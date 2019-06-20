@@ -9,3 +9,6 @@ mod-sample/obj/*
 
 customcolors/libs/*
 customcolors/obj/*
+
+beat-on-mod/libs/*
+beat-on-mod/obj/*
