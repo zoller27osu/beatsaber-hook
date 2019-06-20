@@ -22,6 +22,7 @@ const char* ASSETS_TARGET = "/sdcard/BeatOnData/BeatSaberAssets/";
 const char* SONGS_TARGET = "/sdcard/BeatOnData/CustomSongs/";
 
 #define STARTSWITH(pre, str) ((strlen(str) < strlen(pre)) ? 0 : strncmp(pre, str, strlen(pre)) == 0)
+
 regex_t assetsRegex;
 regex_t songsRegex;
 uint globalOpid = 0;
@@ -84,8 +85,8 @@ MAKE_HOOK_NAT(stat_nat, stat, int, char *path, struct stat *buf)
         log("%i ^^ STAT: SONG remap path match ^^", opid);
         log("%i From: %s\n", opid, path);        
         memset(bfr, 0, sizeof bfr);
-        strcpy(bfr, ASSETS_TARGET);
-        strcpy(bfr+strlen(ASSETS_TARGET), path + pmatch[1].rm_so);
+        strcpy(bfr, SONGS_TARGET);
+        strcpy(bfr+strlen(SONGS_TARGET), path + pmatch[1].rm_so);
         log("%i To: %s\n", opid, bfr);
         statResult = stat_nat(bfr, buf);
         if (statResult < 0) {
