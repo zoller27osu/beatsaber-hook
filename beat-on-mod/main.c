@@ -34,42 +34,42 @@ MAKE_HOOK_NAT(open_nat, open, int, char* path, int oflag, mode_t mode)
     char bfr[500];
     regmatch_t pmatch[2];
     if (regexec(&songsRegex, path, 2, pmatch, 0) == 0) {
-        log("%i ** OPEN: SONG remap path match **", opid);
-        log("%i From: %s\n", opid, path);        
+        //log("%i ** OPEN: SONG remap path match **", opid);
+        //log("%i From: %s\n", opid, path);        
         memset(bfr, 0, sizeof bfr);
         strcpy(bfr, SONGS_TARGET);
         strcpy(bfr+strlen(SONGS_TARGET), path + pmatch[1].rm_so);
-        log("%i To: %s\n", opid, bfr);
+        //log("%i To: %s\n", opid, bfr);
         filePtr = open_nat(bfr, oflag, mode);
         if (filePtr < 0) {
-            log("%i ** OPEN: No SONG remap, remapped file did not open **", opid);
-            log("%i errno: %i %s", opid, errno, strerror(errno));
+            //log("%i ** OPEN: No SONG remap, remapped file did not open **", opid);
+            //log("%i errno: %i %s", opid, errno, strerror(errno));
             return open_nat(path, oflag, mode);
         } else
         {
-            log("%i ************** OPEN: SONG REMAP SUCCESS **************", opid);
+            log("OPEN: SONG REMAP SUCCESS to: %s", bfr);
             return filePtr;
         }
     } else if (regexec(&assetsRegex, path, 2, pmatch, 0) == 0) {
-        log("%i ** OPEN: ASSET remap path match **", opid);
-        log("%i From: %s\n", opid, path);        
+        //log("%i ** OPEN: ASSET remap path match **", opid);
+        //log("%i From: %s\n", opid, path);        
         memset(bfr, 0, sizeof bfr);
         strcpy(bfr, ASSETS_TARGET);
         strcpy(bfr+strlen(ASSETS_TARGET), path + pmatch[1].rm_so);
-        log("%i To: %s\n", opid, bfr);
+        //log("%i To: %s\n", opid, bfr);
         filePtr = open_nat(bfr, oflag, mode);
         if (filePtr < 0) {
-            log("%i ** OPEN: No ASSET remap, remapped file did not open **", opid);
-            log("%i errno: %i %s", opid, errno, strerror(errno));
+            //log("%i ** OPEN: No ASSET remap, remapped file did not open **", opid);
+            //log("%i errno: %i %s", opid, errno, strerror(errno));
             return open_nat(path, oflag, mode);
         } else
         {
-            log("%i ************** OPEN: ASSET REMAP SUCCESS **************", opid);
+            log("OPEN: ASSET REMAP SUCCESS to: %s", bfr);
             return filePtr;
         }
     } else {
-        if (!STARTSWITH("/sys", path) && !STARTSWITH("/proc", path) && !STARTSWITH("/dev", path))
-            log("%i Normal open: %s", opid, path);
+        //if (!STARTSWITH("/sys", path) && !STARTSWITH("/proc", path) && !STARTSWITH("/dev", path))
+            //log("%i Normal open: %s", opid, path);
 
         return open_nat(path, oflag, mode);
     }
@@ -82,42 +82,42 @@ MAKE_HOOK_NAT(stat_nat, stat, int, char *path, struct stat *buf)
     char bfr[500];
     regmatch_t pmatch[2];
     if (regexec(&songsRegex, path, 2, pmatch, 0) == 0) {
-        log("%i ^^ STAT: SONG remap path match ^^", opid);
-        log("%i From: %s\n", opid, path);        
+        //log("%i ^^ STAT: SONG remap path match ^^", opid);
+        //log("%i From: %s\n", opid, path);        
         memset(bfr, 0, sizeof bfr);
         strcpy(bfr, SONGS_TARGET);
         strcpy(bfr+strlen(SONGS_TARGET), path + pmatch[1].rm_so);
-        log("%i To: %s\n", opid, bfr);
+        //log("%i To: %s\n", opid, bfr);
         statResult = stat_nat(bfr, buf);
         if (statResult < 0) {
-            log("%i ^^ STAT: No SONG remap, remapped file did not stat ^^", opid);
-            log("%i errno: %i %s", opid, errno, strerror(errno));
+            //log("%i ^^ STAT: No SONG remap, remapped file did not stat ^^", opid);
+            //log("%i errno: %i %s", opid, errno, strerror(errno));
             return stat_nat(path, buf);
         } else
         {
-            log("%i ^^^^^^^^^^^^^^ STAT: SONG REMAP SUCCESS ^^^^^^^^^^^^^^", opid);
+            log("STAT: SONG REMAP SUCCESS to: %s", bfr);
             return statResult;
         }
     } else if (regexec(&assetsRegex, path, 2, pmatch, 0) == 0) {
-        log("%i ^^ STAT: ASSET remap path match ^^", opid);
-        log("%i From: %s\n", opid, path);        
+        //log("%i ^^ STAT: ASSET remap path match ^^", opid);
+        //log("%i From: %s\n", opid, path);        
         memset(bfr, 0, sizeof bfr);
         strcpy(bfr, ASSETS_TARGET);
         strcpy(bfr+strlen(ASSETS_TARGET), path + pmatch[1].rm_so);
-        log("%i To: %s\n", opid, bfr);
+        //log("%i To: %s\n", opid, bfr);
         statResult = stat_nat(bfr, buf);
         if (statResult < 0) {
-            log("%i ^^ STAT: No ASSET remap, remapped file did not stat ^^", opid);
-            log("%i errno: %i %s", opid, errno, strerror(errno));
+            //log("%i ^^ STAT: No ASSET remap, remapped file did not stat ^^", opid);
+            //log("%i errno: %i %s", opid, errno, strerror(errno));
             return stat_nat(path, buf);
         } else
         {
-            log("%i ^^^^^^^^^^^^^^ STAT: ASSET REMAP SUCCESS ^^^^^^^^^^^^^^", opid);
+            log("STAT: ASSET REMAP SUCCESS To: %s", bfr);
             return statResult;
         }
     } else {
-        if (!STARTSWITH("/sys", path) && !STARTSWITH("/proc", path) && !STARTSWITH("/dev", path))
-            log("%i Normal stat: %s", opid, path);
+        //if (!STARTSWITH("/sys", path) && !STARTSWITH("/proc", path) && !STARTSWITH("/dev", path))
+          //  log("%i Normal stat: %s", opid, path);
 
         return stat_nat(path, buf);
     }
