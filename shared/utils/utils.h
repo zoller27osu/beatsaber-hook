@@ -3,7 +3,7 @@ long getRealOffset(long offset);
 typedef struct {
     char padding[0x8];
     unsigned int len;
-    char str[];
+    wchar_t str[];
 } cs_string;
 
 

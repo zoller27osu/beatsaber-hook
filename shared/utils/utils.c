@@ -2,6 +2,7 @@
 
 #include <jni.h>
 
+#include <wchar.h>
 #include "utils.h"
 #include <android/log.h>
 #include <string.h>
