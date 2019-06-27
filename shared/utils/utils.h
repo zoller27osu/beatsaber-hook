@@ -28,4 +28,5 @@ retval hook_ ## name(__VA_ARGS__)
 registerInlineHook((uint32_t)(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name);\
 inlineHook((uint32_t)(addr_ ## name));\
 
+void csstrtowstr(cs_string* in, wchar_t* out);
 void csstrtostr(cs_string* in, char* out);

@@ -74,10 +74,19 @@ long getRealOffset(long offset) // calculate dump.cs address + lib.so base addre
 
 
 
-void csstrtostr(cs_string* in, wchar_t* out)
+void csstrtowstr(cs_string* in, wchar_t* out)
 {
     for(int i = 0; i < in->len; i++) {
         out[i] = in->str[i];
     }
     out[in->len] = '\0';
+}
+
+void csstrtostr(cs_string* in, char* out)
+{
+    // TODO Implement! Needs to properly convert wchar_t to char[]
+    // and then place that char[] into the 'out' variable at the right spot
+    // for(int i = 0; i < in->len; i++) {
+    //     wctomb(o)
+    // }
 }
