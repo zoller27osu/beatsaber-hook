@@ -3,7 +3,7 @@ long getRealOffset(long offset);
 typedef struct {
     char padding[0x8];
     unsigned int len;
-    short str[];
+    unsigned short str[];
 } cs_string;
 
 
@@ -28,5 +28,7 @@ retval hook_ ## name(__VA_ARGS__)
 registerInlineHook((uint32_t)(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name);\
 inlineHook((uint32_t)(addr_ ## name));\
 
-void csstrtowstr(cs_string* in, short* out);
+void csstrtowstr(cs_string* in, unsigned short* out);
 void csstrtostr(cs_string* in, char* out);
+void setcswstr(cs_string* in, unsigned short* value);
+void setcsstr(cs_string* in, char* value);

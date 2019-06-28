@@ -73,9 +73,7 @@ long getRealOffset(long offset) // calculate dump.cs address + lib.so base addre
     return location + offset;
 }
 
-
-
-void csstrtowstr(cs_string* in, short* out)
+void csstrtowstr(cs_string* in, unsigned short* out)
 {
     for(int i = 0; i < in->len; i++) {
         out[i] = in->str[i];
@@ -83,11 +81,28 @@ void csstrtowstr(cs_string* in, short* out)
     out[in->len] = '\0';
 }
 
+void setcswstr(cs_string* in, unsigned short* value) {
+    int l = sizeof(value) / sizeof(unsigned short);
+    in->len = l;
+    for(int i = 0; i < l; i++) {
+        in->str[i] = value[i];
+    }
+}
+
+void setcsstr(cs_string* in, char* value) {
+    int l = strlen(value);
+    in->len = l;
+    for(int i = 0; i < l; i++) {
+        // Can assume that each char is only a single char (a single word --> double word)
+        in->str[i] = (unsigned short)value[i];
+    }
+}
+
 void csstrtostr(cs_string* in, char* out)
 {
-    // TODO Implement! Needs to properly convert wchar_t to char[]
-    // and then place that char[] into the 'out' variable at the right spot
-    // for(int i = 0; i < in->len; i++) {
-    //     wctomb(o)
-    // }
+    for(int i = 0; i < in->len; i++) {
+        // Can assume that each short can just be a literal char
+        out[i*2] = in->str[i];
+    }
+    out[in->len] = '\x0';
 }
