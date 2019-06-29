@@ -78,11 +78,10 @@ void csstrtowstr(cs_string* in, unsigned short* out)
     for(int i = 0; i < in->len; i++) {
         out[i] = in->str[i];
     }
-    out[in->len] = '\0';
 }
 
 void setcswstr(cs_string* in, unsigned short* value) {
-    int l = sizeof(value) / sizeof(unsigned short);
+    int l = sizeof(value) / sizeof(short);
     in->len = l;
     for(int i = 0; i < l; i++) {
         in->str[i] = value[i];
