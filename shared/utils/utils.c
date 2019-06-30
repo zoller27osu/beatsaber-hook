@@ -73,6 +73,20 @@ long getRealOffset(long offset) // calculate dump.cs address + lib.so base addre
     return location + offset;
 }
 
+cs_string* createcsstr(char* characters, size_t length) {
+    cs_string* str = malloc(sizeof(cs_string));
+    // Write padding for C# strings
+    str->padding[0] = 128;
+    str->padding[1] = 67;
+    str->padding[2] = 15;
+    str->padding[3] = 207;
+    // Rest are 0s
+    // System.string.ctor(char, int): 0x97D778
+    void (*string_ctor)(cs_string*, unsigned short, unsigned int) = (void*)getRealOffset(0x97D778);
+    string_ctor(str, (unsigned short) 44, (unsigned int)length);
+    return str
+}
+
 void csstrtowstr(cs_string* in, unsigned short* out)
 {
     for(int i = 0; i < in->len; i++) {
@@ -80,16 +94,16 @@ void csstrtowstr(cs_string* in, unsigned short* out)
     }
 }
 
-void setcswstr(cs_string* in, unsigned short* value) {
-    int l = sizeof(value) / sizeof(short);
+void setcswstr(cs_string* in, unsigned short* value, size_t length) {
+    unsigned int l = (unsigned int)length;
     in->len = l;
     for(int i = 0; i < l; i++) {
         in->str[i] = value[i];
     }
 }
 
-void setcsstr(cs_string* in, char* value) {
-    int l = strlen(value);
+void setcsstr(cs_string* in, char* value, size_t length) {
+    unsigned int l = (unsigned int)length;
     in->len = l;
     for(int i = 0; i < l; i++) {
         // Can assume that each char is only a single char (a single word --> double word)

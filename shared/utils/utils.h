@@ -30,5 +30,8 @@ inlineHook((uint32_t)(addr_ ## name));\
 
 void csstrtowstr(cs_string* in, unsigned short* out);
 void csstrtostr(cs_string* in, char* out);
-void setcswstr(cs_string* in, unsigned short* value);
+void setcswstr(cs_string* in, unsigned short* value, size_t length);
 void setcsstr(cs_string* in, char* value);
+void setcsstr(cs_string* in, char* value, size_t length);
+
+cs_string* createcsstr(char* characters, size_t length);
