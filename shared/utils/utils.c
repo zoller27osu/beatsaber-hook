@@ -73,18 +73,36 @@ long getRealOffset(long offset) // calculate dump.cs address + lib.so base addre
     return location + offset;
 }
 
+// BEAT SABER SPECIFIC
+// Create an object using garbage collection offset
+const long GC_CREATOR_OFFSET = 0x308740;
+// GameObject.ctor() offset
+const long GO_CTOR_OFFSET = 0xc86558;
+// GameObject type offset
+const long GO_TYPE_OFFSET = 0x19c7998;
+// System.GetType(string typeName) offset
+const long GET_TYPE_OFFSET = 0x104B254;
+// System.String.Concat(cs_string* left, cs_string* right) offset
+const long CONCAT_STRING_OFFSET = 0x972F2C;
+// System.String.CreateString(char* array, int start, int length) offset
+const long CREATE_STRING_OFFSET = 0x9831BC;
+
 cs_string* createcsstr(char* characters, size_t length) {
     cs_string* str = malloc(sizeof(cs_string));
     // Write padding for C# strings
-    str->padding[0] = 128;
-    str->padding[1] = 67;
-    str->padding[2] = 15;
-    str->padding[3] = 207;
+    // str->padding[0] = 128;
+    // str->padding[1] = 67;
+    // str->padding[2] = 15;
+    // str->padding[3] = 207;
     // Rest are 0s
     // System.string.ctor(char, int): 0x97D778
     void (*string_ctor)(cs_string*, unsigned short, unsigned int) = (void*)getRealOffset(0x97D778);
     string_ctor(str, (unsigned short) 44, (unsigned int)length);
-    return str
+    for (int i = 0; i < length; i++) {
+        str->str[i] = characters[i];
+        str->len++;
+    }
+    return str;
 }
 
 void csstrtowstr(cs_string* in, unsigned short* out)
