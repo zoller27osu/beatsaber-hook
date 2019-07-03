@@ -59,6 +59,8 @@ extern const long GET_TYPE_OFFSET;
 extern const long CONCAT_STRING_OFFSET;
 // System.String.CreateString(char* array, int start, int length) offset
 extern const long CREATE_STRING_OFFSET;
+// System.String.FastAllocateString(int length) offset
+extern const long ALLOCATE_STRING_OFFSET;
 
 // Sets the unsigned short array of the given cs_string
 void csstrtowstr(cs_string* in, unsigned short* out);

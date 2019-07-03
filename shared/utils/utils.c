@@ -86,6 +86,8 @@ const long GET_TYPE_OFFSET = 0x104B254;
 const long CONCAT_STRING_OFFSET = 0x972F2C;
 // System.String.CreateString(char* array, int start, int length) offset
 const long CREATE_STRING_OFFSET = 0x9831BC;
+// System.String.FastAllocateString(int length) offset
+const long ALLOCATE_STRING_OFFSET = 0x97A704;
 
 cs_string* createcsstr(char* characters, size_t length) {
     cs_string* str = malloc(sizeof(cs_string));
