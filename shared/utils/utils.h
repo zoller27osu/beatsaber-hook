@@ -61,6 +61,8 @@ extern const long CONCAT_STRING_OFFSET;
 extern const long CREATE_STRING_OFFSET;
 // System.String.FastAllocateString(int length) offset
 extern const long ALLOCATE_STRING_OFFSET;
+// System.String.Substring(cs_string* this, int start, int length) offset
+extern const long SUBSTRING_OFFSET;
 
 // Sets the unsigned short array of the given cs_string
 void csstrtowstr(cs_string* in, unsigned short* out);
@@ -71,4 +73,4 @@ void setcswstr(cs_string* in, unsigned short* value, size_t length);
 // Sets the given cs_string using the given character array and length
 void setcsstr(cs_string* in, char* value, size_t length);
 // Creates a cs string (allocates it) with the given character array and length and returns it
-cs_string* createcsstr(char* characters, size_t length);
+cs_string* createcsstr(cs_string* existing, char* characters, size_t length);
