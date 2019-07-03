@@ -2,7 +2,6 @@
 
 #include <jni.h>
 
-#include <wchar.h>
 #include "utils.h"
 #include <android/log.h>
 #include <string.h>
@@ -74,6 +73,7 @@ long getRealOffset(long offset) // calculate dump.cs address + lib.so base addre
 }
 
 // BEAT SABER SPECIFIC
+
 // Create an object using garbage collection offset
 const long GC_CREATOR_OFFSET = 0x308740;
 // GameObject.ctor() offset
@@ -90,31 +90,38 @@ const long CREATE_STRING_OFFSET = 0x9831BC;
 const long ALLOCATE_STRING_OFFSET = 0x97A704;
 // System.String.Substring(cs_string* this, int start, int length) offset
 const long SUBSTRING_OFFSET = 0x96EBEC;
+// il2cpp_string_new, used to find string construction offset: 0x2ed144
+// Creation of string method(char* chars, size_t length): 0x31A1E1
+static const long NEW_STRING_OFFSET = 0x31A1E1;
 
-cs_string* createcsstr(cs_string* existing, char* characters, size_t length) {
+cs_string* createcsstr(char* characters, size_t length) {
+    cs_string* (*create_str)(char*, size_t) = (void*)getRealOffset(NEW_STRING_OFFSET);
+    return create_str(characters, length);
+    
     // Creates a cs_cstring by doing concatenation, substring, and setting.
-    cs_string* (*concat)(cs_string*, cs_string*) = (void*)getRealOffset(CONCAT_STRING_OFFSET);
-    cs_string* temp = concat(existing, existing);
-    int i = 0;
-    while (temp->len < length) {
-        if (i > 10000) {
-            // ERROR!
-            return NULL;
-        }
-        i++;
-        temp = concat(temp, existing);
-    }
+    // cs_string* (*concat)(cs_string*, cs_string*) = (void*)getRealOffset(CONCAT_STRING_OFFSET);
+    // cs_string* temp = concat(existing, existing);
+    // int i = 0;
+    // while (temp->len < length) {
+    //     if (i > 10000) {
+    //         // ERROR!
+    //         return NULL;
+    //     }
+    //     i++;
+    //     temp = concat(temp, existing);
+    // }
 
-    cs_string* (*substring)(cs_string*, int, int) = (void*)getRealOffset(SUBSTRING_OFFSET);
-    cs_string* end = substring(temp, 0, length);
-    if (end->len != (int)length) {
-        // ERROR!
-        return NULL;
-    }
-    for (int j = 0; j < length; j++) {
-        end->str[j] = characters[j];
-    }
-    return end;
+    // cs_string* (*substring)(cs_string*, int, int) = (void*)getRealOffset(SUBSTRING_OFFSET);
+    // cs_string* end = substring(temp, 0, length);
+    // if (end->len != (int)length) {
+    //     // ERROR!
+    //     return NULL;
+    // }
+    // for (int j = 0; j < length; j++) {
+    //     end->str[j] = characters[j];
+    // }
+    // return end;
+
     // Write padding for C# strings
     // str->padding[0] = 128;
     // str->padding[1] = 67;
