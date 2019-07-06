@@ -90,9 +90,10 @@ const long CREATE_STRING_OFFSET = 0x9831BC;
 const long ALLOCATE_STRING_OFFSET = 0x97A704;
 // System.String.Substring(cs_string* this, int start, int length) offset
 const long SUBSTRING_OFFSET = 0x96EBEC;
-// il2cpp_string_new, used to find string construction offset: 0x2ed144
-// Creation of string method(char* chars, size_t length): 0x31A1E1
-static const long NEW_STRING_OFFSET = 0x31A1E1;
+// il2cpp_string_new, used to find string construction offset: 0x2DD144
+// il2cpp_string_new immediate call offset: 0x30A1C8
+// Creation of string method(char* chars, size_t length): 0x30A1E8
+static const long NEW_STRING_OFFSET = 0x30A1E8;
 
 cs_string* createcsstr(char* characters, size_t length) {
     cs_string* (*create_str)(char*, size_t) = (void*)getRealOffset(NEW_STRING_OFFSET);
@@ -170,3 +171,5 @@ void csstrtostr(cs_string* in, char* out)
     }
     out[in->len] = '\x0';
 }
+
+// BEAT SABER SETTINGS
