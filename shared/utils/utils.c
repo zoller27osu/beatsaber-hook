@@ -98,45 +98,6 @@ static const long NEW_STRING_OFFSET = 0x30A1E8;
 cs_string* createcsstr(char* characters, size_t length) {
     cs_string* (*create_str)(char*, size_t) = (void*)getRealOffset(NEW_STRING_OFFSET);
     return create_str(characters, length);
-    
-    // Creates a cs_cstring by doing concatenation, substring, and setting.
-    // cs_string* (*concat)(cs_string*, cs_string*) = (void*)getRealOffset(CONCAT_STRING_OFFSET);
-    // cs_string* temp = concat(existing, existing);
-    // int i = 0;
-    // while (temp->len < length) {
-    //     if (i > 10000) {
-    //         // ERROR!
-    //         return NULL;
-    //     }
-    //     i++;
-    //     temp = concat(temp, existing);
-    // }
-
-    // cs_string* (*substring)(cs_string*, int, int) = (void*)getRealOffset(SUBSTRING_OFFSET);
-    // cs_string* end = substring(temp, 0, length);
-    // if (end->len != (int)length) {
-    //     // ERROR!
-    //     return NULL;
-    // }
-    // for (int j = 0; j < length; j++) {
-    //     end->str[j] = characters[j];
-    // }
-    // return end;
-
-    // Write padding for C# strings
-    // str->padding[0] = 128;
-    // str->padding[1] = 67;
-    // str->padding[2] = 15;
-    // str->padding[3] = 207;
-    // Rest are 0s
-    // System.string.ctor(char, int): 0x97D778
-    // void (*string_ctor)(cs_string*, unsigned short, unsigned int) = (void*)getRealOffset(0x97D778);
-    // string_ctor(str, (unsigned short) 44, (unsigned int)length);
-    // for (int i = 0; i < length; i++) {
-    //     str->str[i] = characters[i];
-    //     str->len++;
-    // }
-    // return str;
 }
 
 void csstrtowstr(cs_string* in, unsigned short* out)
