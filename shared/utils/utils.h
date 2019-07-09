@@ -55,7 +55,7 @@ extern const long GO_CTOR_OFFSET;
 extern const long GO_TYPE_OFFSET;
 // System.GetType(string typeName) offset
 extern const long GET_TYPE_OFFSET;
-// System.String.CreateString(cs_string* left, cs_string* right) offset
+// System.String.Concat(cs_string* left, cs_string* right) offset
 extern const long CONCAT_STRING_OFFSET;
 // System.String.CreateString(char* array, int start, int length) offset
 extern const long CREATE_STRING_OFFSET;
@@ -63,6 +63,8 @@ extern const long CREATE_STRING_OFFSET;
 extern const long ALLOCATE_STRING_OFFSET;
 // System.String.Substring(cs_string* this, int start, int length) offset
 extern const long SUBSTRING_OFFSET;
+// System.String.Replace(cs_string* original, cs_string* old, cs_string* new) offset
+extern const long STRING_REPLACE_OFFSET;
 
 // Sets the unsigned short array of the given cs_string
 void csstrtowstr(cs_string* in, unsigned short* out);

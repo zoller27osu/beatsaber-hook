@@ -94,6 +94,8 @@ const long SUBSTRING_OFFSET = 0x96EBEC;
 // il2cpp_string_new immediate call offset: 0x30A1C8
 // Creation of string method(char* chars, size_t length): 0x30A1E8
 static const long NEW_STRING_OFFSET = 0x30A1E8;
+// System.String.Replace(cs_string* original, cs_string* old, cs_string* new) offset
+const long STRING_REPLACE_OFFSET = 0x97FF04;
 
 cs_string* createcsstr(char* characters, size_t length) {
     cs_string* (*create_str)(char*, size_t) = (void*)getRealOffset(NEW_STRING_OFFSET);
