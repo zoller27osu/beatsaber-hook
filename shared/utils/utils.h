@@ -1,3 +1,14 @@
+#ifndef UTILS_H_INCLUDED
+#define UTILS_H_INCLUDED
+
+#ifndef JSMN_INCLUDED
+
+#define JSMN_INCLUDED
+#define JSMN_STATIC
+#include "../../jsmn/jsmn.h"
+
+#endif /* JSMN_INCLUDED */
+
 long getRealOffset(long offset);
 
 #define log(...) __android_log_print(ANDROID_LOG_INFO, "QuestHook", __VA_ARGS__)
@@ -47,6 +58,8 @@ typedef struct {
     float z;
 } Vector3;
 
+// OFFSETS
+
 // Create an object using garbage collection offset
 extern const long GC_CREATOR_OFFSET;
 // GameObject.ctor() offset
@@ -66,6 +79,8 @@ extern const long SUBSTRING_OFFSET;
 // System.String.Replace(cs_string* original, cs_string* old, cs_string* new) offset
 extern const long STRING_REPLACE_OFFSET;
 
+// FUNCTIONS
+
 // Sets the unsigned short array of the given cs_string
 void csstrtowstr(cs_string* in, unsigned short* out);
 // Sets the character array of the given cs_string
@@ -76,3 +91,36 @@ void setcswstr(cs_string* in, unsigned short* value, size_t length);
 void setcsstr(cs_string* in, char* value, size_t length);
 // Creates a cs string (allocates it) with the given character array and length and returns it
 cs_string* createcsstr(char* characters, size_t length);
+
+// SETTINGS
+
+// ParseError is thrown when failing to parse a JSON file
+typedef enum ParseError {
+    PARSE_ERROR_FILE_DOES_NOT_EXIST = -1
+} ParseError_t;
+
+// WriteError is thrown when failing to create a file
+typedef enum WriteError {
+    WRITE_ERROR_COULD_NOT_MAKE_FILE = -1
+} WriteError_t;
+
+// Returns if a file exists and can be written to / read from.
+char fileexists(const char* filename);
+// Reads all of the text of a file at the given filename. If the file does not exist, returns NULL
+char* readfile(const char* filename);
+// Writes all of the text to a file at the given filename. Returns either 0 or WriteError code
+int writefile(const char* filename, const char* text);
+// Parses a JSON string, given an array of tokens and a maximum number of tokens and returns the number of tokens or JSMN_ERROR code
+int parsejson(const char* js, jsmntok_t** tokens, const unsigned int count);
+// Parses the JSON of the filename, returning the number of tokens parsed or ParseError code
+int parsejsonfile(const char* filename, jsmntok_t** tokens, const unsigned int token_count);
+// Returns the buffer string from a given JSON string and token. RELATIVELY UNSAFE
+char* bufferfromtoken(const char* js, jsmntok_t token);
+// Returns the integer from the JSON string at the provided token. NO ERROR CHECKING
+int intfromjson(const char* js, jsmntok_t token);
+// Returns the double from the JSON string at the provided token. NO ERROR CHECKING
+double doublefromjson(const char* js, jsmntok_t token);
+// Returns the boolean from the JSON string at the provided token. NO ERROR CHECKING
+char boolfromjson(const char* js, jsmntok_t token);
+
+#endif /* UTILS_H_INCLUDED */

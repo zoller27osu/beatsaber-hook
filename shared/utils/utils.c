@@ -8,6 +8,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <unistd.h>
+#ifndef JSMN_INCLUDED
+#include "../../jsmn/jsmn.h"
+#endif
 
 
 long baseAddr(char *soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
@@ -74,27 +78,18 @@ long getRealOffset(long offset) // calculate dump.cs address + lib.so base addre
 
 // BEAT SABER SPECIFIC
 
-// Create an object using garbage collection offset
 const long GC_CREATOR_OFFSET = 0x308740;
-// GameObject.ctor() offset
 const long GO_CTOR_OFFSET = 0xc86558;
-// GameObject type offset
 const long GO_TYPE_OFFSET = 0x19c7998;
-// System.GetType(string typeName) offset
 const long GET_TYPE_OFFSET = 0x104B254;
-// System.String.Concat(cs_string* left, cs_string* right) offset
 const long CONCAT_STRING_OFFSET = 0x972F2C;
-// System.String.CreateString(char* array, int start, int length) offset
 const long CREATE_STRING_OFFSET = 0x9831BC;
-// System.String.FastAllocateString(int length) offset
 const long ALLOCATE_STRING_OFFSET = 0x97A704;
-// System.String.Substring(cs_string* this, int start, int length) offset
 const long SUBSTRING_OFFSET = 0x96EBEC;
 // il2cpp_string_new, used to find string construction offset: 0x2DD144
 // il2cpp_string_new immediate call offset: 0x30A1C8
 // Creation of string method(char* chars, size_t length): 0x30A1E8
 static const long NEW_STRING_OFFSET = 0x30A1E8;
-// System.String.Replace(cs_string* original, cs_string* old, cs_string* new) offset
 const long STRING_REPLACE_OFFSET = 0x97FF04;
 
 cs_string* createcsstr(char* characters, size_t length) {
@@ -136,3 +131,71 @@ void csstrtostr(cs_string* in, char* out)
 }
 
 // BEAT SABER SETTINGS
+
+char fileexists(const char* filename) {
+    return access(filename, W_OK | R_OK) != -1 ? '\1' : '\0';
+}
+
+char* readfile(const char* filename) {
+    FILE* fp = fopen(filename, "r");
+    char* content = NULL;
+    long size = 0;
+    if (fp) {
+        fseek(fp, 0, SEEK_END);
+        size = ftell(fp);
+        rewind(fp);
+        content = (char*)malloc(size * sizeof(char));
+        fread(content, sizeof(char), size, fp);
+        fclose(fp);
+    }
+    return content;
+}
+
+int writefile(const char* filename, const char* text) {
+    FILE* fp = fopen(filename, "w");
+    if (fp) {
+        fwrite(text, sizeof(char), strlen(text), fp);
+        return 0;
+    }
+    return WRITE_ERROR_COULD_NOT_MAKE_FILE;
+}
+
+int parsejson(const char* js, jsmntok_t** tokens, const unsigned int count) {
+    jsmn_parser parser;
+    jsmn_init(&parser);
+    int r = jsmn_parse(&parser, js, strlen(js), *tokens, count);
+    if (r == JSMN_ERROR_NOMEM) {
+        // NOT ENOUGH TOKENS ALLOCATED!
+        // free(tokens);
+        // malloc(RETRY * TOKENS * sizeof(jsmntok_t));
+        // r = jsmn_parse(&parser, js, strlen(js), &tokens, RETRY * TOKENS);
+    }
+    return r;
+}
+
+int parsejsonfile(const char* filename, jsmntok_t** tokens, const unsigned int token_count) {
+    char* data = readfile(filename);
+    if (data) {
+        return parsejson(data, tokens, token_count);
+    }
+    return PARSE_ERROR_FILE_DOES_NOT_EXIST;
+}
+
+char* bufferfromtoken(const char* js, jsmntok_t token) {
+    char* buffer = malloc((token.end - token.start + 1) * sizeof(char));
+    memcpy(buffer, &js[token.start], token.end - token.start);
+    buffer[token.end - token.start] = '\0';
+    return buffer;
+}
+
+int intfromjson(const char* js, jsmntok_t token) {
+    return atoi(bufferfromtoken(js, token));
+}
+
+double doublefromjson(const char* js, jsmntok_t token) {
+    return atof(bufferfromtoken(js, token));
+}
+
+char boolfromjson(const char* js, jsmntok_t token) {
+    return strcmp("true", bufferfromtoken(js, token)) == 0 ? '\1' : '\0';
+}
