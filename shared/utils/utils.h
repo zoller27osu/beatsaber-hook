@@ -51,6 +51,12 @@ typedef struct {
     float a;
 } Color;
 
+// UnityEngine.Vector2
+typedef struct {
+    float x;
+    float y;
+} Vector2;
+
 // UnityEngine.Vector3
 typedef struct {
     float x;
@@ -61,23 +67,23 @@ typedef struct {
 // OFFSETS
 
 // Create an object using garbage collection offset
-extern const long GC_CREATOR_OFFSET;
+#define GC_CREATOR_OFFSET 0x308740
 // GameObject.ctor() offset
-extern const long GO_CTOR_OFFSET;
+#define GO_CTOR_OFFSET 0xC86558
 // GameObject type offset
-extern const long GO_TYPE_OFFSET;
+#define GO_TYPE_OFFSET 0x19C7998
 // System.GetType(string typeName) offset
-extern const long GET_TYPE_OFFSET;
+#define GET_TYPE_OFFSET 0x104B254
 // System.String.Concat(cs_string* left, cs_string* right) offset
-extern const long CONCAT_STRING_OFFSET;
+#define CONCAT_STRING_OFFSET 0x972F2C
 // System.String.CreateString(char* array, int start, int length) offset
-extern const long CREATE_STRING_OFFSET;
+#define CREATE_STRING_OFFSET 0x9831BC
 // System.String.FastAllocateString(int length) offset
-extern const long ALLOCATE_STRING_OFFSET;
+#define ALLOCATE_STRING_OFFSET 0x97A704
 // System.String.Substring(cs_string* this, int start, int length) offset
-extern const long SUBSTRING_OFFSET;
+#define SUBSTRING_OFFSET 0x96EBEC
 // System.String.Replace(cs_string* original, cs_string* old, cs_string* new) offset
-extern const long STRING_REPLACE_OFFSET;
+#define STRING_REPLACE_OFFSET 0x97FF04
 
 // FUNCTIONS
 

@@ -78,19 +78,10 @@ long getRealOffset(long offset) // calculate dump.cs address + lib.so base addre
 
 // BEAT SABER SPECIFIC
 
-const long GC_CREATOR_OFFSET = 0x308740;
-const long GO_CTOR_OFFSET = 0xc86558;
-const long GO_TYPE_OFFSET = 0x19c7998;
-const long GET_TYPE_OFFSET = 0x104B254;
-const long CONCAT_STRING_OFFSET = 0x972F2C;
-const long CREATE_STRING_OFFSET = 0x9831BC;
-const long ALLOCATE_STRING_OFFSET = 0x97A704;
-const long SUBSTRING_OFFSET = 0x96EBEC;
 // il2cpp_string_new, used to find string construction offset: 0x2DD144
 // il2cpp_string_new immediate call offset: 0x30A1C8
 // Creation of string method(char* chars, size_t length): 0x30A1E8
 static const long NEW_STRING_OFFSET = 0x30A1E8;
-const long STRING_REPLACE_OFFSET = 0x97FF04;
 
 cs_string* createcsstr(char* characters, size_t length) {
     cs_string* (*create_str)(char*, size_t) = (void*)getRealOffset(NEW_STRING_OFFSET);
