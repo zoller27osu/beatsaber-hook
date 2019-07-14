@@ -146,6 +146,7 @@ int writefile(const char* filename, const char* text) {
     FILE* fp = fopen(filename, "w");
     if (fp) {
         fwrite(text, sizeof(char), strlen(text), fp);
+        fclose(fp);
         return 0;
     }
     return WRITE_ERROR_COULD_NOT_MAKE_FILE;
