@@ -14,6 +14,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace rapidjson;
 
 long baseAddr(char *soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
 {
@@ -164,17 +165,33 @@ int writefile(const char* filename, const char* text) {
     return WRITE_ERROR_COULD_NOT_MAKE_FILE;
 }
 
-tao::json::value parsejson(const char* js) {
-    return tao::json::from_string(js);
+rapidjson::Document parsejson(string_view js) {
+    char temp[js.length()];
+    memcpy(temp, js.data(), js.length());
+    
+    Document doc;
+    if (doc.ParseInsitu(temp).HasParseError()) {
+        return {};
+    }
+    return doc;
 }
 
-tao::json::value parsejsonfile(const char* filename) {
-    return tao::json::parse_file(filename);
+rapidjson::Document parsejsonfile(string filename) {
+    if (!fileexists(filename.c_str())) {
+        return {};
+    }
+    FILE* fp = fopen(filename.c_str(), "r");
+    
+    Document doc;
+    if (doc.ParseStream(fp).HasParseError()) {
+        return {};
+    }
+    return doc;
 }
 
 // CONFIG
 
-tao::json::value config_object = tao::json::empty_object;
+rapidjson::Document config_object;
 bool readJson = false;
 
 // Loads the config for the given MOD_ID, if it doesn't exist, will leave it as an empty object.
@@ -187,9 +204,9 @@ void loadConfig() {
     if (!fileexists(filename.c_str())) {
         writefile(filename.c_str(), "{}");
     }
-    tao::json::value o = tao::json::parse_file(filename);
-    if (o && o.is_object()) {
-        config_object = o;
+    config_object = parsejsonfile(filename);
+    if (!config_object.IsObject()) {
+        config_object.SetObject();
     }
     readJson = true;
 }
@@ -200,9 +217,10 @@ void writeConfig() {
     }
     string filename = CONFIG_PATH + MOD_ID + ".json";
 
-    if (!fileexists(filename.c_str())) {
-        writefile(filename.c_str(), tao::json::to_string(config_object).c_str());
-    }
+    StringBuffer buf;
+    PrettyWriter<StringBuffer> writer(buf);
+    config_object.Accept(writer);
+    writefile(filename.c_str(), buf.GetString());
 }
 
 tao::json::value getconfigvalue(const char* key, tao::json::value defaultValue = NULL, bool insertIfNotFound = false) {
