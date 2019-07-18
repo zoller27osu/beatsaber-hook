@@ -12,7 +12,12 @@
 #ifndef JSMN_INCLUDED
 #include "../../jsmn/jsmn.h"
 #endif
-
+#ifndef MOD_ID
+#error "'MOD_ID' must be defined in the mod!"
+#endif
+#ifndef VERSION
+#error "'VERSION' must be defined in the mod!"
+#endif
 
 long baseAddr(char *soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
 {
