@@ -1,6 +1,8 @@
 // thx https://github.com/jbro129/Unity-Substrate-Hook-Android
 
 #include <jni.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "utils.h"
 #include <android/log.h>
@@ -9,15 +11,9 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <unistd.h>
-#ifndef JSMN_INCLUDED
-#include "../../jsmn/jsmn.h"
-#endif
-#ifndef MOD_ID
-#error "'MOD_ID' must be defined in the mod!"
-#endif
-#ifndef VERSION
-#error "'VERSION' must be defined in the mod!"
-#endif
+#include <iostream>
+
+using namespace std;
 
 long baseAddr(char *soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
 {
@@ -128,8 +124,19 @@ void csstrtostr(cs_string* in, char* out)
 
 // BEAT SABER SETTINGS
 
-char fileexists(const char* filename) {
-    return access(filename, W_OK | R_OK) != -1 ? '\1' : '\0';
+bool fileexists(const char* filename) {
+    return access(filename, W_OK | R_OK) != -1;
+}
+
+bool direxists(const char* dirname) {
+    struct stat info;
+
+    if (stat(dirname, &info) != 0) {
+        return false;
+    } if (info.st_mode & S_IFDIR) {
+        return true;
+    }
+    return false;
 }
 
 char* readfile(const char* filename) {
@@ -157,42 +164,66 @@ int writefile(const char* filename, const char* text) {
     return WRITE_ERROR_COULD_NOT_MAKE_FILE;
 }
 
-int parsejson(const char* js, jsmntok_t** tokens, const unsigned int count) {
-    jsmn_parser parser;
-    jsmn_init(&parser);
-    int r = jsmn_parse(&parser, js, strlen(js), *tokens, count);
-    if (r == JSMN_ERROR_NOMEM) {
-        // NOT ENOUGH TOKENS ALLOCATED!
-        // free(tokens);
-        // malloc(RETRY * TOKENS * sizeof(jsmntok_t));
-        // r = jsmn_parse(&parser, js, strlen(js), &tokens, RETRY * TOKENS);
+tao::json::value parsejson(const char* js) {
+    return tao::json::from_string(js);
+}
+
+tao::json::value parsejsonfile(const char* filename) {
+    return tao::json::parse_file(filename);
+}
+
+// CONFIG
+
+tao::json::value config_object = tao::json::empty_object;
+bool readJson = false;
+
+// Loads the config for the given MOD_ID, if it doesn't exist, will leave it as an empty object.
+void loadConfig() {
+    if (!direxists(CONFIG_PATH)) {
+        mkdir(CONFIG_PATH, 0700);
     }
-    return r;
-}
+    string filename = CONFIG_PATH + MOD_ID + ".json";
 
-int parsejsonfile(const char* filename, jsmntok_t** tokens, const unsigned int token_count) {
-    char* data = readfile(filename);
-    if (data) {
-        return parsejson(data, tokens, token_count);
+    if (!fileexists(filename.c_str())) {
+        writefile(filename.c_str(), "{}");
     }
-    return PARSE_ERROR_FILE_DOES_NOT_EXIST;
+    tao::json::value o = tao::json::parse_file(filename);
+    if (o && o.is_object()) {
+        config_object = o;
+    }
+    readJson = true;
 }
 
-char* bufferfromtoken(const char* js, jsmntok_t token) {
-    char* buffer = malloc((token.end - token.start + 1) * sizeof(char));
-    memcpy(buffer, &js[token.start], token.end - token.start);
-    buffer[token.end - token.start] = '\0';
-    return buffer;
+void writeConfig() {
+    if (!direxists(CONFIG_PATH)) {
+        mkdir(CONFIG_PATH, 0700);
+    }
+    string filename = CONFIG_PATH + MOD_ID + ".json";
+
+    if (!fileexists(filename.c_str())) {
+        writefile(filename.c_str(), tao::json::to_string(config_object).c_str());
+    }
 }
 
-int intfromjson(const char* js, jsmntok_t token) {
-    return atoi(bufferfromtoken(js, token));
+tao::json::value getconfigvalue(const char* key, tao::json::value defaultValue = NULL, bool insertIfNotFound = false) {
+    if (!readJson) {
+        loadConfig();
+    }
+    tao::json::value v = config_object.find(key);
+    if (v) {
+        return v;
+    } else {
+        if (insertIfNotFound) {
+            setconfigvalue(key, defaultValue);
+        }
+        return defaultValue;
+    }
 }
 
-double doublefromjson(const char* js, jsmntok_t token) {
-    return atof(bufferfromtoken(js, token));
-}
-
-char boolfromjson(const char* js, jsmntok_t token) {
-    return strcmp("true", bufferfromtoken(js, token)) == 0 ? '\1' : '\0';
+tao::json::value setconfigvalue(const char* key, tao::json::value value) {
+    if (!readJson) {
+        loadConfig();
+    }
+    config_object[key] = value;
+    writeConfig();
 }

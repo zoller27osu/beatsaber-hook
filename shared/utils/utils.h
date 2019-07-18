@@ -1,17 +1,21 @@
 #ifndef UTILS_H_INCLUDED
 #define UTILS_H_INCLUDED
 
-#ifndef JSMN_INCLUDED
+#ifndef MOD_ID
+#error "'MOD_ID' must be defined in the mod!"
+#endif
+#ifndef VERSION
+#error "'VERSION' must be defined in the mod!"
+#endif
 
-#define JSMN_INCLUDED
-#define JSMN_STATIC
-#include "../../jsmn/jsmn.h"
-
-#endif /* JSMN_INCLUDED */
+#ifndef JSON_INCLUDED
+#define JSON_INCLUDED
+#include "../../json/include/tao/json.hpp"
+#endif /* JSON_INCLUDED */
 
 long getRealOffset(long offset);
 
-#define log(...) __android_log_print(ANDROID_LOG_INFO, "QuestHook", __VA_ARGS__)
+#define log(...) __android_log_print(ANDROID_LOG_INFO, "QuestHook", "[%s v%s] ", MOD_ID, VERSION, __VA_ARGS__)
 
 #define MAKE_HOOK(name, addr, retval, ...) \
 long addr_ ## name = (long) addr; \
@@ -110,23 +114,29 @@ typedef enum WriteError {
     WRITE_ERROR_COULD_NOT_MAKE_FILE = -1
 } WriteError_t;
 
+// JSON Parse Errors
+typedef enum JsonParseError {
+    JSON_PARSE_ERROR = -1
+} JsonParseError_t;
+
 // Returns if a file exists and can be written to / read from.
-char fileexists(const char* filename);
+bool fileexists(const char* filename);
 // Reads all of the text of a file at the given filename. If the file does not exist, returns NULL
 char* readfile(const char* filename);
 // Writes all of the text to a file at the given filename. Returns either 0 or WriteError code
 int writefile(const char* filename, const char* text);
-// Parses a JSON string, given an array of tokens and a maximum number of tokens and returns the number of tokens or JSMN_ERROR code
-int parsejson(const char* js, jsmntok_t** tokens, const unsigned int count);
-// Parses the JSON of the filename, returning the number of tokens parsed or ParseError code
-int parsejsonfile(const char* filename, jsmntok_t** tokens, const unsigned int token_count);
-// Returns the buffer string from a given JSON string and token. RELATIVELY UNSAFE
-char* bufferfromtoken(const char* js, jsmntok_t token);
-// Returns the integer from the JSON string at the provided token. NO ERROR CHECKING
-int intfromjson(const char* js, jsmntok_t token);
-// Returns the double from the JSON string at the provided token. NO ERROR CHECKING
-double doublefromjson(const char* js, jsmntok_t token);
-// Returns the boolean from the JSON string at the provided token. NO ERROR CHECKING
-char boolfromjson(const char* js, jsmntok_t token);
+// Parses a JSON string, and returns the tao::json::value
+tao::json::value parsejson(const char* js);
+// Parses the JSON of the filename, and returns the tao::json::value of it
+tao::json::value parsejsonfile(const char* filename);
+
+// CONFIG
+
+#define CONFIG_PATH "/sdcard/Android/data/com.beatgames.beatsaber/files/mods/cfgs/"
+
+// Gets the config value of a given key
+tao::json::value getconfigvalue(const char* key, tao::json::value defaultValue = NULL, bool insertIfNotFound = false);
+// Sets the config value of a given key
+tao::json::value setconfigvalue(const char* key, tao::json::value value);
 
 #endif /* UTILS_H_INCLUDED */
