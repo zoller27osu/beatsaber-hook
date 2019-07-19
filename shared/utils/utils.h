@@ -3,6 +3,11 @@
 
 #ifdef __cplusplus
 
+template<typename TRet, typename ...TArgs>
+using function_ptr_t = TRet(*)(TArgs...);
+
+#include "../libil2cpp/tempil2cpp-api.h"
+
 // Taken from: https://github.com/nike4613/BeatMods2/blob/master/BeatMods2/include/util/json.h
 #ifndef UTIL_JSON_H
 #define UTIL_JSON_H
@@ -20,6 +25,21 @@
 #include <string>
 #include <string_view>
 #include <cassert>
+
+namespace Configuration {
+    // Provides a class for configuration.
+    // You are responsible for Loading and Writing to it as necessary.
+    class Config {
+        public:
+            Config();
+            rapidjson::Document document;
+            // Loads Config
+            static Config Load();
+            // Writes Config
+            void Write();
+
+    };
+}
 
 namespace utils::json {
     
@@ -78,6 +98,11 @@ namespace utils::json {
 }
 
 #endif
+
+// Parses a JSON string, and returns the rapidjson::Document of it
+rapidjson::Document parsejson(string_view js);
+// Parses the JSON of the filename, and returns the rapidjson::Document of it
+rapidjson::Document parsejsonfile(string filename);
 
 extern "C" {
 #endif
@@ -170,8 +195,6 @@ typedef struct {
 void csstrtowstr(cs_string* in, unsigned short* out);
 // Sets the character array of the given cs_string
 void csstrtostr(cs_string* in, char* out);
-// Sets the given cs_string using the given unsigned short array and length
-void setcswstr(cs_string* in, unsigned short* value, size_t length);
 // Sets the given cs_string using the given character array and length
 void setcsstr(cs_string* in, char* value, size_t length);
 // Creates a cs string (allocates it) with the given character array and length and returns it
@@ -194,27 +217,18 @@ typedef enum JsonParseError {
     JSON_PARSE_ERROR = -1
 } JsonParseError_t;
 
-// Returns if a file exists and can be written to / read from.
-bool fileexists(const char* filename);
 // Reads all of the text of a file at the given filename. If the file does not exist, returns NULL
 char* readfile(const char* filename);
 // Writes all of the text to a file at the given filename. Returns either 0 or WriteError code
 int writefile(const char* filename, const char* text);
-// Parses a JSON string, and returns the tao::json::value
-tao::json::value parsejson(const char* js);
-// Parses the JSON of the filename, and returns the tao::json::value of it
-tao::json::value parsejsonfile(const char* filename);
 
 // CONFIG
 
 #define CONFIG_PATH "/sdcard/Android/data/com.beatgames.beatsaber/files/mods/cfgs/"
 
-// Gets the config value of a given key
-tao::json::value getconfigvalue(const char* key, tao::json::value defaultValue = NULL, bool insertIfNotFound = false);
-// Sets the config value of a given key
-tao::json::value setconfigvalue(const char* key, tao::json::value value);
-
 #ifdef __cplusplus
+// Returns if a file exists and can be written to / read from.
+bool fileexists(const char* filename);
 }
 #endif
 

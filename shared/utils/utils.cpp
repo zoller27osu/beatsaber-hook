@@ -86,7 +86,7 @@ long getRealOffset(long offset) // calculate dump.cs address + lib.so base addre
 static const long NEW_STRING_OFFSET = 0x30A1E8;
 
 cs_string* createcsstr(char* characters, size_t length) {
-    cs_string* (*create_str)(char*, size_t) = (void*)getRealOffset(NEW_STRING_OFFSET);
+    auto create_str = reinterpret_cast<function_ptr_t<cs_string*, char*, size_t>>(getRealOffset(NEW_STRING_OFFSET));
     return create_str(characters, length);
 }
 
@@ -94,14 +94,6 @@ void csstrtowstr(cs_string* in, unsigned short* out)
 {
     for(int i = 0; i < in->len; i++) {
         out[i] = in->str[i];
-    }
-}
-
-void setcswstr(cs_string* in, unsigned short* value, size_t length) {
-    unsigned int l = (unsigned int)length;
-    in->len = l;
-    for(int i = 0; i < l; i++) {
-        in->str[i] = value[i];
     }
 }
 
@@ -191,27 +183,27 @@ rapidjson::Document parsejsonfile(string filename) {
 
 // CONFIG
 
-rapidjson::Document config_object;
+Configuration::Config config_object;
 bool readJson = false;
 
 // Loads the config for the given MOD_ID, if it doesn't exist, will leave it as an empty object.
-void loadConfig() {
+Configuration::Config Configuration::Config::Load() {
     if (!direxists(CONFIG_PATH)) {
-        mkdir(CONFIG_PATH, 0700);
+        mkdir(CONFIG_PATH);
     }
     string filename = CONFIG_PATH + MOD_ID + ".json";
 
     if (!fileexists(filename.c_str())) {
         writefile(filename.c_str(), "{}");
     }
-    config_object = parsejsonfile(filename);
-    if (!config_object.IsObject()) {
-        config_object.SetObject();
+    config_object.document = parsejsonfile(filename);
+    if (!config_object.document.IsObject()) {
+        config_object.document.SetObject();
     }
     readJson = true;
 }
 
-void writeConfig() {
+void Configuration::Config::Write() {
     if (!direxists(CONFIG_PATH)) {
         mkdir(CONFIG_PATH);
     }
@@ -219,29 +211,6 @@ void writeConfig() {
 
     StringBuffer buf;
     PrettyWriter<StringBuffer> writer(buf);
-    config_object.Accept(writer);
+    config_object.document.Accept(writer);
     writefile(filename.c_str(), buf.GetString());
-}
-
-tao::json::value getconfigvalue(const char* key, tao::json::value defaultValue = NULL, bool insertIfNotFound = false) {
-    if (!readJson) {
-        loadConfig();
-    }
-    tao::json::value v = config_object.find(key);
-    if (v) {
-        return v;
-    } else {
-        if (insertIfNotFound) {
-            setconfigvalue(key, defaultValue);
-        }
-        return defaultValue;
-    }
-}
-
-tao::json::value setconfigvalue(const char* key, tao::json::value value) {
-    if (!readJson) {
-        loadConfig();
-    }
-    config_object[key] = value;
-    writeConfig();
 }
