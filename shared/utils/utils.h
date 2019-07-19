@@ -41,7 +41,7 @@ namespace Configuration {
     };
 }
 
-namespace utils::json {
+namespace json {
     
     enum class Endianness {
         Big, Little, Default, Network = Big
@@ -55,34 +55,34 @@ namespace utils::json {
         static_assert(std::is_integral_v<Ch>);
         static constexpr int size = sizeof(Ch);
         using type = 
-            std::conditional_t<size == 1, rapidjson::UTF8<Ch>,
-            std::conditional_t<size == 2, rapidjson::UTF16<Ch>,
-            std::conditional_t<size == 4, rapidjson::UTF32<Ch>,
+            std::conditional<size == 1, rapidjson::UTF8<Ch>,
+            std::conditional<size == 2, rapidjson::UTF16<Ch>,
+            std::conditional<size == 4, rapidjson::UTF32<Ch>,
             sfinae_fail<Ch>>>>;
     };
     template<typename Ch>
     struct encoding_for_char_t<Ch, Endianness::Default, true> {
-        static_assert(std::is_integral_v<Ch>);
+        static_assert(std::is_integral<Ch>);
         using type = typename encoding_for_char_t<Ch, Endianness::Default, false>::type;
     };
     template<typename Ch>
     struct encoding_for_char_t<Ch, Endianness::Big, true> {
-        static_assert(std::is_integral_v<Ch>);
+        static_assert(std::is_integral<Ch>);
         static constexpr int size = sizeof(Ch);
         using type =
-            std::conditional_t<size == 1, rapidjson::UTF8<Ch>,
-            std::conditional_t<size == 2, rapidjson::UTF16BE<Ch>,
-            std::conditional_t<size == 4, rapidjson::UTF32BE<Ch>,
+            std::conditional<size == 1, rapidjson::UTF8<Ch>,
+            std::conditional<size == 2, rapidjson::UTF16BE<Ch>,
+            std::conditional<size == 4, rapidjson::UTF32BE<Ch>,
             sfinae_fail<Ch>>>>;
     };
     template<typename Ch>
     struct encoding_for_char_t<Ch, Endianness::Little, true> {
-        static_assert(std::is_integral_v<Ch>);
+        static_assert(std::is_integral<Ch>);
         static constexpr int size = sizeof(Ch);
         using type =
-            std::conditional_t<size == 1, rapidjson::UTF8<Ch>,
-            std::conditional_t<size == 2, rapidjson::UTF16LE<Ch>,
-            std::conditional_t<size == 4, rapidjson::UTF32LE<Ch>,
+            std::conditional<size == 1, rapidjson::UTF8<Ch>,
+            std::conditional<size == 2, rapidjson::UTF16LE<Ch>,
+            std::conditional<size == 4, rapidjson::UTF32LE<Ch>,
             sfinae_fail<Ch>>>>;
     };
 
@@ -100,9 +100,9 @@ namespace utils::json {
 #endif
 
 // Parses a JSON string, and returns the rapidjson::Document of it
-rapidjson::Document parsejson(string_view js);
+rapidjson::Document parsejson(std::string_view js);
 // Parses the JSON of the filename, and returns the rapidjson::Document of it
-rapidjson::Document parsejsonfile(string filename);
+rapidjson::Document parsejsonfile(std::string filename);
 
 extern "C" {
 #endif
