@@ -12,6 +12,7 @@
 #include <dlfcn.h>
 #include <unistd.h>
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 using namespace rapidjson;
@@ -172,10 +173,15 @@ rapidjson::Document parsejsonfile(string filename) {
     if (!fileexists(filename.c_str())) {
         return {};
     }
-    FILE* fp = fopen(filename.c_str(), "r");
+    // FILE* fp = fopen(filename.c_str(), "r");
+
+    std::ifstream is;
+    is.open(filename.c_str());
+
+    IStreamWrapper wrap {is};
     
     Document doc;
-    if (doc.ParseStream(fp).HasParseError()) {
+    if (doc.ParseStream(wrap).HasParseError()) {
         return {};
     }
     return doc;
@@ -192,9 +198,12 @@ bool readJson = false;
 Configuration::Config Configuration::Config::Load() {
     config_object = {};
     if (!direxists(CONFIG_PATH)) {
-        mkdir(CONFIG_PATH);
+        mkdir(CONFIG_PATH, 0700);
     }
-    string filename = CONFIG_PATH + MOD_ID + ".json";
+    string filename;
+    filename = filename.append(CONFIG_PATH);
+    filename = filename.append(MOD_ID);
+    filename = filename.append(".json");
 
     if (!fileexists(filename.c_str())) {
         writefile(filename.c_str(), "{}");
@@ -208,9 +217,12 @@ Configuration::Config Configuration::Config::Load() {
 
 void Configuration::Config::Write() {
     if (!direxists(CONFIG_PATH)) {
-        mkdir(CONFIG_PATH);
+        mkdir(CONFIG_PATH, 0700);
     }
-    string filename = CONFIG_PATH + MOD_ID + ".json";
+    string filename;
+    filename = filename.append(CONFIG_PATH);
+    filename = filename.append(MOD_ID);
+    filename = filename.append(".json");
 
     StringBuffer buf;
     PrettyWriter<StringBuffer> writer(buf);
