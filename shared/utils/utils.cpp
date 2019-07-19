@@ -183,11 +183,14 @@ rapidjson::Document parsejsonfile(string filename) {
 
 // CONFIG
 
+Configuration::Config::Config() : document{rapidjson::Type::kObjectType} {}
+
 Configuration::Config config_object;
 bool readJson = false;
 
 // Loads the config for the given MOD_ID, if it doesn't exist, will leave it as an empty object.
 Configuration::Config Configuration::Config::Load() {
+    config_object = {};
     if (!direxists(CONFIG_PATH)) {
         mkdir(CONFIG_PATH);
     }
