@@ -3,6 +3,8 @@
 
 #ifdef __cplusplus
 
+#include "../libil2cpp/tempil2cpp-api.h"
+
 // Taken from: https://github.com/nike4613/BeatMods2/blob/master/BeatMods2/include/util/json.h
 #ifndef UTIL_JSON_H
 #define UTIL_JSON_H
