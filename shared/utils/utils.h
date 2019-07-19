@@ -52,7 +52,7 @@ namespace json {
     template<typename, Endianness = Endianness::Default, bool BOM = false> struct encoding_for_char_t;
     template<typename Ch, Endianness E>
     struct encoding_for_char_t<Ch, E, false> {
-        static_assert(std::is_integral_v<Ch>);
+        static_assert(std::is_integral<Ch>());
         static constexpr int size = sizeof(Ch);
         using type = 
             std::conditional<size == 1, rapidjson::UTF8<Ch>,
@@ -62,12 +62,12 @@ namespace json {
     };
     template<typename Ch>
     struct encoding_for_char_t<Ch, Endianness::Default, true> {
-        static_assert(std::is_integral<Ch>);
+        static_assert(std::is_integral<Ch>());
         using type = typename encoding_for_char_t<Ch, Endianness::Default, false>::type;
     };
     template<typename Ch>
     struct encoding_for_char_t<Ch, Endianness::Big, true> {
-        static_assert(std::is_integral<Ch>);
+        static_assert(std::is_integral<Ch>());
         static constexpr int size = sizeof(Ch);
         using type =
             std::conditional<size == 1, rapidjson::UTF8<Ch>,
@@ -77,7 +77,7 @@ namespace json {
     };
     template<typename Ch>
     struct encoding_for_char_t<Ch, Endianness::Little, true> {
-        static_assert(std::is_integral<Ch>);
+        static_assert(std::is_integral<Ch>());
         static constexpr int size = sizeof(Ch);
         using type =
             std::conditional<size == 1, rapidjson::UTF8<Ch>,
@@ -115,7 +115,10 @@ extern "C" {
 
 long getRealOffset(long offset);
 
-#define log(...) __android_log_print(ANDROID_LOG_INFO, "QuestHook", "[%s v%s] ", MOD_ID, VERSION, __VA_ARGS__)
+#ifdef log
+#undef log
+#endif
+#define log(...) __android_log_print(ANDROID_LOG_INFO, "QuestHook [" MOD_ID " v" VERSION "] ", __VA_ARGS__)
 
 #define MAKE_HOOK(name, addr, retval, ...) \
 long addr_ ## name = (long) addr; \
