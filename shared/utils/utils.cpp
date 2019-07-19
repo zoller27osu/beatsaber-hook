@@ -213,7 +213,7 @@ void loadConfig() {
 
 void writeConfig() {
     if (!direxists(CONFIG_PATH)) {
-        mkdir(CONFIG_PATH, 0700);
+        mkdir(CONFIG_PATH);
     }
     string filename = CONFIG_PATH + MOD_ID + ".json";
 

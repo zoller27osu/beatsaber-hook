@@ -1,12 +1,7 @@
 #ifndef UTILS_H_INCLUDED
 #define UTILS_H_INCLUDED
 
-#ifndef MOD_ID
-#error "'MOD_ID' must be defined in the mod!"
-#endif
-#ifndef VERSION
-#error "'VERSION' must be defined in the mod!"
-#endif
+#ifdef __cplusplus
 
 // Taken from: https://github.com/nike4613/BeatMods2/blob/master/BeatMods2/include/util/json.h
 #ifndef UTIL_JSON_H
@@ -26,7 +21,7 @@
 #include <string_view>
 #include <cassert>
 
-namespace BeatMods::json {
+namespace utils::json {
     
     enum class Endianness {
         Big, Little, Default, Network = Big
@@ -80,9 +75,17 @@ namespace BeatMods::json {
         assert(value.IsString());
         return {value.GetString(), value.GetStringLength()};
     }
-
 }
 
+#endif
+
+extern "C" {
+#endif
+#ifndef MOD_ID
+#error "'MOD_ID' must be defined in the mod!"
+#endif
+#ifndef VERSION
+#error "'VERSION' must be defined in the mod!"
 #endif
 
 long getRealOffset(long offset);
@@ -142,8 +145,8 @@ typedef struct {
 
 // OFFSETS
 
-// Create an object using garbage collection offset
-#define GC_CREATOR_OFFSET 0x308740
+// Create an object using il2cpp_object_new offset
+#define OBJ_CREATOR_OFFSET 0x308740
 // GameObject.ctor() offset
 #define GO_CTOR_OFFSET 0xC86558
 // GameObject type offset
@@ -210,5 +213,9 @@ tao::json::value parsejsonfile(const char* filename);
 tao::json::value getconfigvalue(const char* key, tao::json::value defaultValue = NULL, bool insertIfNotFound = false);
 // Sets the config value of a given key
 tao::json::value setconfigvalue(const char* key, tao::json::value value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UTILS_H_INCLUDED */
