@@ -47,7 +47,7 @@ MAKE_HOOK_NAT(open_nat, open, int, char* path, int oflag, mode_t mode)
             return open_nat(path, oflag, mode);
         } else
         {
-            log("OPEN: SONG REMAP SUCCESS to: %s", bfr);
+            //log("OPEN: SONG REMAP SUCCESS to: %s", bfr);
             return filePtr;
         }
     } else if (regexec(&assetsRegex, path, 2, pmatch, 0) == 0) {
@@ -64,12 +64,12 @@ MAKE_HOOK_NAT(open_nat, open, int, char* path, int oflag, mode_t mode)
             return open_nat(path, oflag, mode);
         } else
         {
-            log("OPEN: ASSET REMAP SUCCESS to: %s", bfr);
+            //log("OPEN: ASSET REMAP SUCCESS to: %s", bfr);
             return filePtr;
         }
     } else {
-        //if (!STARTSWITH("/sys", path) && !STARTSWITH("/proc", path) && !STARTSWITH("/dev", path))
-            //log("%i Normal open: %s", opid, path);
+      //  if (!STARTSWITH("/sys", path) && !STARTSWITH("/proc", path) && !STARTSWITH("/dev", path))
+        //    log("%i Normal open: %s", opid, path);
 
         return open_nat(path, oflag, mode);
     }
@@ -108,16 +108,16 @@ MAKE_HOOK_NAT(stat_nat, stat, int, char *path, struct stat *buf)
         statResult = stat_nat(bfr, buf);
         if (statResult < 0) {
             //log("%i ^^ STAT: No ASSET remap, remapped file did not stat ^^", opid);
-            //log("%i errno: %i %s", opid, errno, strerror(errno));
+           // log("%i errno: %i %s", opid, errno, strerror(errno));
             return stat_nat(path, buf);
         } else
         {
-            log("STAT: ASSET REMAP SUCCESS To: %s", bfr);
+           // log("STAT: ASSET REMAP SUCCESS To: %s", bfr);
             return statResult;
         }
     } else {
-        //if (!STARTSWITH("/sys", path) && !STARTSWITH("/proc", path) && !STARTSWITH("/dev", path))
-          //  log("%i Normal stat: %s", opid, path);
+     //   if (!STARTSWITH("/sys", path) && !STARTSWITH("/proc", path) && !STARTSWITH("/dev", path))
+       //     log("%i Normal stat: %s", opid, path);
 
         return stat_nat(path, buf);
     }
