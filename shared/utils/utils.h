@@ -101,6 +101,24 @@ namespace json {
     }
 }
 
+namespace il2cpp_utils {
+    // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
+    Il2CppClass* GetClassFromName(const char* nameSpace, const char* typeName) {
+        size_t assemb_count;
+        const Il2CppAssembly** allAssemb = il2cpp_domain_get_assemblies(il2cpp_domain_get(), &assemb_count);
+
+        for (int i = 0; i < assemb_count; i++) {
+            auto assemb = allAssemb[i];
+            auto img = il2cpp_assembly_get_image(assemb);
+            auto klass = il2cpp_class_from_name(img, nameSpace, typeName);
+            if (klass) {
+                return klass;
+            }
+        }
+        return NULL;
+    }
+}
+
 #endif
 
 extern "C" {
