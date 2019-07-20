@@ -104,7 +104,7 @@ namespace json {
 
 namespace il2cpp_utils {
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
-    Il2CppClass* GetClassFromName(const char* nameSpace, const char* typeName) {
+    inline Il2CppClass* GetClassFromName(const char* nameSpace, const char* typeName) {
         size_t assemb_count;
         const Il2CppAssembly** allAssemb = il2cpp_domain_get_assemblies(il2cpp_domain_get(), &assemb_count);
 
@@ -119,33 +119,34 @@ namespace il2cpp_utils {
         return NULL;
     }
     template<typename TObj, typename... TArgs>
-    TObj* New(const Il2CppClass* klass, TArgs* ...args) {
+    inline TObj* New(Il2CppClass* klass, TArgs* ...args) {
         void* invoke_params[] = {(reinterpret_cast<void*>(args), ...)};
         // object_new call
         auto obj = il2cpp_object_new(klass);
         // runtime_invoke constructor with right number of args, return null if multiple matches (or take a vector of type pointers to resolve it), return null if constructor errors
         void* myIter = nullptr;
-        MethodInfo* current;
-        MethodInfo* ctor = nullptr;
+        const MethodInfo* current;
+        const MethodInfo* ctor = nullptr;
         constexpr auto count = sizeof...(TArgs);
-        while (current = il2cpp_class_get_methods(klass, &myIter)) {
+        auto argarr = {args...};
+        while ((current = il2cpp_class_get_methods(klass, &myIter))) {
             if (ctor->parameters_count != count + 1) {
                 continue;
             }
             // Start at 1 to ignore 'self' param
             for (int i = 1; i < current->parameters_count; i++) {
-                if (!il2cpp_type_equals(current->parameters[i].parameter_type, args[i - 1])) {
+                if (!il2cpp_type_equals(current->parameters[i].parameter_type, argarr[i - 1])) {
                     goto next_method;
                 }
             }
             ctor = current;
-            next_method:
+            next_method: continue;
         }
         if (!ctor) {
             return nullptr;
         }
         Il2CppException* exp = nullptr;
-        il2cpp_runtime_invoke(ctor, obj, params, &exp);
+        il2cpp_runtime_invoke(ctor, obj, invoke_params, &exp);
         if (exp) {
             return nullptr;
         }
