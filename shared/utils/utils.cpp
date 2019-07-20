@@ -17,13 +17,13 @@
 using namespace std;
 using namespace rapidjson;
 
-long baseAddr(char *soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
+long baseAddr(const char *soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
 {
     void *imagehandle = dlopen(soname, RTLD_LOCAL | RTLD_LAZY);
     if (soname == NULL)
-        return NULL;
+        return (long)NULL;
     if (imagehandle == NULL){
-        return NULL;
+        return (long)NULL;
     }
     uintptr_t * irc = NULL;
     FILE *f = NULL;
@@ -32,7 +32,7 @@ long baseAddr(char *soname)  // credits to https://github.com/ikoz/AndroidSubstr
     char *tok = NULL;
     char * baseAddr = NULL;
     if ((f = fopen("/proc/self/maps", "r")) == NULL)
-        return NULL;
+        return (long)NULL;
     while (fgets(line, 199, f) != NULL)
     {
         tok = strtok_r(line, "-", &state);
@@ -64,7 +64,7 @@ long baseAddr(char *soname)  // credits to https://github.com/ikoz/AndroidSubstr
         }
     }
     fclose(f);
-    return NULL;
+    return (long)NULL;
 }
 
 long location; // save lib.so base address so we do not have to recalculate every time causing lag.
@@ -158,18 +158,17 @@ int writefile(const char* filename, const char* text) {
     return WRITE_ERROR_COULD_NOT_MAKE_FILE;
 }
 
-rapidjson::Document parsejson(string_view js) {
+bool parsejson(rapidjson::Document& doc, string_view js) {
     char temp[js.length()];
     memcpy(temp, js.data(), js.length());
     
-    Document doc;
     if (doc.ParseInsitu(temp).HasParseError()) {
-        return {};
+        return false;
     }
-    return doc;
+    return true;
 }
 
-rapidjson::Document parsejsonfile(string filename) {
+bool parsejsonfile(rapidjson::Document& doc, string filename) {
     if (!fileexists(filename.c_str())) {
         return {};
     }
@@ -178,13 +177,12 @@ rapidjson::Document parsejsonfile(string filename) {
     std::ifstream is;
     is.open(filename.c_str());
 
-    IStreamWrapper wrap {is};
+    IStreamWrapper wrapper {is};
     
-    Document doc;
-    if (doc.ParseStream(wrap).HasParseError()) {
-        return {};
+    if (doc.ParseStream(wrapper).HasParseError()) {
+        return false;
     }
-    return doc;
+    return true;
 }
 
 // CONFIG
@@ -208,7 +206,7 @@ Configuration::Config Configuration::Config::Load() {
     if (!fileexists(filename.c_str())) {
         writefile(filename.c_str(), "{}");
     }
-    config_object.document = parsejsonfile(filename);
+    parsejsonfile(config_object.document, filename);
     if (!config_object.document.IsObject()) {
         config_object.document.SetObject();
     }

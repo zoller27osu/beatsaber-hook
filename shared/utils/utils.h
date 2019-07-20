@@ -30,6 +30,7 @@ using function_ptr_t = TRet(*)(TArgs...);
 #include <string_view>
 #include <cassert>
 
+
 namespace Configuration {
     // Provides a class for configuration.
     // You are responsible for Loading and Writing to it as necessary.
@@ -102,16 +103,26 @@ namespace json {
 
 #endif
 
+extern "C" {
+#endif
 
 // Code courtesy of MichaelZoller
+
 // A C# object
 struct Object {
+    #ifdef __cplusplus
     Il2CppClass* klass;  // pointer to the class object, which starts with VTable
+    #else
+    void* klass;
+    #endif
     void* monitorData;  // pointer to a MonitorData object, used for thread sync
 };
 
 // A C# struct
 struct Struct { };
+
+#ifdef __cplusplus
+}
 
 template< class T >
 struct is_value_type : std::integral_constant< 
@@ -145,10 +156,10 @@ struct Array : public Object
     }
 };
 
-// Parses a JSON string, and returns the rapidjson::Document of it
-rapidjson::Document parsejson(std::string_view js);
-// Parses the JSON of the filename, and returns the rapidjson::Document of it
-rapidjson::Document parsejsonfile(std::string filename);
+// Parses a JSON string, and returns whether it succeeded or not
+bool parsejson(rapidjson::Document& doc, std::string_view js);
+// Parses the JSON of the filename, and returns whether it succeeded or not
+bool parsejsonfile(rapidjson::Document& doc, std::string filename);
 
 extern "C" {
 #endif
@@ -189,7 +200,7 @@ inlineHook((uint32_t)(addr_ ## name));\
 
 // System.string
 typedef struct {
-    char padding[0x8];
+    Object object;
     unsigned int len;
     unsigned short str[];
 } cs_string;
