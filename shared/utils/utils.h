@@ -7,10 +7,10 @@
 template<typename TRet, typename ...TArgs>
 using function_ptr_t = TRet(*)(TArgs...);
 
-#include "../libil2cpp/il2cpp-api-types.h"
-#include "../libil2cpp/il2cpp-class-internals.h"
 #include "../libil2cpp/il2cpp-config-api.h"
 #include "../libil2cpp/il2cpp-api.h"
+#include "../libil2cpp/il2cpp-api-types.h"
+#include "../libil2cpp/il2cpp-class-internals.h"
 // #include "../libil2cpp/il2cpp-api-functions.h"
 
 // Taken from: https://github.com/nike4613/BeatMods2/blob/master/BeatMods2/include/util/json.h
