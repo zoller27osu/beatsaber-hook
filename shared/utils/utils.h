@@ -3,10 +3,14 @@
 
 #ifdef __cplusplus
 
+// Code courtesy of DaNike
 template<typename TRet, typename ...TArgs>
 using function_ptr_t = TRet(*)(TArgs...);
 
-#include "../libil2cpp/tempil2cpp-api.h"
+#include "../libil2cpp/il2cpp-api-types.h"
+#include "../libil2cpp/il2cpp-config-api.h"
+#include "../libil2cpp/il2cpp-api.h"
+// #include "../libil2cpp/il2cpp-api-functions.h"
 
 // Taken from: https://github.com/nike4613/BeatMods2/blob/master/BeatMods2/include/util/json.h
 #ifndef UTIL_JSON_H
@@ -37,7 +41,6 @@ namespace Configuration {
             static Config Load();
             // Writes Config
             void Write();
-
     };
 }
 
@@ -52,7 +55,7 @@ namespace json {
     template<typename, Endianness = Endianness::Default, bool BOM = false> struct encoding_for_char_t;
     template<typename Ch, Endianness E>
     struct encoding_for_char_t<Ch, E, false> {
-        static_assert(std::is_integral<Ch>());
+        static_assert(std::is_integral<Ch>::value);
         static constexpr int size = sizeof(Ch);
         using type = 
             std::conditional<size == 1, rapidjson::UTF8<Ch>,
@@ -62,12 +65,12 @@ namespace json {
     };
     template<typename Ch>
     struct encoding_for_char_t<Ch, Endianness::Default, true> {
-        static_assert(std::is_integral<Ch>());
+        static_assert(std::is_integral<Ch>::value);
         using type = typename encoding_for_char_t<Ch, Endianness::Default, false>::type;
     };
     template<typename Ch>
     struct encoding_for_char_t<Ch, Endianness::Big, true> {
-        static_assert(std::is_integral<Ch>());
+        static_assert(std::is_integral<Ch>::value);
         static constexpr int size = sizeof(Ch);
         using type =
             std::conditional<size == 1, rapidjson::UTF8<Ch>,
@@ -77,7 +80,7 @@ namespace json {
     };
     template<typename Ch>
     struct encoding_for_char_t<Ch, Endianness::Little, true> {
-        static_assert(std::is_integral<Ch>());
+        static_assert(std::is_integral<Ch>::value);
         static constexpr int size = sizeof(Ch);
         using type =
             std::conditional<size == 1, rapidjson::UTF8<Ch>,
@@ -98,6 +101,49 @@ namespace json {
 }
 
 #endif
+
+
+// Code courtesy of MichaelZoller
+// A C# object
+struct Object {
+    Il2CppClass* klass;  // pointer to the class object, which starts with VTable
+    void* monitorData;  // pointer to a MonitorData object, used for thread sync
+};
+
+// A C# struct
+struct Struct { };
+
+template< class T >
+struct is_value_type : std::integral_constant< 
+    bool,
+    std::is_arithmetic<T>::value || std::is_enum<T>::value ||
+    std::is_pointer<T>::value ||
+    std::is_base_of<Struct, T>::value
+> {};
+
+struct ArrayBounds
+{
+    int32_t length;
+    int32_t lower_bound;
+};
+
+template<class T>
+struct Array : public Object
+{
+    static_assert(is_value_type<T>::value, "T must be a C# value type! (primitive, pointer or Struct)");
+    /* bounds is NULL for szarrays */
+    ArrayBounds *bounds;
+    /* total number of elements of the array */
+    int32_t max_length;
+    T values[0];
+
+    int32_t Length() {
+        if (bounds) {
+            return bounds->length;
+        }
+        return max_length;
+    }
+};
 
 // Parses a JSON string, and returns the rapidjson::Document of it
 rapidjson::Document parsejson(std::string_view js);
