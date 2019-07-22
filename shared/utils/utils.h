@@ -1,6 +1,8 @@
 #ifndef UTILS_H_INCLUDED
 #define UTILS_H_INCLUDED
 
+#include <sys/stat.h>
+
 #ifdef __cplusplus
 
 // Code courtesy of DaNike
@@ -105,17 +107,32 @@ namespace json {
 namespace il2cpp_utils {
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
     inline Il2CppClass* GetClassFromName(const char* nameSpace, const char* typeName) {
+        void *imagehandle = dlopen("/data/app/com.beatgames.beatsaber-1/lib/arm/libil2cpp.so", 0x00000 | 0x00001);
+        Il2CppDomain* (*domain_get)(void);
+        *(void**)(&domain_get) = dlsym(imagehandle, "il2cpp_domain_get");
+        const Il2CppAssembly** (*domain_get_assemblies)(Il2CppDomain*, size_t*);
+        *(void**)(&domain_get_assemblies) = dlsym(imagehandle, "il2cpp_domain_get_assemblies");
+        const Il2CppImage* (*get_image)(const Il2CppAssembly*);
+        *(void**)(&get_image) = dlsym(imagehandle, "il2cpp_assembly_get_image");
+        Il2CppClass* (*get_class)(const Il2CppImage*, const char*, const char*);
+        *(void**)(&get_class) = dlsym(imagehandle, "il2cpp_class_from_name");
+
         size_t assemb_count;
-        const Il2CppAssembly** allAssemb = il2cpp_domain_get_assemblies(il2cpp_domain_get(), &assemb_count);
+        const Il2CppAssembly** allAssemb = domain_get_assemblies(domain_get(), &assemb_count);
+        // const Il2CppAssembly** allAssemb = il2cpp_domain_get_assemblies(il2cpp_domain_get(), &assemb_count);
 
         for (int i = 0; i < assemb_count; i++) {
             auto assemb = allAssemb[i];
-            auto img = il2cpp_assembly_get_image(assemb);
-            auto klass = il2cpp_class_from_name(img, nameSpace, typeName);
+            // auto img = il2cpp_assembly_get_image(assemb);
+            // auto klass = il2cpp_class_from_name(img, nameSpace, typeName);
+            auto img = get_image(assemb);
+            auto klass = get_class(img, nameSpace, typeName);
             if (klass) {
+                dlclose(imagehandle);
                 return klass;
             }
         }
+        dlclose(imagehandle);
         return NULL;
     }
     template<typename TObj, typename... TArgs>
