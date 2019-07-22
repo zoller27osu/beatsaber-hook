@@ -1,7 +1,9 @@
 #ifndef UTILS_H_INCLUDED
 #define UTILS_H_INCLUDED
 
-#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <dlfcn.h>
 
 #ifdef __cplusplus
 
