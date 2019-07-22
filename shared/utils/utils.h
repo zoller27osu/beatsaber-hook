@@ -139,22 +139,33 @@ namespace il2cpp_utils {
     }
     template<typename TObj, typename... TArgs>
     inline TObj* New(Il2CppClass* klass, TArgs* ...args) {
+        void *imagehandle = dlopen("/data/app/com.beatgames.beatsaber-1/lib/arm/libil2cpp.so", 0x00000 | 0x00001);
+        Il2CppObject* (*object_new)(Il2CppClass*);
+        *(void**)(&object_new) = dlsym(imagehandle, "il2cpp_object_new");
+        const MethodInfo* (*class_get_methods)(Il2CppClass*, void** iter);
+        *(void**)(&class_get_methods) = dlsym(imagehandle, "il2cpp_class_get_methods");
+        bool (*type_equals)(const Il2CppType*, const Il2CppType*);
+        *(void**)(&type_equals) = dlsym(imagehandle, "il2cpp_type_equals");
+        Il2CppObject* (*runtime_invoke)(const MethodInfo*, void*, void**, Il2CppException**);
+        *(void**)(&runtime_invoke) = dlsym(imagehandle, "il2cpp_runtime_invoke");
+        dlclose(imagehandle);
+
         void* invoke_params[] = {(reinterpret_cast<void*>(args), ...)};
         // object_new call
-        auto obj = il2cpp_object_new(klass);
+        auto obj = object_new(klass);
         // runtime_invoke constructor with right number of args, return null if multiple matches (or take a vector of type pointers to resolve it), return null if constructor errors
         void* myIter = nullptr;
         const MethodInfo* current;
         const MethodInfo* ctor = nullptr;
         constexpr auto count = sizeof...(TArgs);
         auto argarr = {args...};
-        while ((current = il2cpp_class_get_methods(klass, &myIter))) {
+        while ((current = class_get_methods(klass, &myIter))) {
             if (ctor->parameters_count != count + 1) {
                 continue;
             }
             // Start at 1 to ignore 'self' param
             for (int i = 1; i < current->parameters_count; i++) {
-                if (!il2cpp_type_equals(current->parameters[i].parameter_type, argarr[i - 1])) {
+                if (!type_equals(current->parameters[i].parameter_type, argarr[i - 1])) {
                     goto next_method;
                 }
             }
@@ -165,7 +176,7 @@ namespace il2cpp_utils {
             return nullptr;
         }
         Il2CppException* exp = nullptr;
-        il2cpp_runtime_invoke(ctor, obj, invoke_params, &exp);
+        runtime_invoke(ctor, obj, invoke_params, &exp);
         if (exp) {
             return nullptr;
         }
