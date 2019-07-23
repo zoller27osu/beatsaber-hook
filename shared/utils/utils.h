@@ -158,7 +158,7 @@ namespace il2cpp_utils {
             dlclose(imagehandle);
         }
 
-        void* invoke_params[] = {(reinterpret_cast<void*>(args), ...)};
+        void* invoke_params[] = {reinterpret_cast<void*>(args)...};
         // object_new call
         auto obj = object_new(klass);
         // runtime_invoke constructor with right number of args, return null if multiple matches (or take a vector of type pointers to resolve it), return null if constructor errors
