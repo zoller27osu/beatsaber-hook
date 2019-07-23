@@ -193,7 +193,7 @@ Configuration::Config config_object;
 bool readJson = false;
 
 // Loads the config for the given MOD_ID, if it doesn't exist, will leave it as an empty object.
-Configuration::Config Configuration::Config::Load() {
+Configuration::Config& Configuration::Config::Load() {
     config_object = {};
     if (!direxists(CONFIG_PATH)) {
         mkdir(CONFIG_PATH, 0700);
@@ -211,6 +211,7 @@ Configuration::Config Configuration::Config::Load() {
         config_object.document.SetObject();
     }
     readJson = true;
+    return config_object;
 }
 
 void Configuration::Config::Write() {

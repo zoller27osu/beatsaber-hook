@@ -11,7 +11,6 @@
 template<typename TRet, typename ...TArgs>
 using function_ptr_t = TRet(*)(TArgs...);
 
-#include "../libil2cpp/il2cpp-config-api.h"
 #include "../libil2cpp/il2cpp-api.h"
 #include "../libil2cpp/il2cpp-api-types.h"
 #include "../libil2cpp/il2cpp-class-internals.h"
@@ -44,7 +43,7 @@ namespace Configuration {
             Config();
             rapidjson::Document document;
             // Loads Config
-            static Config Load();
+            static Config& Load();
             // Writes Config
             void Write();
     };
@@ -105,19 +104,26 @@ namespace json {
         return {value.GetString(), value.GetStringLength()};
     }
 }
+#endif /* UTIL_JSON_H */
+#ifndef IL2CPP_UTILS_H
 
 namespace il2cpp_utils {
+    static bool __cachedClassFromName = false;
+    static Il2CppDomain* (*domain_get)(void);
+    static const Il2CppAssembly** (*domain_get_assemblies)(Il2CppDomain*, size_t*);
+    static const Il2CppImage* (*get_image)(const Il2CppAssembly*);
+    static Il2CppClass* (*get_class)(const Il2CppImage*, const char*, const char*);
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
     inline Il2CppClass* GetClassFromName(const char* nameSpace, const char* typeName) {
-        void *imagehandle = dlopen("/data/app/com.beatgames.beatsaber-1/lib/arm/libil2cpp.so", 0x00000 | 0x00001);
-        Il2CppDomain* (*domain_get)(void);
-        *(void**)(&domain_get) = dlsym(imagehandle, "il2cpp_domain_get");
-        const Il2CppAssembly** (*domain_get_assemblies)(Il2CppDomain*, size_t*);
-        *(void**)(&domain_get_assemblies) = dlsym(imagehandle, "il2cpp_domain_get_assemblies");
-        const Il2CppImage* (*get_image)(const Il2CppAssembly*);
-        *(void**)(&get_image) = dlsym(imagehandle, "il2cpp_assembly_get_image");
-        Il2CppClass* (*get_class)(const Il2CppImage*, const char*, const char*);
-        *(void**)(&get_class) = dlsym(imagehandle, "il2cpp_class_from_name");
+        if (!__cachedClassFromName) {
+            void *imagehandle = dlopen("/data/app/com.beatgames.beatsaber-1/lib/arm/libil2cpp.so", 0x00000 | 0x00001);
+            *(void**)(&domain_get) = dlsym(imagehandle, "il2cpp_domain_get");
+            *(void**)(&domain_get_assemblies) = dlsym(imagehandle, "il2cpp_domain_get_assemblies");
+            *(void**)(&get_image) = dlsym(imagehandle, "il2cpp_assembly_get_image");
+            *(void**)(&get_class) = dlsym(imagehandle, "il2cpp_class_from_name");
+            dlclose(imagehandle);
+            __cachedClassFromName = true;
+        }
 
         size_t assemb_count;
         const Il2CppAssembly** allAssemb = domain_get_assemblies(domain_get(), &assemb_count);
@@ -130,25 +136,27 @@ namespace il2cpp_utils {
             auto img = get_image(assemb);
             auto klass = get_class(img, nameSpace, typeName);
             if (klass) {
-                dlclose(imagehandle);
                 return klass;
             }
         }
-        dlclose(imagehandle);
         return NULL;
     }
+    static bool __cachedNew = false;
+    static Il2CppObject* (*object_new)(Il2CppClass*);
+    static const MethodInfo* (*class_get_methods)(Il2CppClass*, void** iter);
+    static bool (*type_equals)(const Il2CppType*, const Il2CppType*);
+    static Il2CppObject* (*runtime_invoke)(const MethodInfo*, void*, void**, Il2CppException**);
+
     template<typename TObj, typename... TArgs>
     inline TObj* New(Il2CppClass* klass, TArgs* ...args) {
-        void *imagehandle = dlopen("/data/app/com.beatgames.beatsaber-1/lib/arm/libil2cpp.so", 0x00000 | 0x00001);
-        Il2CppObject* (*object_new)(Il2CppClass*);
-        *(void**)(&object_new) = dlsym(imagehandle, "il2cpp_object_new");
-        const MethodInfo* (*class_get_methods)(Il2CppClass*, void** iter);
-        *(void**)(&class_get_methods) = dlsym(imagehandle, "il2cpp_class_get_methods");
-        bool (*type_equals)(const Il2CppType*, const Il2CppType*);
-        *(void**)(&type_equals) = dlsym(imagehandle, "il2cpp_type_equals");
-        Il2CppObject* (*runtime_invoke)(const MethodInfo*, void*, void**, Il2CppException**);
-        *(void**)(&runtime_invoke) = dlsym(imagehandle, "il2cpp_runtime_invoke");
-        dlclose(imagehandle);
+        if (!__cachedNew) {
+            void *imagehandle = dlopen("/data/app/com.beatgames.beatsaber-1/lib/arm/libil2cpp.so", 0x00000 | 0x00001);
+            *(void**)(&object_new) = dlsym(imagehandle, "il2cpp_object_new");
+            *(void**)(&class_get_methods) = dlsym(imagehandle, "il2cpp_class_get_methods");
+            *(void**)(&type_equals) = dlsym(imagehandle, "il2cpp_type_equals");
+            *(void**)(&runtime_invoke) = dlsym(imagehandle, "il2cpp_runtime_invoke");
+            dlclose(imagehandle);
+        }
 
         void* invoke_params[] = {(reinterpret_cast<void*>(args), ...)};
         // object_new call
@@ -183,26 +191,25 @@ namespace il2cpp_utils {
         return reinterpret_cast<TObj*>(obj);
     }
 }
-
-#endif
+#endif /* IL2CPP_UTILS_H */
 
 extern "C" {
-#endif
+#endif /* __cplusplus */
 
 // Code courtesy of MichaelZoller
 
 // A C# object
-struct Object {
+typedef struct __Object {
     #ifdef __cplusplus
     Il2CppClass* klass;  // pointer to the class object, which starts with VTable
     #else
     void* klass;
     #endif
     void* monitorData;  // pointer to a MonitorData object, used for thread sync
-};
+} Object;
 
 // A C# struct
-struct Struct { };
+typedef struct __Struct Struct; 
 
 #ifdef __cplusplus
 }
@@ -215,11 +222,11 @@ struct is_value_type : std::integral_constant<
     std::is_base_of<Struct, T>::value
 > {};
 
-struct ArrayBounds
+typedef struct __ArrayBounds
 {
     int32_t length;
     int32_t lower_bound;
-};
+} ArrayBounds;
 
 template<class T>
 struct Array : public Object
@@ -245,7 +252,7 @@ bool parsejson(rapidjson::Document& doc, std::string_view js);
 bool parsejsonfile(rapidjson::Document& doc, std::string filename);
 
 extern "C" {
-#endif
+#endif /* __cplusplus */
 #ifndef MOD_ID
 #error "'MOD_ID' must be defined in the mod!"
 #endif
@@ -373,6 +380,6 @@ int writefile(const char* filename, const char* text);
 // Returns if a file exists and can be written to / read from.
 bool fileexists(const char* filename);
 }
-#endif
+#endif /* __cplusplus */
 
 #endif /* UTILS_H_INCLUDED */
