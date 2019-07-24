@@ -14,6 +14,7 @@ using function_ptr_t = TRet(*)(TArgs...);
 #include "../libil2cpp/il2cpp-api.h"
 #include "../libil2cpp/il2cpp-api-types.h"
 #include "../libil2cpp/il2cpp-class-internals.h"
+#include "../libil2cpp/il2cpp-object-internals.h"
 // #include "../libil2cpp/il2cpp-api-functions.h"
 
 // Taken from: https://github.com/nike4613/BeatMods2/blob/master/BeatMods2/include/util/json.h
@@ -199,16 +200,6 @@ extern "C" {
 
 // Code courtesy of MichaelZoller
 
-// A C# object
-typedef struct __Object {
-    #ifdef __cplusplus
-    Il2CppClass* klass;  // pointer to the class object, which starts with VTable
-    #else
-    void* klass;
-    #endif
-    void* monitorData;  // pointer to a MonitorData object, used for thread sync
-} Object;
-
 // A C# struct
 typedef struct __Struct Struct; 
 
@@ -230,7 +221,7 @@ typedef struct __ArrayBounds
 } ArrayBounds;
 
 template<class T>
-struct Array : public Object
+struct Array : public Il2CppObject
 {
     static_assert(is_value_type<T>::value, "T must be a C# value type! (primitive, pointer or Struct)");
     /* bounds is NULL for szarrays */
@@ -289,9 +280,16 @@ inlineHook((uint32_t)(addr_ ## name));\
 
 // C# SPECIFIC
 
+#ifndef __cplusplus
+typedef struct {
+    void* klass;
+    void* monitor;
+} Il2CppObject;
+#endif /* Il2CppObject */
+
 // System.string
 typedef struct {
-    Object object;
+    Il2CppObject object;
     unsigned int len;
     unsigned short str[];
 } cs_string;
