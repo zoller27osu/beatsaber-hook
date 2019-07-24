@@ -156,6 +156,7 @@ namespace il2cpp_utils {
             *(void**)(&type_equals) = dlsym(imagehandle, "il2cpp_type_equals");
             *(void**)(&runtime_invoke) = dlsym(imagehandle, "il2cpp_runtime_invoke");
             dlclose(imagehandle);
+            __cachedNew = true;
         }
 
         void* invoke_params[] = {reinterpret_cast<void*>(args)...};
@@ -166,7 +167,7 @@ namespace il2cpp_utils {
         const MethodInfo* current;
         const MethodInfo* ctor = nullptr;
         constexpr auto count = sizeof...(TArgs);
-        auto argarr = {args...};
+        Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
         while ((current = class_get_methods(klass, &myIter))) {
             if (ctor->parameters_count != count + 1) {
                 continue;
@@ -178,7 +179,7 @@ namespace il2cpp_utils {
                 }
             }
             ctor = current;
-            next_method: continue;
+            next_method:;
         }
         if (!ctor) {
             return nullptr;
