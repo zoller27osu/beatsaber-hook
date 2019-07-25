@@ -45,6 +45,8 @@ namespace Configuration {
             rapidjson::Document document;
             // Loads Config
             static Config& Load();
+            // Reloads Config from file
+            void Reload();
             // Writes Config
             void Write();
     };
@@ -347,7 +349,11 @@ void csstrtostr(cs_string* in, char* out);
 // Sets the given cs_string using the given character array and length
 void setcsstr(cs_string* in, char* value, size_t length);
 // Creates a cs string (allocates it) with the given character array and length and returns it
-cs_string* createcsstr(char* characters, size_t length);
+cs_string* createcsstrn(char* characters, size_t length);
+// Creates a cs string (allocates it) with the given character array
+cs_string* createcsstr(char* characters);
+// Creates a cs string (allocates it) with the given character array
+cs_string* createcsstr(char* const characters);
 
 // SETTINGS
 

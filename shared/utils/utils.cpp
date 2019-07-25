@@ -86,9 +86,29 @@ long getRealOffset(long offset) // calculate dump.cs address + lib.so base addre
 // Creation of string method(char* chars, size_t length): 0x30A1E8
 static const long NEW_STRING_OFFSET = 0x30A1E8;
 
-cs_string* createcsstr(char* characters, size_t length) {
-    auto create_str = reinterpret_cast<function_ptr_t<cs_string*, char*, size_t>>(getRealOffset(NEW_STRING_OFFSET));
+bool __cached_create_cs_str = false;
+function_ptr_t<cs_string*, char*, size_t> create_str;
+void cache_create() {
+    if (!__cached_create_cs_str) {
+        create_str = reinterpret_cast<function_ptr_t<cs_string*, char*, size_t>>(getRealOffset(NEW_STRING_OFFSET));
+        __cached_create_cs_str = true;
+    }
+}
+
+
+cs_string* createcsstrn(char* characters, size_t length) {
+    cache_create();
     return create_str(characters, length);
+}
+
+cs_string* createcsstr(char* characters) {
+    cache_create();
+    return create_str(characters, strlen(characters));
+}
+
+cs_string* createcsstr(char* const characters) {
+    cache_create();
+    return create_str(const_cast<char*>(characters), strlen(characters));
 }
 
 void csstrtowstr(cs_string* in, unsigned short* out)
@@ -214,6 +234,19 @@ Configuration::Config& Configuration::Config::Load() {
     return config_object;
 }
 
+void Configuration::Config::Reload() {
+    string filename;
+    filename = filename.append(CONFIG_PATH);
+    filename = filename.append(MOD_ID);
+    filename = filename.append(".json");
+
+    parsejsonfile(document, filename);
+    if (!document.IsObject()) {
+        document.SetObject();
+    }
+    readJson = true;
+}
+
 void Configuration::Config::Write() {
     if (!direxists(CONFIG_PATH)) {
         mkdir(CONFIG_PATH, 0700);
@@ -225,6 +258,6 @@ void Configuration::Config::Write() {
 
     StringBuffer buf;
     PrettyWriter<StringBuffer> writer(buf);
-    config_object.document.Accept(writer);
+    document.Accept(writer);
     writefile(filename.c_str(), buf.GetString());
 }
