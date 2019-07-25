@@ -352,8 +352,6 @@ void setcsstr(cs_string* in, char* value, size_t length);
 cs_string* createcsstrn(char* characters, size_t length);
 // Creates a cs string (allocates it) with the given character array
 cs_string* createcsstr(char* characters);
-// Creates a cs string (allocates it) with the given character array
-cs_string* createcsstr(char* const characters);
 
 // SETTINGS
 

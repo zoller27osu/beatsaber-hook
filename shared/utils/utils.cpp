@@ -106,11 +106,6 @@ cs_string* createcsstr(char* characters) {
     return create_str(characters, strlen(characters));
 }
 
-cs_string* createcsstr(char* const characters) {
-    cache_create();
-    return create_str(const_cast<char*>(characters), strlen(characters));
-}
-
 void csstrtowstr(cs_string* in, unsigned short* out)
 {
     for(int i = 0; i < in->len; i++) {
