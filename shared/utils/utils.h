@@ -279,18 +279,18 @@ struct Array : public Il2CppObject
 
 // FUNCTIONS
 
-// Sets the unsigned short array of the given cs_string
-std::string_view csstrtowstr(cs_string* in);
 // Sets the character array of the given cs_string
-std::string_view csstrtostr(cs_string* in);
-// Sets the given cs_string using the given character array and length
-void setcsstr(cs_string* in, std::string_view str);
+std::wstring_view csstrtostr(cs_string* in);
+// Sets the given cs_string using the given string/char16 array
+void setcsstr(cs_string* in, std::wstring_view str);
 // Creates a cs string (allocates it) with the given string_view and returns it
 cs_string* createcsstr(std::string_view inp);
 // Parses a JSON string, and returns whether it succeeded or not
 bool parsejson(rapidjson::Document& doc, std::string_view js);
 // Parses the JSON of the filename, and returns whether it succeeded or not
 bool parsejsonfile(rapidjson::Document& doc, std::string filename);
+// Dumps the 'before' bytes before and 'after' bytes after the given pointer to log
+void dump(int before, int after, void* ptr);
 
 extern "C" {
 #endif /* __cplusplus */

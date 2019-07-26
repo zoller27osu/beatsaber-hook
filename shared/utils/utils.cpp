@@ -100,17 +100,7 @@ cs_string* createcsstr(string_view inp) {
     return create_str(const_cast<char*>(inp.data()), strlen(inp.data()));
 }
 
-string_view csstrtowstr(cs_string* in)
-{
-    string out;
-    for(int i = 0; i < in->len; i++) {
-        out[i] = in->str[i];
-    }
-    string_view sv = out;
-    return sv;
-}
-
-void setcsstr(cs_string* in, string_view str) {
+void setcsstr(cs_string* in, wstring_view str) {
     in->len = str.length();
     for(int i = 0; i < in->len; i++) {
         // Can assume that each char is only a single char (a single word --> double word)
@@ -118,15 +108,18 @@ void setcsstr(cs_string* in, string_view str) {
     }
 }
 
-string_view csstrtostr(cs_string* in)
+wstring_view csstrtostr(cs_string* in)
 {
-    string o;
-    for(int i = 0; i < in->len; i++) {
-        // Can assume that each char16 can just be a literal char
-        o += (char)in->str[i];
+    return {in->str, in->len};
+}
+
+// Thanks DaNike!
+void dump(int before, int after, void* ptr) {
+    auto begin = static_cast<char*>(ptr) + before;
+    auto end = static_cast<char*>(ptr) + after;
+    for (auto cur = begin; cur != end; ++cur) {
+        log("%p: %08x", cur, *cur);
     }
-    string_view sv = o;
-    return sv;
 }
 
 // BEAT SABER SETTINGS
