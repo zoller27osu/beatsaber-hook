@@ -95,18 +95,20 @@ void setcsstr(cs_string* in, u16string_view str) {
 
 // Inspired by DaNike
 string to_utf8(u16string_view view) {
-    char dat[view.length()];
+    char dat[view.length() + 1];
     transform(view.data(), view.data() + view.size(), dat, [](auto utf16_char) {
         return static_cast<char>(utf16_char);
     });
+    dat[view.length()] = '\0';
     return {dat};
 }
 
 u16string to_utf16(string_view view) {
-    char16_t dat[view.length()];
+    char16_t dat[view.length() + 1];
     transform(view.data(), view.data() + view.size(), dat, [](auto standardChar) {
         return static_cast<char16_t>(standardChar);
     });
+    dat[view.length()] = '\0';
     return {dat};
 }
 
