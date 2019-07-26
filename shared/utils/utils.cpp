@@ -84,31 +84,33 @@ long getRealOffset(long offset) // calculate dump.cs address + lib.so base addre
 // il2cpp_string_new, used to find string construction offset: 0x2DD144
 // il2cpp_string_new immediate call offset: 0x30A1C8
 // Creation of string method(char* chars, size_t length): 0x30A1E8
-static const long NEW_STRING_OFFSET = 0x30A1E8;
 
-bool __cached_create_cs_str = false;
-function_ptr_t<cs_string*, char*, size_t> create_str;
-void cache_create() {
-    if (!__cached_create_cs_str) {
-        create_str = reinterpret_cast<function_ptr_t<cs_string*, char*, size_t>>(getRealOffset(NEW_STRING_OFFSET));
-        __cached_create_cs_str = true;
-    }
-}
-
-cs_string* createcsstr(string_view inp) {
-    cache_create();
-    return create_str(const_cast<char*>(inp.data()), strlen(inp.data()));
-}
-
-void setcsstr(cs_string* in, wstring_view str) {
+void setcsstr(cs_string* in, u16string_view str) {
     in->len = str.length();
     for(int i = 0; i < in->len; i++) {
         // Can assume that each char is only a single char (a single word --> double word)
-        in->str[i] = (char16_t)str[i];
+        in->str[i] = str[i];
     }
 }
 
-wstring_view csstrtostr(cs_string* in)
+// Inspired by DaNike
+string to_utf8(u16string_view view) {
+    char dat[view.length()];
+    transform(view.data(), view.data() + view.size(), dat, [](auto utf16_char) {
+        return static_cast<char>(utf16_char);
+    });
+    return {dat};
+}
+
+u16string to_utf16(string_view view) {
+    char16_t dat[view.length()];
+    transform(view.data(), view.data() + view.size(), dat, [](auto standardChar) {
+        return static_cast<char16_t>(standardChar);
+    });
+    return {dat};
+}
+
+u16string_view csstrtostr(cs_string* in)
 {
     return {in->str, in->len};
 }
