@@ -35,7 +35,6 @@ using function_ptr_t = TRet(*)(TArgs...);
 #include <string_view>
 #include <cassert>
 
-
 namespace Configuration {
     // Provides a class for configuration.
     // You are responsible for Loading and Writing to it as necessary.
@@ -203,7 +202,45 @@ extern "C" {
 // Code courtesy of MichaelZoller
 
 // A C# struct
-typedef struct __Struct Struct; 
+typedef struct __Struct Struct;
+// C# SPECIFIC
+
+#ifndef __cplusplus
+typedef struct {
+    void* klass;
+    void* monitor;
+} Il2CppObject;
+#endif /* __cplusplus */
+
+// System.string
+typedef struct {
+    Il2CppObject object;
+    unsigned int len;
+    char16_t str[];
+} cs_string;
+
+// BEAT SABER SPECIFIC
+
+// UnityEngine.Color
+typedef struct {
+    float r;
+    float g;
+    float b;
+    float a;
+} Color;
+
+// UnityEngine.Vector2
+typedef struct {
+    float x;
+    float y;
+} Vector2;
+
+// UnityEngine.Vector3
+typedef struct {
+    float x;
+    float y;
+    float z;
+} Vector3;
 
 #ifdef __cplusplus
 }
@@ -240,6 +277,16 @@ struct Array : public Il2CppObject
     }
 };
 
+// FUNCTIONS
+
+// Sets the unsigned short array of the given cs_string
+std::string_view csstrtowstr(cs_string* in);
+// Sets the character array of the given cs_string
+std::string_view csstrtostr(cs_string* in);
+// Sets the given cs_string using the given character array and length
+void setcsstr(cs_string* in, std::string_view str);
+// Creates a cs string (allocates it) with the given string_view and returns it
+cs_string* createcsstr(std::string_view inp);
 // Parses a JSON string, and returns whether it succeeded or not
 bool parsejson(rapidjson::Document& doc, std::string_view js);
 // Parses the JSON of the filename, and returns whether it succeeded or not
@@ -280,45 +327,6 @@ retval hook_ ## name(__VA_ARGS__)
 registerInlineHook((uint32_t)(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name);\
 inlineHook((uint32_t)(addr_ ## name));\
 
-// C# SPECIFIC
-
-#ifndef __cplusplus
-typedef struct {
-    void* klass;
-    void* monitor;
-} Il2CppObject;
-#endif /* Il2CppObject */
-
-// System.string
-typedef struct {
-    Il2CppObject object;
-    unsigned int len;
-    unsigned short str[];
-} cs_string;
-
-// BEAT SABER SPECIFIC
-
-// UnityEngine.Color
-typedef struct {
-    float r;
-    float g;
-    float b;
-    float a;
-} Color;
-
-// UnityEngine.Vector2
-typedef struct {
-    float x;
-    float y;
-} Vector2;
-
-// UnityEngine.Vector3
-typedef struct {
-    float x;
-    float y;
-    float z;
-} Vector3;
-
 // OFFSETS
 
 // Create an object using il2cpp_object_new offset
@@ -339,19 +347,6 @@ typedef struct {
 #define SUBSTRING_OFFSET 0x96EBEC
 // System.String.Replace(cs_string* original, cs_string* old, cs_string* new) offset
 #define STRING_REPLACE_OFFSET 0x97FF04
-
-// FUNCTIONS
-
-// Sets the unsigned short array of the given cs_string
-void csstrtowstr(cs_string* in, unsigned short* out);
-// Sets the character array of the given cs_string
-void csstrtostr(cs_string* in, char* out);
-// Sets the given cs_string using the given character array and length
-void setcsstr(cs_string* in, char* value, size_t length);
-// Creates a cs string (allocates it) with the given character array and length and returns it
-cs_string* createcsstrn(char* characters, size_t length);
-// Creates a cs string (allocates it) with the given character array
-cs_string* createcsstr(char* characters);
 
 // SETTINGS
 

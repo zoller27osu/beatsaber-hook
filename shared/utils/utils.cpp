@@ -95,40 +95,38 @@ void cache_create() {
     }
 }
 
-
-cs_string* createcsstrn(char* characters, size_t length) {
+cs_string* createcsstr(string_view inp) {
     cache_create();
-    return create_str(characters, length);
+    return create_str(const_cast<char*>(inp.data()), strlen(inp.data()));
 }
 
-cs_string* createcsstr(char* characters) {
-    cache_create();
-    return create_str(characters, strlen(characters));
-}
-
-void csstrtowstr(cs_string* in, unsigned short* out)
+string_view csstrtowstr(cs_string* in)
 {
+    string out;
     for(int i = 0; i < in->len; i++) {
         out[i] = in->str[i];
     }
+    string_view sv = out;
+    return sv;
 }
 
-void setcsstr(cs_string* in, char* value, size_t length) {
-    unsigned int l = (unsigned int)length;
-    in->len = l;
-    for(int i = 0; i < l; i++) {
-        // Can assume that each char is only a single char (a single word --> double word)
-        in->str[i] = (unsigned short)value[i];
-    }
-}
-
-void csstrtostr(cs_string* in, char* out)
-{
+void setcsstr(cs_string* in, string_view str) {
+    in->len = str.length();
     for(int i = 0; i < in->len; i++) {
-        // Can assume that each short can just be a literal char
-        out[i*2] = in->str[i];
+        // Can assume that each char is only a single char (a single word --> double word)
+        in->str[i] = (char16_t)str[i];
     }
-    out[in->len] = '\x0';
+}
+
+string_view csstrtostr(cs_string* in)
+{
+    string o;
+    for(int i = 0; i < in->len; i++) {
+        // Can assume that each char16 can just be a literal char
+        o += (char)in->str[i];
+    }
+    string_view sv = o;
+    return sv;
 }
 
 // BEAT SABER SETTINGS
