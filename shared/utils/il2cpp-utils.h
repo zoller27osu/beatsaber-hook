@@ -17,6 +17,35 @@ template<typename TRet, typename ...TArgs>
 using function_ptr_t = TRet(*)(TArgs...);
 
 namespace il2cpp_utils {
+    namespace array_utils {
+        char* il2cpp_array_addr_with_size(Il2CppArray *array, int32_t size, uintptr_t idx);
+        #define load_array_elema(arr, idx, size) ((((uint8_t*)(arr)) + kIl2CppSizeOfArray) + ((size) * (idx)))
+
+        #define il2cpp_array_setwithsize(array, elementSize, index, value)  \
+            do {    \
+                void*__p = (void*) il2cpp_array_addr_with_size ((array), elementSize, (index)); \
+                memcpy(__p, &(value), elementSize); \
+            } while (0)
+        #define il2cpp_array_setrefwithsize(array, elementSize, index, value)  \
+            do {    \
+                void*__p = (void*) il2cpp_array_addr_with_size ((array), elementSize, (index)); \
+                memcpy(__p, value, elementSize); \
+                } while (0)
+        #define il2cpp_array_addr(array, type, index) ((type*)(void*) il2cpp_array_addr_with_size (array, sizeof (type), index))
+        #define il2cpp_array_get(array, type, index) ( *(type*)il2cpp_array_addr ((array), type, (index)) )
+        #define il2cpp_array_set(array, type, index, value)    \
+            do {    \
+                type *__p = (type *) il2cpp_array_addr ((array), type, (index));    \
+                *__p = (value); \
+            } while (0)
+        #define il2cpp_array_setref(array, index, value)  \
+            do {    \
+                void* *__p = (void* *) il2cpp_array_addr ((array), void*, (index)); \
+                /* il2cpp_gc_wbarrier_set_arrayref ((array), __p, (MonoObject*)(value));    */\
+                *__p = (value);    \
+            } while (0)
+    }
+    // Init all of the usable il2cpp API, if it has yet to be initialized
     inline void InitFunctions() {
         if (!il2cpp_functions::initialized) {
             log(WARNING, "il2cpp_utils: GetClassFromName: IL2CPP Functions Not Initialized!");
@@ -113,7 +142,6 @@ namespace il2cpp_utils {
         // runtime_invoke constructor with right number of args, return null if multiple matches, return null if constructor errors
         void* myIter = nullptr;
         constexpr auto count = sizeof...(TArgs);
-        Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
 
         const MethodInfo* ctor = il2cpp_functions::class_get_method_from_name(klass, ".ctor", count + 1);
 
@@ -129,6 +157,29 @@ namespace il2cpp_utils {
             return nullptr;
         }
         return reinterpret_cast<TObj*>(obj);
+    }
+    // Calls the System.RuntimeType.MakeGenericType(System.Type gt, System.Type[] types) function
+    inline Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types) {
+        InitFunctions();
+
+        auto runtimeType = GetClassFromName("System", "RuntimeType");
+        if (!runtimeType) {
+            log(ERROR, "il2cpp_utils: MakeGenericType: Failed to get System.RuntimeType!");
+            return nullptr;
+        }
+        auto makeGenericMethod = il2cpp_functions::class_get_method_from_name(runtimeType, "MakeGenericType", 2);
+        if (!makeGenericMethod) {
+            log(ERROR, "il2cpp_utils: MakeGenericType: Failed to get RuntimeType.MakeGenericType(param1, param2) method!");
+            return nullptr;
+        }
+        Il2CppException* exp = nullptr;
+        void* params[] = {reinterpret_cast<void*>(gt), reinterpret_cast<void*>(types)};
+        auto genericType = il2cpp_functions::runtime_invoke(makeGenericMethod, nullptr, params, &exp);
+        if (exp) {
+            log(ERROR, "il2cpp_utils: MakeGenericType: Failed with exception: %s", ExceptionToString(exp).c_str());
+            return nullptr;
+        }
+        return reinterpret_cast<Il2CppReflectionType*>(genericType);
     }
 
     // Creates a cs string (allocates it) with the given string_view and returns it
