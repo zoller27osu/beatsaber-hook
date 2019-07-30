@@ -85,11 +85,11 @@ long getRealOffset(long offset) // calculate dump.cs address + lib.so base addre
 // il2cpp_string_new immediate call offset: 0x30A1C8
 // Creation of string method(char* chars, size_t length): 0x30A1E8
 
-void setcsstr(cs_string* in, u16string_view str) {
-    in->len = str.length();
-    for(int i = 0; i < in->len; i++) {
+void setcsstr(Il2CppString* in, u16string_view str) {
+    in->length = str.length();
+    for(int i = 0; i < in->length; i++) {
         // Can assume that each char is only a single char (a single word --> double word)
-        in->str[i] = str[i];
+        in->chars[i] = str[i];
     }
 }
 
@@ -112,9 +112,9 @@ u16string to_utf16(string_view view) {
     return {dat};
 }
 
-u16string_view csstrtostr(cs_string* in)
+u16string_view csstrtostr(Il2CppString* in)
 {
-    return {in->str, in->len};
+    return {in->chars, static_cast<uint32_t>(in->length)};
 }
 
 // Thanks DaNike!
@@ -122,7 +122,7 @@ void dump(int before, int after, void* ptr) {
     auto begin = static_cast<char*>(ptr) + before;
     auto end = static_cast<char*>(ptr) + after;
     for (auto cur = begin; cur != end; ++cur) {
-        log("%p: %08x", cur, *cur);
+        log(DEBUG, "%p: %08x", cur, *cur);
     }
 }
 
@@ -166,6 +166,15 @@ int writefile(const char* filename, const char* text) {
         return 0;
     }
     return WRITE_ERROR_COULD_NOT_MAKE_FILE;
+}
+
+void* loadfromasset(const char* assetFilePath, const char* assetName) {
+    // TODO IMPLEMENT
+    // Create C# string
+    auto str = il2cpp_utils::createcsstr(assetFilePath);
+    void* fromFileParams[] = {str};
+    // auto asyncBundle = il2cpp_functions::runtime_invoke()
+    return nullptr;
 }
 
 bool parsejson(rapidjson::Document& doc, string_view js) {

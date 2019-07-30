@@ -13,23 +13,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
-// Code courtesy of MichaelZoller
-typedef struct __Struct Struct;
 // C# SPECIFIC
 
-#ifndef __cplusplus
-typedef struct {
-    void* klass;
-    void* monitor;
-} Il2CppObject;
-#endif /* __cplusplus */
-
-// System.string
-typedef struct {
-    Il2CppObject object;
-    unsigned int len;
-    char16_t str[];
-} cs_string;
+typedef struct __Struct Struct;
 
 // BEAT SABER SPECIFIC
 
