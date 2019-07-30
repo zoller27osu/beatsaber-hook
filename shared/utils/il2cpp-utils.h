@@ -23,11 +23,15 @@ namespace il2cpp_utils {
             il2cpp_functions::Init();
         }
     }
-
+    // Maximum length of characters of an exception message - 1
+    #define EXCEPTION_MESSAGE_SIZE 4096
     // Returns a legible string from an Il2CppException*
     inline std::string ExceptionToString(Il2CppException* exp) {
-        std::u16string_view exception_message = csstrtostr(exp->message);
-        return to_utf8(exception_message);
+        char msg[EXCEPTION_MESSAGE_SIZE];
+        il2cpp_functions::format_exception(exp, msg, EXCEPTION_MESSAGE_SIZE);
+        // auto exception_message = csstrtostr(exp->message);
+        // return to_utf8(exception_message);
+        return msg;
     }
 
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
