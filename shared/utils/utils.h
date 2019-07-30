@@ -14,19 +14,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#ifndef MOD_ID
-#error "'MOD_ID' must be defined in the mod!"
-#endif
-#ifndef VERSION
-#error "'VERSION' must be defined in the mod!"
-#endif
-
 long getRealOffset(long offset);
-
-#ifdef log
-#undef log
-#endif
-#define log(...) __android_log_print(ANDROID_LOG_INFO, "QuestHook [" MOD_ID " v" VERSION "] ", __VA_ARGS__)
 
 #define MAKE_HOOK(name, addr, retval, ...) \
 long addr_ ## name = (long) addr; \
