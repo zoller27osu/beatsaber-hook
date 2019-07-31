@@ -208,6 +208,11 @@ namespace il2cpp_functions {
 	static bool (*custom_attrs_has_attr)(Il2CppCustomAttrInfo * ainfo, Il2CppClass * attr_klass);
 	static Il2CppArray* (*custom_attrs_construct)(Il2CppCustomAttrInfo * cinfo);
 	static void (*custom_attrs_free)(Il2CppCustomAttrInfo * ainfo);
+
+	// MANUALLY DEFINED CONST DEFINITIONS
+	static const Il2CppType* (*class_get_type_const)(const Il2CppClass * klass);
+	static const char* (*class_get_name_const)(const Il2CppClass * klass);
+
 	// Whether all of the il2cpp functions have been initialized or not
     static bool initialized = false;
     // Initializes all of the IL2CPP functions via dlopen and dlsym for use.
@@ -616,6 +621,12 @@ namespace il2cpp_functions {
 		log(INFO, "Loaded: il2cpp_custom_attrs_construct");
 		*(void**)(&custom_attrs_free) = dlsym(imagehandle, "il2cpp_custom_attrs_free");
 		log(INFO, "Loaded: il2cpp_custom_attrs_free");
+
+		// MANUALLY DEFINED CONST DEFINITIONS
+		*(void**)(&class_get_type_const) = dlsym(imagehandle, "il2cpp_class_get_type");
+		log(INFO, "Loaded: il2cpp_class_get_type CONST VERSION!");
+		*(void**)(&class_get_name_const) = dlsym(imagehandle, "il2cpp_class_get_name");
+		log(INFO, "Loaded: il2cpp_class_get_name CONST VERSION!");
 
         dlclose(imagehandle);
         initialized = true;

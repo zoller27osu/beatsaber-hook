@@ -204,13 +204,12 @@ namespace il2cpp_utils {
         log(DEBUG, "Is Generic: %i", klass->is_generic);
     }
 
-    // Function Made by zoller27osu, modified heavilty by Sc2ad
+    // Function Made by zoller27osu, modified by Sc2ad
     inline const Il2CppClass* MakeGeneric(const Il2CppClass* klazz, std::initializer_list<const Il2CppClass*> args) {
         InitFunctions();
  
         auto typ = GetClassFromName("System", "Type");
         if (!typ) {
-            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get System.Type!");
             return nullptr;
         }
         auto getType = il2cpp_functions::class_get_method_from_name(typ, "GetType", 1);
@@ -219,7 +218,7 @@ namespace il2cpp_utils {
             return nullptr;
         }
  
-        auto klassType = il2cpp_functions::type_get_object(il2cpp_functions::class_get_type(const_cast<Il2CppClass*>(klazz)));
+        auto klassType = il2cpp_functions::type_get_object(il2cpp_functions::class_get_type_const(klazz));
         if (!klassType) {
             log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get class type object!");
             return nullptr;
@@ -232,20 +231,19 @@ namespace il2cpp_utils {
             return nullptr;
         }
  
-        // TODO: use il2cpp_array_set to fill the elements instead
         int i = 0;
         for (auto arg : args) {
-            auto t = il2cpp_functions::class_get_type(const_cast<Il2CppClass*>(arg));
+            auto t = il2cpp_functions::class_get_type_const(arg);
             auto o = il2cpp_functions::type_get_object(t);
             if (!o) {
-                log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get type for %s", il2cpp_functions::class_get_name(const_cast<Il2CppClass*>(arg)));
+                log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get type for %s", il2cpp_functions::class_get_name_const(arg));
                 return nullptr;
             }
             il2cpp_array_set(a, void*, i, reinterpret_cast<void*>(o));
             i++;
         }
 
-        auto reflection_type = MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), reinterpret_cast<Il2CppArray*>(a));
+        auto reflection_type = MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), a);
         if (!reflection_type) {
             log(ERROR, "il2cpp_utils: MakeGeneric: Failed to MakeGenericType from Il2CppReflectionType and Il2CppArray!");
             return nullptr;
@@ -270,6 +268,7 @@ namespace il2cpp_utils {
     [[nodiscard]] inline bool Match(const Il2CppObject* source, const Il2CppClass* klazz) noexcept {
         return (source->klass == klazz);
     }
+
     // Asserts that a given source object is an object of the given class
     inline bool AssertMatch(const Il2CppObject* source, const Il2CppClass* klazz) {
         InitFunctions();
