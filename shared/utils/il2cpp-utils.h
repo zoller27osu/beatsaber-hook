@@ -18,20 +18,23 @@ using function_ptr_t = TRet(*)(TArgs...);
 
 namespace il2cpp_utils {
     namespace array_utils {
-        char* il2cpp_array_addr_with_size(Il2CppArray *array, int32_t size, uintptr_t idx);
+        static char* il2cpp_array_addr_with_size(Il2CppArray *array, int32_t size, uintptr_t idx)
+        {
+            return ((char*)array) + kIl2CppSizeOfArray + size * idx;
+        }
         #define load_array_elema(arr, idx, size) ((((uint8_t*)(arr)) + kIl2CppSizeOfArray) + ((size) * (idx)))
 
         #define il2cpp_array_setwithsize(array, elementSize, index, value)  \
             do {    \
-                void*__p = (void*) il2cpp_array_addr_with_size ((array), elementSize, (index)); \
+                void*__p = (void*) il2cpp_utils::array_utils::il2cpp_array_addr_with_size ((array), elementSize, (index)); \
                 memcpy(__p, &(value), elementSize); \
             } while (0)
         #define il2cpp_array_setrefwithsize(array, elementSize, index, value)  \
             do {    \
-                void*__p = (void*) il2cpp_array_addr_with_size ((array), elementSize, (index)); \
+                void*__p = (void*) il2cpp_utils::array_utils::il2cpp_array_addr_with_size ((array), elementSize, (index)); \
                 memcpy(__p, value, elementSize); \
                 } while (0)
-        #define il2cpp_array_addr(array, type, index) ((type*)(void*) il2cpp_array_addr_with_size (array, sizeof (type), index))
+        #define il2cpp_array_addr(array, type, index) ((type*)(void*) il2cpp_utils::array_utils::il2cpp_array_addr_with_size (array, sizeof (type), index))
         #define il2cpp_array_get(array, type, index) ( *(type*)il2cpp_array_addr ((array), type, (index)) )
         #define il2cpp_array_set(array, type, index, value)    \
             do {    \
@@ -158,6 +161,7 @@ namespace il2cpp_utils {
         }
         return reinterpret_cast<TObj*>(obj);
     }
+
     // Calls the System.RuntimeType.MakeGenericType(System.Type gt, System.Type[] types) function
     inline Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types) {
         InitFunctions();
@@ -172,6 +176,7 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: MakeGenericType: Failed to get RuntimeType.MakeGenericType(param1, param2) method!");
             return nullptr;
         }
+
         Il2CppException* exp = nullptr;
         void* params[] = {reinterpret_cast<void*>(gt), reinterpret_cast<void*>(types)};
         auto genericType = il2cpp_functions::runtime_invoke(makeGenericMethod, nullptr, params, &exp);
@@ -180,6 +185,79 @@ namespace il2cpp_utils {
             return nullptr;
         }
         return reinterpret_cast<Il2CppReflectionType*>(genericType);
+    }
+
+    // Logs information about the given Il2CppClass* as log(DEBUG)
+    inline void LogClass(const Il2CppClass* klass) {
+        InitFunctions();
+
+        auto unconst = const_cast<Il2CppClass*>(klass);
+        log(DEBUG, "======================CLASS INFO FOR CLASS: %s::%s======================", il2cpp_functions::class_get_namespace(unconst), il2cpp_functions::class_get_name(unconst));
+        log(DEBUG, "Assembly Name: %s", il2cpp_functions::class_get_assemblyname(klass));
+        log(DEBUG, "Rank: %i", il2cpp_functions::class_get_rank(klass));
+        log(DEBUG, "Type Token: %i", il2cpp_functions::class_get_type_token(unconst));
+        log(DEBUG, "Flags: %i", il2cpp_functions::class_get_flags(klass));
+        log(DEBUG, "Event Count: %i", klass->event_count);
+        log(DEBUG, "Field Count: %i", klass->field_count);
+        log(DEBUG, "Method Count: %i", klass->method_count);
+        log(DEBUG, "Property Count: %i", klass->property_count);
+        log(DEBUG, "Is Generic: %i", klass->is_generic);
+    }
+
+    // Function Made by zoller27osu, modified heavilty by Sc2ad
+    inline const Il2CppClass* MakeGeneric(const Il2CppClass* klazz, std::initializer_list<const Il2CppClass*> args) {
+        InitFunctions();
+ 
+        auto typ = GetClassFromName("System", "Type");
+        if (!typ) {
+            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get System.Type!");
+            return nullptr;
+        }
+        auto getType = il2cpp_functions::class_get_method_from_name(typ, "GetType", 1);
+        if (!getType) {
+            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get System.Type.GetType(param1) method!");
+            return nullptr;
+        }
+ 
+        auto klassType = il2cpp_functions::type_get_object(il2cpp_functions::class_get_type(const_cast<Il2CppClass*>(klazz)));
+        if (!klassType) {
+            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get class type object!");
+            return nullptr;
+        }
+ 
+        // Call Type.MakeGenericType on it
+        auto a = il2cpp_functions::array_new_specific(typ, args.size());
+        if (!a) {
+            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to make new array with length: %i", args.size());
+            return nullptr;
+        }
+ 
+        // TODO: use il2cpp_array_set to fill the elements instead
+        int i = 0;
+        for (auto arg : args) {
+            auto t = il2cpp_functions::class_get_type(const_cast<Il2CppClass*>(arg));
+            auto o = il2cpp_functions::type_get_object(t);
+            if (!o) {
+                log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get type for %s", il2cpp_functions::class_get_name(const_cast<Il2CppClass*>(arg)));
+                return nullptr;
+            }
+            il2cpp_array_set(a, void*, i, reinterpret_cast<void*>(o));
+            i++;
+        }
+
+        auto reflection_type = MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), reinterpret_cast<Il2CppArray*>(a));
+        if (!reflection_type) {
+            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to MakeGenericType from Il2CppReflectionType and Il2CppArray!");
+            return nullptr;
+        }
+
+        auto ret = il2cpp_functions::class_from_system_type(reinterpret_cast<Il2CppReflectionType*>(reflection_type));
+        if (!ret) {
+            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get class from Il2CppReflectionType!");
+            return nullptr;
+        }
+        log(DEBUG, "il2cpp_utils: MakeGeneric: returning %s", il2cpp_functions::class_get_name(ret));
+        return ret;
     }
 
     // Creates a cs string (allocates it) with the given string_view and returns it

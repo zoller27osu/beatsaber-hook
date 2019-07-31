@@ -14,13 +14,10 @@
 extern "C" {
 #endif /* __cplusplus */
 // C# SPECIFIC
-
-typedef struct __Struct Struct;
-
 // BEAT SABER SPECIFIC
 
 // UnityEngine.Color
-typedef struct {
+typedef struct Color {
     float r;
     float g;
     float b;
@@ -28,13 +25,13 @@ typedef struct {
 } Color;
 
 // UnityEngine.Vector2
-typedef struct {
+typedef struct Vector2 {
     float x;
     float y;
 } Vector2;
 
 // UnityEngine.Vector3
-typedef struct {
+typedef struct Vector3 {
     float x;
     float y;
     float z;
@@ -46,12 +43,12 @@ typedef struct {
 template< class T >
 struct is_value_type : std::integral_constant< 
     bool,
-    std::is_arithmetic<T>::value || std::is_enum<T>::value ||
-    std::is_pointer<T>::value ||
-    std::is_base_of<Struct, T>::value
+    (std::is_arithmetic<T>::value || std::is_enum<T>::value ||
+    std::is_pointer<T>::value) &&
+    !std::is_base_of<Il2CppObject, T>::value
 > {};
 
-typedef struct __ArrayBounds
+typedef struct ArrayBounds
 {
     int32_t length;
     int32_t lower_bound;
