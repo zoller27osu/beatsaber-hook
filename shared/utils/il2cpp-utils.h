@@ -4,12 +4,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <sstream>
 #include "typedefs.h"
 #include "il2cpp-functions.h"
 #include "utils-functions.h"
 #include "logging.h"
-#include <string>
-#include <string_view>
+
+#if __has_include("../libil2cpp/il2cpp-tabledefs.h")
+#include "../libil2cpp/il2cpp-tabledefs.h"
+#else
+#define METHOD_ATTRIBUTE_STATIC                    0x0010
+#define METHOD_ATTRIBUTE_VIRTUAL                   0x0040
+#define METHOD_ATTRIBUTE_ABSTRACT                  0x0400
+#endif
 
 // Code courtesy of DaNike
 template<typename TRet, typename ...TArgs>
@@ -67,30 +77,11 @@ namespace il2cpp_utils {
     }
 
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
-    inline Il2CppClass* GetClassFromName(const char* nameSpace, const char* typeName) {
-        InitFunctions();
-
-        size_t assemb_count;
-        const Il2CppAssembly** allAssemb = il2cpp_functions::domain_get_assemblies(il2cpp_functions::domain_get(), &assemb_count);
-        // const Il2CppAssembly** allAssemb = il2cpp_domain_get_assemblies(il2cpp_domain_get(), &assemb_count);
-
-        for (int i = 0; i < assemb_count; i++) {
-            auto assemb = allAssemb[i];
-            // auto img = il2cpp_assembly_get_image(assemb);
-            // auto klass = il2cpp_class_from_name(img, nameSpace, typeName);
-            auto img = il2cpp_functions::assembly_get_image(assemb);
-            auto klass = il2cpp_functions::class_from_name(img, nameSpace, typeName);
-            if (klass) {
-                return klass;
-            }
-        }
-        log(ERROR, "il2cpp_utils: GetClassFromName: Could not find class with namepace: %s and name: %s", nameSpace, typeName);
-        return NULL;
-    }
+    Il2CppClass* GetClassFromName(const char* name_space, const char* type_name);
 
     template<typename TObj, typename... TArgs>
     // Creates a new object of the given class and Il2CppTypes parameters and casts it to TObj*
-    inline TObj* New(Il2CppClass* klass, TArgs* ...args) {
+    TObj* New(Il2CppClass* klass, TArgs* ...args) {
         InitFunctions();
 
         void* invoke_params[] = {reinterpret_cast<void*>(args)...};
@@ -103,7 +94,7 @@ namespace il2cpp_utils {
         constexpr auto count = sizeof...(TArgs);
         Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
         while ((current = il2cpp_functions::class_get_methods(klass, &myIter))) {
-            if (ctor->parameters_count != count + 1) {
+            if (ctor->parameters_count != count) {
                 continue;
             }
             // Start at 1 to ignore 'self' param
@@ -136,7 +127,7 @@ namespace il2cpp_utils {
     template<typename TObj, typename... TArgs>
     // Creates a New object of the given class and parameters and casts it to TObj*
     // DOES NOT PERFORM TYPE-SAFE CHECKING!
-    inline TObj* NewUnsafe(Il2CppClass* klass, TArgs* ...args) {
+    TObj* NewUnsafe(Il2CppClass* klass, TArgs* ...args) {
         InitFunctions();
 
         void* invoke_params[] = {reinterpret_cast<void*>(args)...};
@@ -146,7 +137,7 @@ namespace il2cpp_utils {
         void* myIter = nullptr;
         constexpr auto count = sizeof...(TArgs);
 
-        const MethodInfo* ctor = il2cpp_functions::class_get_method_from_name(klass, ".ctor", count + 1);
+        const MethodInfo* ctor = il2cpp_functions::class_get_method_from_name(klass, ".ctor", count);
 
         if (!ctor) {
             log(ERROR, "il2cpp_utils: New: Could not find constructor for provided class!");
@@ -163,28 +154,71 @@ namespace il2cpp_utils {
     }
 
     // Calls the System.RuntimeType.MakeGenericType(System.Type gt, System.Type[] types) function
-    inline Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types) {
+    Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types);
+
+    // Function Made by zoller27osu, modified by Sc2ad
+    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::initializer_list<const Il2CppClass*> args);
+
+    // Gets the type enum of a given type
+    // TODO Remove this method! Replace with default typesystem
+    inline int GetTypeEnum(const char* name_space, const char* type_name) {
+        auto klass = GetClassFromName(name_space, type_name);
+        auto typ = il2cpp_functions::class_get_type(klass);
+        return il2cpp_functions::type_get_type(typ);
+    }
+ 
+    // Gets a C# name of a type
+    static std::unordered_map<int, const char*> typeMap;
+    inline const char* TypeGetSimpleName(const Il2CppType* type) {
+        if (typeMap.empty()) {
+            typeMap[GetTypeEnum("System", "Boolean")] = "bool";
+            typeMap[GetTypeEnum("System", "Byte")] = "byte";
+            typeMap[GetTypeEnum("System", "SByte")] = "sbyte";
+            typeMap[GetTypeEnum("System", "Char")] = "char";
+            typeMap[GetTypeEnum("System", "Single")] = "float";
+            typeMap[GetTypeEnum("System", "Double")] = "double";
+            typeMap[GetTypeEnum("System", "Int16")] = "short";
+            typeMap[GetTypeEnum("System", "UInt16")] = "ushort";
+            typeMap[GetTypeEnum("System", "Int32")] = "int";
+            typeMap[GetTypeEnum("System", "UInt32")] = "uint";
+            typeMap[GetTypeEnum("System", "Int64")] = "long";
+            typeMap[GetTypeEnum("System", "UInt64")] = "ulong";
+            typeMap[GetTypeEnum("System", "Object")] = "object";
+            typeMap[GetTypeEnum("System", "String")] = "string";
+            typeMap[GetTypeEnum("System", "Void")] = "void";
+        }
+        auto p = typeMap.find(il2cpp_functions::type_get_type(type));
+        if (p != typeMap.end()) {
+            return p->second;
+        } else {
+            return il2cpp_functions::type_get_name(type);
+        }
+    }
+ 
+    // Logs information about the given MethodInfo* as log(DEBUG)
+    inline void LogMethod(const MethodInfo* method) {
         InitFunctions();
-
-        auto runtimeType = GetClassFromName("System", "RuntimeType");
-        if (!runtimeType) {
-            log(ERROR, "il2cpp_utils: MakeGenericType: Failed to get System.RuntimeType!");
-            return nullptr;
+ 
+        auto flags = il2cpp_functions::method_get_flags(method, nullptr);
+        std::stringstream flagStream;
+        if (flags & METHOD_ATTRIBUTE_STATIC) flagStream << "static ";
+        if (flags & METHOD_ATTRIBUTE_VIRTUAL) flagStream << "virtual ";
+        if (flags & METHOD_ATTRIBUTE_ABSTRACT) flagStream << "abstract ";
+        const auto& flagStrRef = flagStream.str();  
+        const char* flagStr = flagStrRef.c_str();
+        auto retType = il2cpp_functions::method_get_return_type(method);
+        auto retTypeStr = TypeGetSimpleName(retType);
+        auto methodName = il2cpp_functions::method_get_name(method);
+        std::stringstream paramStream;
+        for (int i = 0; i < il2cpp_functions::method_get_param_count(method); i++) {
+            if (i > 0) paramStream << ", ";
+            auto paramType = il2cpp_functions::method_get_param(method, i);
+            paramStream << TypeGetSimpleName(paramType) << " ";
+            paramStream << il2cpp_functions::method_get_param_name(method, i);
         }
-        auto makeGenericMethod = il2cpp_functions::class_get_method_from_name(runtimeType, "MakeGenericType", 2);
-        if (!makeGenericMethod) {
-            log(ERROR, "il2cpp_utils: MakeGenericType: Failed to get RuntimeType.MakeGenericType(param1, param2) method!");
-            return nullptr;
-        }
-
-        Il2CppException* exp = nullptr;
-        void* params[] = {reinterpret_cast<void*>(gt), reinterpret_cast<void*>(types)};
-        auto genericType = il2cpp_functions::runtime_invoke(makeGenericMethod, nullptr, params, &exp);
-        if (exp) {
-            log(ERROR, "il2cpp_utils: MakeGenericType: Failed with exception: %s", ExceptionToString(exp).c_str());
-            return nullptr;
-        }
-        return reinterpret_cast<Il2CppReflectionType*>(genericType);
+        const auto& paramStrRef = paramStream.str();
+        const char* paramStr = paramStrRef.c_str();
+        log(DEBUG, "%s%s %s(%s);", flagStr, retTypeStr, methodName, paramStr);
     }
 
     // Logs information about the given Il2CppClass* as log(DEBUG)
@@ -196,66 +230,23 @@ namespace il2cpp_utils {
         log(DEBUG, "Assembly Name: %s", il2cpp_functions::class_get_assemblyname(klass));
         log(DEBUG, "Rank: %i", il2cpp_functions::class_get_rank(klass));
         log(DEBUG, "Type Token: %i", il2cpp_functions::class_get_type_token(unconst));
-        log(DEBUG, "Flags: %i", il2cpp_functions::class_get_flags(klass));
+        log(DEBUG, "Flags: 0x%.8X", il2cpp_functions::class_get_flags(klass));
         log(DEBUG, "Event Count: %i", klass->event_count);
         log(DEBUG, "Field Count: %i", klass->field_count);
         log(DEBUG, "Method Count: %i", klass->method_count);
         log(DEBUG, "Property Count: %i", klass->property_count);
-        log(DEBUG, "Is Generic: %i", klass->is_generic);
-    }
-
-    // Function Made by zoller27osu, modified by Sc2ad
-    inline const Il2CppClass* MakeGeneric(const Il2CppClass* klazz, std::initializer_list<const Il2CppClass*> args) {
-        InitFunctions();
- 
-        auto typ = GetClassFromName("System", "Type");
-        if (!typ) {
-            return nullptr;
-        }
-        auto getType = il2cpp_functions::class_get_method_from_name(typ, "GetType", 1);
-        if (!getType) {
-            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get System.Type.GetType(param1) method!");
-            return nullptr;
-        }
- 
-        auto klassType = il2cpp_functions::type_get_object(il2cpp_functions::class_get_type_const(klazz));
-        if (!klassType) {
-            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get class type object!");
-            return nullptr;
-        }
- 
-        // Call Type.MakeGenericType on it
-        auto a = il2cpp_functions::array_new_specific(typ, args.size());
-        if (!a) {
-            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to make new array with length: %i", args.size());
-            return nullptr;
-        }
- 
+        log(DEBUG, "Is Generic: %i", il2cpp_functions::class_is_generic(klass));
+        log(DEBUG, "Is Abstract: %i", il2cpp_functions::class_is_abstract(klass));
+        log(DEBUG, "LOGGING METHODS...");
+        void* myIter = nullptr;
+        const MethodInfo* current;
         int i = 0;
-        for (auto arg : args) {
-            auto t = il2cpp_functions::class_get_type_const(arg);
-            auto o = il2cpp_functions::type_get_object(t);
-            if (!o) {
-                log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get type for %s", il2cpp_functions::class_get_name_const(arg));
-                return nullptr;
-            }
-            il2cpp_array_set(a, void*, i, reinterpret_cast<void*>(o));
+        while ((current = il2cpp_functions::class_get_methods(unconst, &myIter))) {
+            log(DEBUG, "Method %i:", i);
+            LogMethod(current);
             i++;
         }
-
-        auto reflection_type = MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), a);
-        if (!reflection_type) {
-            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to MakeGenericType from Il2CppReflectionType and Il2CppArray!");
-            return nullptr;
-        }
-
-        auto ret = il2cpp_functions::class_from_system_type(reinterpret_cast<Il2CppReflectionType*>(reflection_type));
-        if (!ret) {
-            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get class from Il2CppReflectionType!");
-            return nullptr;
-        }
-        log(DEBUG, "il2cpp_utils: MakeGeneric: returning %s", il2cpp_functions::class_get_name(ret));
-        return ret;
+        log(DEBUG, "====================================================================================")
     }
 
     // Creates a cs string (allocates it) with the given string_view and returns it
@@ -265,14 +256,14 @@ namespace il2cpp_utils {
     }
 
     // Returns if a given source object is an object of the given class
-    [[nodiscard]] inline bool Match(const Il2CppObject* source, const Il2CppClass* klazz) noexcept {
-        return (source->klass == klazz);
+    [[nodiscard]] inline bool Match(const Il2CppObject* source, const Il2CppClass* klass) noexcept {
+        return (source->klass == klass);
     }
 
     // Asserts that a given source object is an object of the given class
-    inline bool AssertMatch(const Il2CppObject* source, const Il2CppClass* klazz) {
+    inline bool AssertMatch(const Il2CppObject* source, const Il2CppClass* klass) {
         InitFunctions();
-        if (!Match(source, klazz)) {
+        if (!Match(source, klass)) {
             log(CRITICAL, "il2cpp_utils: AssertMatch: Unhandled subtype: namespace %s, class %s", 
                 il2cpp_functions::class_get_namespace(source->klass), il2cpp_functions::class_get_name(source->klass));
             std::terminate();
