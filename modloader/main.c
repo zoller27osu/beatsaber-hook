@@ -10,10 +10,14 @@
 #include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <dlfcn.h>
+#include <errno.h>
 
 
 #include "../shared/inline-hook/inlineHook.h"
 #include "../shared/utils/utils.h"
+
+#include "../shared/inline-hook/And64InlineHook.hpp"
+
 
 #define MOD_PATH_FMT "/sdcard/Android/data/%s/files/mods/"
 #define MOD_TEMP_PATH_FMT "/data/data/%s/cache/curmod.so"

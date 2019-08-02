@@ -31,7 +31,7 @@ created time: 2015-11-30
 
 #define ACTION_ENABLE	0
 #define ACTION_DISABLE	1
-	
+#ifndef __aarch64__
 enum hook_status {
 	REGISTERED,
 	HOOKED,
@@ -422,3 +422,4 @@ void inlineHookAll()
 
 	unFreeze(pid);
 }
+#endif

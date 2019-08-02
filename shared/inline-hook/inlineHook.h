@@ -6,7 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#ifndef __aarch64__
 enum ele7en_status {
 	ELE7EN_ERROR_UNKNOWN = -1,
 	ELE7EN_OK = 0,
@@ -30,4 +30,5 @@ void inlineHookAll();
 }
 #endif
 	
+#endif
 #endif
