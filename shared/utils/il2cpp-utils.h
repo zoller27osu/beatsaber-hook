@@ -79,7 +79,7 @@ namespace il2cpp_utils {
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
     Il2CppClass* GetClassFromName(const char* name_space, const char* type_name);
 
-    template<typename TObj, typename... TArgs>
+    template<typename TObj = Il2CppObject, typename... TArgs>
     // Creates a new object of the given class and Il2CppTypes parameters and casts it to TObj*
     TObj* New(Il2CppClass* klass, TArgs* ...args) {
         InitFunctions();
@@ -124,7 +124,7 @@ namespace il2cpp_utils {
         return reinterpret_cast<TObj*>(obj);
     }
 
-    template<typename TObj, typename... TArgs>
+    template<typename TObj = Il2CppObject, typename... TArgs>
     // Creates a New object of the given class and parameters and casts it to TObj*
     // DOES NOT PERFORM TYPE-SAFE CHECKING!
     TObj* NewUnsafe(Il2CppClass* klass, TArgs* ...args) {
@@ -133,7 +133,7 @@ namespace il2cpp_utils {
         void* invoke_params[] = {reinterpret_cast<void*>(args)...};
         // object_new call
         auto obj = il2cpp_functions::object_new(klass);
-        // runtime_invoke constructor with right number of args, return null if multiple matches, return null if constructor errors
+        // runtime_invoke constructor with right number of args, return null if constructor errors
         void* myIter = nullptr;
         constexpr auto count = sizeof...(TArgs);
 
@@ -151,6 +151,51 @@ namespace il2cpp_utils {
             return nullptr;
         }
         return reinterpret_cast<TObj*>(obj);
+    }
+
+    // TODO: add a version with a return like New instead (TObj*)
+    template<class... TArgs>
+    // Runs a MethodInfo method with the specified parameters, returns false if it errors
+    bool RunMethod(void* instance, const MethodInfo* method, TArgs* ...params) {
+        Il2CppException* exp = nullptr;
+        void* invoke_params[] = {reinterpret_cast<void*>(params)...};
+        il2cpp_functions::runtime_invoke(method, instance, invoke_params, &exp);
+        if (exp) {
+            log(ERROR, "%s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
+                il2cpp_utils::ExceptionToString(exp).c_str());
+            return false;
+        }
+        return true;
+    }
+
+    template<typename T = MulticastDelegate, typename R, typename... TArgs>
+    T* MakeAction(Il2CppObject* obj, function_ptr_t<R, TArgs...> callback, const Il2CppType* actionType) {
+        constexpr auto count = sizeof...(TArgs);
+        Il2CppClass* actionClass = il2cpp_functions::class_from_il2cpp_type(actionType);
+
+        /* 
+        * TODO: call PlatformInvoke::MarshalFunctionPointerToDelegate directly instead of copying code from it,
+        * or at least use a cache like utils::NativeDelegateMethodCache::GetNativeDelegate(nativeFunctionPointer);
+        */
+        const MethodInfo* invoke = il2cpp_functions::class_get_method_from_name(actionClass, "Invoke", -1);  // well-formed Actions have only 1 invoke method
+        MethodInfo* method = (MethodInfo*) calloc(1, sizeof(MethodInfo));
+        method->methodPointer = (Il2CppMethodPointer)callback;
+        method->invoker_method = NULL;
+        method->parameters_count = invoke->parameters_count;
+        method->slot = kInvalidIl2CppMethodSlot;
+        method->is_marshaled_from_native = true;  // "a fake MethodInfo wrapping a native function pointer"
+        // Note: it's unclear if these are actually needed or which check is safer
+        // if (obj == nullptr) method->flags |= METHOD_ATTRIBUTE_STATIC;
+
+        // TODO: figure out why passing method directly doesn't work
+        auto action = il2cpp_utils::NewUnsafe<T>(actionClass, obj, &method);
+        auto asDelegate = reinterpret_cast<Delegate*>(action);
+        if (asDelegate->method_ptr != (void*)callback) {
+            log(ERROR, "Created Action's method_ptr (%p) is incorrect (should be %p)!", asDelegate->method_ptr, callback);
+            return nullptr;
+        }
+
+        return action;
     }
 
     // Calls the System.RuntimeType.MakeGenericType(System.Type gt, System.Type[] types) function

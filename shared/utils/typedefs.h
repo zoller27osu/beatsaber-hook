@@ -11,36 +11,7 @@
 #include "../libil2cpp/il2cpp-object-internals.h"
 
 #ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-// C# SPECIFIC
-// BEAT SABER SPECIFIC
-
-// UnityEngine.Color
-typedef struct Color {
-    float r;
-    float g;
-    float b;
-    float a;
-} Color;
-
-// UnityEngine.Vector2
-typedef struct Vector2 {
-    float x;
-    float y;
-} Vector2;
-
-// UnityEngine.Vector3
-typedef struct Vector3 {
-    float x;
-    float y;
-    float z;
-} Vector3;
-
-#ifdef __cplusplus
-}
-
-template< class T >
+template<class T>
 struct is_value_type : std::integral_constant< 
     bool,
     (std::is_arithmetic<T>::value || std::is_enum<T>::value ||
@@ -71,5 +42,82 @@ struct Array : public Il2CppObject
         return max_length;
     }
 };
+
+extern "C" {
+#endif /* __cplusplus */
+#ifndef __cplusplus
+typedef struct Il2CppObject {
+    void* vtable;
+    void* monitor;
+} Il2CppObject;
+#endif /* !__cplusplus */
+
+// C# SPECIFIC
+
+// System.IntPtr
+typedef struct IntPtr {
+    void* value;
+} IntPtr;
+
+// System.DelegateData
+typedef struct DelegateData : Il2CppObject {
+    Il2CppReflectionType* target_type;
+    Il2CppString* method_name;
+    bool curied_first_arg;
+} DelegateData;
+
+// See il2cpp-object-internals.h/Il2CppDelegate
+// System.Delegate
+typedef struct Delegate : Il2CppObject
+{
+    Il2CppMethodPointer method_ptr; // 0x8
+    InvokerMethod invoke_impl; // 0xC
+    Il2CppObject* m_target; // 0x10
+    IntPtr* method; // 0x14
+    void* delegate_trampoline; // 0x18
+    intptr_t extra_arg; // 0x1C
+
+    /*
+    * If non-NULL, this points to a memory location which stores the address of
+    * the compiled code of the method, or NULL if it is not yet compiled.
+    */
+    uint8_t** method_code; // 0x20
+    Il2CppReflectionMethod* method_info; // 0x24
+    Il2CppReflectionMethod* original_method_info; // 0x28
+    DelegateData* data; // 0x2C
+    bool method_is_virtual; // 0x30
+} Delegate;
+
+// System.MulticastDelegate
+typedef struct MulticastDelegate : Delegate
+{
+    Array<Delegate*>* delegates;
+} MulticastDelegate;
+
+// BEAT SABER SPECIFIC
+
+// UnityEngine.Color
+typedef struct Color {
+    float r;
+    float g;
+    float b;
+    float a;
+} Color;
+
+// UnityEngine.Vector2
+typedef struct Vector2 {
+    float x;
+    float y;
+} Vector2;
+
+// UnityEngine.Vector3
+typedef struct Vector3 {
+    float x;
+    float y;
+    float z;
+} Vector3;
+
+#ifdef __cplusplus
+}
 #endif /* __cplusplus */
 #endif /* TYPEDEFS_H */
