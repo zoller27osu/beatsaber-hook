@@ -118,6 +118,14 @@ typedef struct Vector3 {
     float z;
 } Vector3;
 
+// UnityEngine.Quaternion
+typedef struct Quaternion {
+    float x;
+    float y;
+    float z;
+    float w;
+} Quaternion;
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
