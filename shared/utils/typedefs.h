@@ -9,6 +9,7 @@
 #include "../libil2cpp/il2cpp-api-types.h"
 #include "../libil2cpp/il2cpp-class-internals.h"
 #include "../libil2cpp/il2cpp-object-internals.h"
+#include "../libil2cpp/il2cpp-tabledefs.h"
 
 #ifdef __cplusplus
 template<class T>

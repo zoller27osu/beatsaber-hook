@@ -13,15 +13,7 @@
 #include "utils-functions.h"
 #include "logging.h"
 
-#if __has_include("../libil2cpp/il2cpp-tabledefs.h")
-#include "../libil2cpp/il2cpp-tabledefs.h"
-#else
-#define METHOD_ATTRIBUTE_STATIC                    0x0010
-#define METHOD_ATTRIBUTE_VIRTUAL                   0x0040
-#define METHOD_ATTRIBUTE_ABSTRACT                  0x0400
-#endif
-
-// Code courtesy of DaNike
+// function_ptr_t courtesy of DaNike
 template<typename TRet, typename ...TArgs>
 // A generic function pointer, which can be called with and set to a `getRealOffset` call
 using function_ptr_t = TRet(*)(TArgs...);
@@ -143,7 +135,6 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: New: Could not find constructor for provided class!");
             return nullptr;
         }
-        // TODO FIX CTOR CHECKING
         Il2CppException* exp = nullptr;
         il2cpp_functions::runtime_invoke(ctor, obj, invoke_params, &exp);
         if (exp) {
@@ -169,6 +160,8 @@ namespace il2cpp_utils {
     }
 
     template<typename T = MulticastDelegate, typename R, typename... TArgs>
+    // Created by zoller27osu
+    // Creates an Action and casts it to a MulticastDelegate*
     T* MakeAction(Il2CppObject* obj, function_ptr_t<R, TArgs...> callback, const Il2CppType* actionType) {
         constexpr auto count = sizeof...(TArgs);
         Il2CppClass* actionClass = il2cpp_functions::class_from_il2cpp_type(actionType);
@@ -184,8 +177,8 @@ namespace il2cpp_utils {
         method->parameters_count = invoke->parameters_count;
         method->slot = kInvalidIl2CppMethodSlot;
         method->is_marshaled_from_native = true;  // "a fake MethodInfo wrapping a native function pointer"
-        // Note: it's unclear if these are actually needed or which check is safer
-        // if (obj == nullptr) method->flags |= METHOD_ATTRIBUTE_STATIC;
+        // In the event that a function is static, this will behave as normal
+        if (obj == nullptr) method->flags |= METHOD_ATTRIBUTE_STATIC;
 
         // TODO: figure out why passing method directly doesn't work
         auto action = il2cpp_utils::NewUnsafe<T>(actionClass, obj, &method);
@@ -201,7 +194,7 @@ namespace il2cpp_utils {
     // Calls the System.RuntimeType.MakeGenericType(System.Type gt, System.Type[] types) function
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types);
 
-    // Function Made by zoller27osu, modified by Sc2ad
+    // Function made by zoller27osu, modified by Sc2ad
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::initializer_list<const Il2CppClass*> args);
 
     // Gets the type enum of a given type
@@ -239,7 +232,8 @@ namespace il2cpp_utils {
             return il2cpp_functions::type_get_name(type);
         }
     }
- 
+    
+    // Function made by zoller27osu, modified by Sc2ad
     // Logs information about the given MethodInfo* as log(DEBUG)
     inline void LogMethod(const MethodInfo* method) {
         InitFunctions();
@@ -266,6 +260,22 @@ namespace il2cpp_utils {
         log(DEBUG, "%s%s %s(%s);", flagStr, retTypeStr, methodName, paramStr);
     }
 
+    // Created by zoller27osu
+    // Logs information about the given FieldInfo* as log(DEBUG)
+    inline void LogField(FieldInfo* field) {
+        InitFunctions();
+
+        auto flags = il2cpp_functions::field_get_flags(field);
+        const char* flagStr = (flags & FIELD_ATTRIBUTE_STATIC) ? "static " : "";
+        auto type = il2cpp_functions::field_get_type(field);
+        auto typeStr = TypeGetSimpleName(type);
+        auto name = il2cpp_functions::field_get_name(field);
+        auto offset = il2cpp_functions::field_get_offset(field);
+
+        log(DEBUG, "%s%s %s; // 0x%.2X, flags: 0x%.4X", flagStr, typeStr, name, offset, flags);
+    }
+
+    // Some parts provided by zoller27osu
     // Logs information about the given Il2CppClass* as log(DEBUG)
     inline void LogClass(const Il2CppClass* klass) {
         InitFunctions();
@@ -282,7 +292,7 @@ namespace il2cpp_utils {
         log(DEBUG, "Property Count: %i", klass->property_count);
         log(DEBUG, "Is Generic: %i", il2cpp_functions::class_is_generic(klass));
         log(DEBUG, "Is Abstract: %i", il2cpp_functions::class_is_abstract(klass));
-        log(DEBUG, "LOGGING METHODS...");
+        log(DEBUG, "=========METHODS=========");
         void* myIter = nullptr;
         const MethodInfo* current;
         int i = 0;
@@ -291,7 +301,36 @@ namespace il2cpp_utils {
             LogMethod(current);
             i++;
         }
-        log(DEBUG, "====================================================================================")
+        auto genClass = klass->generic_class;
+        if (genClass) {
+            auto genContext = &genClass->context;
+            auto genInst = genContext->class_inst;
+            if (genInst) {
+                for (int i = 0; i < genInst->type_argc; i++) {
+                    auto typ = genInst->type_argv[i];
+                    log(DEBUG, "  generic type %i: %s", i + 1, TypeGetSimpleName(typ));
+                }
+            }
+        }
+        auto declaring = il2cpp_functions::class_get_declaring_type(unconst);
+        log(DEBUG, "declaring type: %p", declaring);
+        if (declaring) LogClass(declaring);
+        auto element = il2cpp_functions::class_get_element_class(unconst);
+        log(DEBUG, "element class: %p (self = %p)", element, klass);
+        if (element && element != klass) LogClass(element);
+
+        log(DEBUG, "=========FIELDS=========");
+        myIter = nullptr;
+        FieldInfo* field;
+        while ((field = il2cpp_functions::class_get_fields(unconst, &myIter))) {
+            LogField(field);
+        }
+        log(DEBUG, "=========END FIELDS=========");
+
+        auto parent = il2cpp_functions::class_get_parent(unconst);
+        log(DEBUG, "parent: %p", parent);
+        if (parent) LogClass(parent);
+        log(DEBUG, "==================================================================================");
     }
 
     // Creates a cs string (allocates it) with the given string_view and returns it
