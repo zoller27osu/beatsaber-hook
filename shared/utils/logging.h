@@ -19,10 +19,14 @@ enum LOG_VERBOSE_TYPE {
 #endif
 
 #ifndef MOD_ID
-#error "'MOD_ID' must be defined in the mod!"
+// This is too annoying, let's change it to default to some stupid stuff
+// #error "'MOD_ID' must be defined in the mod!"
+#define MOD_ID "PLACEHOLDER_MOD_ID"
 #endif
 #ifndef VERSION
-#error "'VERSION' must be defined in the mod!"
+// This is too annoying, let's change ti to default to some stupid stuff
+// #error "'VERSION' must be defined in the mod!"
+#define VERSION "0.0.0"
 #endif
 
 #ifdef log
