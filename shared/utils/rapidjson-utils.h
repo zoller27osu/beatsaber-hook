@@ -6,6 +6,7 @@
 
 #include <type_traits>
 #include "../../rapidjson/include/rapidjson/document.h"
+#include "../../rapidjson/include/rapidjson/allocators.h"
 #include "../../rapidjson/include/rapidjson/prettywriter.h"
 #include "../../rapidjson/include/rapidjson/encodings.h"
 #include "../../rapidjson/include/rapidjson/reader.h"

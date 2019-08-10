@@ -86,12 +86,11 @@ namespace il2cpp_utils {
         constexpr auto count = sizeof...(TArgs);
         Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
         while ((current = il2cpp_functions::class_get_methods(klass, &myIter))) {
-            if (ctor->parameters_count != count) {
+            if (current->parameters_count != count) {
                 continue;
             }
-            // Start at 1 to ignore 'self' param
-            for (int i = 1; i < current->parameters_count; i++) {
-                if (!il2cpp_functions::type_equals(current->parameters[i].parameter_type, argarr[i - 1])) {
+            for (int i = 0; i < current->parameters_count; i++) {
+                if (!il2cpp_functions::type_equals(current->parameters[i].parameter_type, argarr[i])) {
                     goto next_method;
                 }
             }

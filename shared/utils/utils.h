@@ -37,24 +37,25 @@ inlineHook((uint32_t)(addr_ ## name));\
 
 // OFFSETS
 
-// Create an object using il2cpp_object_new offset
-#define OBJ_CREATOR_OFFSET 0x308740
-// GameObject.ctor() offset
-#define GO_CTOR_OFFSET 0xC86558
-// GameObject type offset
-#define GO_TYPE_OFFSET 0x19C7998
-// System.GetType(string typeName) offset
-#define GET_TYPE_OFFSET 0x104B254
-// System.String.Concat(cs_string* left, cs_string* right) offset
-#define CONCAT_STRING_OFFSET 0x972F2C
-// System.String.CreateString(char* array, int start, int length) offset
-#define CREATE_STRING_OFFSET 0x9831BC
-// System.String.FastAllocateString(int length) offset
-#define ALLOCATE_STRING_OFFSET 0x97A704
-// System.String.Substring(cs_string* this, int start, int length) offset
-#define SUBSTRING_OFFSET 0x96EBEC
-// System.String.Replace(cs_string* original, cs_string* old, cs_string* new) offset
-#define STRING_REPLACE_OFFSET 0x97FF04
+// DEPRECATED
+// // Create an object using il2cpp_object_new offset
+// #define OBJ_CREATOR_OFFSET 0x308740
+// // GameObject.ctor() offset
+// #define GO_CTOR_OFFSET 0xC86558
+// // GameObject type offset
+// #define GO_TYPE_OFFSET 0x19C7998
+// // System.GetType(string typeName) offset
+// #define GET_TYPE_OFFSET 0x104B254
+// // System.String.Concat(cs_string* left, cs_string* right) offset
+// #define CONCAT_STRING_OFFSET 0x972F2C
+// // System.String.CreateString(char* array, int start, int length) offset
+// #define CREATE_STRING_OFFSET 0x9831BC
+// // System.String.FastAllocateString(int length) offset
+// #define ALLOCATE_STRING_OFFSET 0x97A704
+// // System.String.Substring(cs_string* this, int start, int length) offset
+// #define SUBSTRING_OFFSET 0x96EBEC
+// // System.String.Replace(cs_string* original, cs_string* old, cs_string* new) offset
+// #define STRING_REPLACE_OFFSET 0x97FF04
 
 // SETTINGS
 
@@ -75,7 +76,7 @@ typedef enum JsonParseError {
 
 // CONFIG
 
-#define CONFIG_PATH "/sdcard/Android/data/com.beatgames.beatsaber/files/mods/cfgs/"
+#define CONFIG_PATH "/sdcard/Android/data/com.beatgames.beatsaber/files/mod_cfgs/"
 
 #ifdef __cplusplus
 }
