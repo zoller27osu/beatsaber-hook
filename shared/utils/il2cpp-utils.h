@@ -53,7 +53,7 @@ namespace il2cpp_utils {
     // Init all of the usable il2cpp API, if it has yet to be initialized
     inline void InitFunctions() {
         if (!il2cpp_functions::initialized) {
-            log(WARNING, "il2cpp_utils: GetClassFromName: IL2CPP Functions Not Initialized!");
+            log(WARNING, "il2cpp_utils: IL2CPP Functions Not Initialized!");
             il2cpp_functions::Init();
         }
     }
