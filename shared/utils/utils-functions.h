@@ -31,9 +31,11 @@ void dump(int before, int after, void* ptr);
 char* readfile(const char* filename);
 // Writes all of the text to a file at the given filename. Returns either 0 or WriteError code
 int writefile(const char* filename, const char* text);
-// Returns if a file exists and can be written to / read from.
+// Returns if a file exists and can be written to / read from
 bool fileexists(const char* filename);
 // Returns a loaded UnityEngine.Object from an asset
 void* loadfromasset(const char* assetFilePath, const char* assetName);
+// Returns the config path for the current mod
+std::string getconfigpath();
 
 #endif /* UTILS_FUNCTIONS_H */

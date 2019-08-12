@@ -204,6 +204,14 @@ bool parsejsonfile(rapidjson::Document& doc, string filename) {
     return true;
 }
 
+string getconfigpath() {
+    string filename;
+    filename = filename.append(CONFIG_PATH);
+    filename = filename.append(MOD_ID);
+    filename = filename.append(".json");
+    return filename;
+}
+
 // CONFIG
 
 rapidjson::Document document;
@@ -211,14 +219,14 @@ bool readJson = false;
 
 // Loads the config for the given MOD_ID, if it doesn't exist, will leave it as an empty object.
 rapidjson::Document& Configuration::Load() {
+    if (readJson) {
+        return document;
+    }
     // document = {};
     if (!direxists(CONFIG_PATH)) {
         mkdir(CONFIG_PATH, 0700);
     }
-    string filename;
-    filename = filename.append(CONFIG_PATH);
-    filename = filename.append(MOD_ID);
-    filename = filename.append(".json");
+    string filename = getconfigpath();
 
     if (!fileexists(filename.c_str())) {
         writefile(filename.c_str(), "{}");
@@ -234,10 +242,7 @@ rapidjson::Document& Configuration::Load() {
 }
 
 rapidjson::Document& Configuration::Reload() {
-    string filename;
-    filename = filename.append(CONFIG_PATH);
-    filename = filename.append(MOD_ID);
-    filename = filename.append(".json");
+    string filename = getconfigpath();
 
     parsejsonfile(document, filename);
     if (!document.IsObject()) {
@@ -251,10 +256,7 @@ void Configuration::Write() {
     if (!direxists(CONFIG_PATH)) {
         mkdir(CONFIG_PATH, 0700);
     }
-    string filename;
-    filename = filename.append(CONFIG_PATH);
-    filename = filename.append(MOD_ID);
-    filename = filename.append(".json");
+    string filename = getconfigpath();
 
     StringBuffer buf;
     PrettyWriter<StringBuffer> writer(buf);
