@@ -2,8 +2,9 @@
 import sys
 import argparse
 import os
+import json
 
-modes = ["Property Method Convert", "Single Class Parse"]
+modes = ["Property Method Convert", "Single Class Parse", "Multiple Class Parse"]
 
 INCLUDES = ["#include <dlfcn.h>", "#include <string_view>", "#include \"../utils/typedefs.h\"", "#include \"../utils/il2cpp-functions.h\"", "#include \"../utils/il2cpp-utils.h\""]
 
@@ -50,6 +51,7 @@ def getParamTypes(method_header):
     return [item for item in spl]
 
 def class_parse(dump_data, namespace, name, dst):
+    dst = os.path.join(dst, namespace + "_" + name + ".h")
     arr = []
     for i in range(len(dump_data)):
         if dump_data[i].startswith("// Namespace: " + namespace):
@@ -118,10 +120,15 @@ def class_parse(dump_data, namespace, name, dst):
                 w.write("// The Initialization function that must be called before using any of these definitions")
                 w.write("static void Init() {")
                 w.indent()
+                w.write("if (!__cached) {")
+                w.indent()
                 w.suffix = ";"
                 for item in func_lines:
                     w.write(item)
+                w.write("__cached = true")
                 w.suffix = ""
+                w.deindent()
+                w.write("}")
                 w.deindent()
                 w.write("}")
                 w.deindent()
@@ -129,6 +136,17 @@ def class_parse(dump_data, namespace, name, dst):
 
                 w.flush(dst)
                 return
+    raise Exception("Could not find class: " + namespace + "." + name)
+
+def parse_many(data, dat, dst):
+    for item in dat:
+        if type(item) == dict:
+            class_parse(data, item['namespace'], item['class'], dst)
+        elif type(item) == list or type(item) == tuple:
+            class_parse(data, item[0], item[1], dst)
+        else:
+            raise TypeError("dat must be list of type dict, list, or tuple!")
+    
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
@@ -148,6 +166,33 @@ if __name__ == '__main__':
             namespace = input("Enter namespace of class to convert: ")
             klass = input("Enter class name to convert: ")
             dst = input("Enter output directory (or press enter for cwd): ")
-            dst = os.path.join(dst, namespace + "_" + klass + ".h")
             class_parse(data, namespace, klass, dst)
-                
+        elif parse == "2":
+            dump = input("Enter path to dump.cs or path to JSON: ")
+            with open(dump, 'r') as f:
+                if dump.endswith(".json"):
+                    d = json.load(f)
+                    with open(d['dump'], 'r') as q:
+                        data = q.readlines()
+                    dat = d['classes']
+                    dst = d['dst']
+                else:
+                    data = f.readlines()
+                    
+                    dst = input("Enter output directory (or press enter for cwd): ")
+                    p = input("Enter namespace (type q at any point to exit): ")
+                    if os.path.exists(p):
+                        with open(p, 'r') as f:
+                            dat = json.load(f)
+                    else:
+                        dat = []
+                        while p != 'q':
+                            k = input("Enter class name (type q at any point to exit): ")
+                            if k == 'q':
+                                break
+                            dat.append({
+                                "namespace": p,
+                                "class": k
+                            })
+                            p = input("Enter namespace (type q at any point to exit): ")
+                parse_many(data, dat, dst)

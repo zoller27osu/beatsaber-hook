@@ -23,17 +23,20 @@ namespace UnityEngine_Resources {
     static const MethodInfo* UnloadUnusedAssets;
     // The Initialization function that must be called before using any of these definitions
     static void Init() {
-        klass = il2cpp_utils::GetClassFromName("UnityEngine", "Resources");
-        ConvertObjects_Object_arr = il2cpp_functions::class_get_method_from_name(klass, "ConvertObjects", 1);
-        FindObjectsOfTypeAll_Type = il2cpp_functions::class_get_method_from_name(klass, "FindObjectsOfTypeAll", 1);
-        FindObjectsOfTypeAll = il2cpp_functions::class_get_method_from_name(klass, "FindObjectsOfTypeAll", 0);
-        Load_string = il2cpp_functions::class_get_method_from_name(klass, "Load", 1);
-        Load_string_generic = il2cpp_functions::class_get_method_from_name(klass, "Load", 1);
-        Load_string_Type = il2cpp_functions::class_get_method_from_name(klass, "Load", 2);
-        LoadAll_string_Type = il2cpp_functions::class_get_method_from_name(klass, "LoadAll", 2);
-        LoadAll_string = il2cpp_functions::class_get_method_from_name(klass, "LoadAll", 1);
-        GetBuiltinResource_Type_string = il2cpp_functions::class_get_method_from_name(klass, "GetBuiltinResource", 2);
-        GetBuiltinResource_string_generic = il2cpp_functions::class_get_method_from_name(klass, "GetBuiltinResource", 1);
-        UnloadUnusedAssets = il2cpp_functions::class_get_method_from_name(klass, "UnloadUnusedAssets", 0);
+        if (!__cached) {
+            klass = il2cpp_utils::GetClassFromName("UnityEngine", "Resources");
+            ConvertObjects_Object_arr = il2cpp_functions::class_get_method_from_name(klass, "ConvertObjects", 1);
+            FindObjectsOfTypeAll_Type = il2cpp_functions::class_get_method_from_name(klass, "FindObjectsOfTypeAll", 1);
+            FindObjectsOfTypeAll = il2cpp_functions::class_get_method_from_name(klass, "FindObjectsOfTypeAll", 0);
+            Load_string = il2cpp_functions::class_get_method_from_name(klass, "Load", 1);
+            Load_string_generic = il2cpp_functions::class_get_method_from_name(klass, "Load", 1);
+            Load_string_Type = il2cpp_functions::class_get_method_from_name(klass, "Load", 2);
+            LoadAll_string_Type = il2cpp_functions::class_get_method_from_name(klass, "LoadAll", 2);
+            LoadAll_string = il2cpp_functions::class_get_method_from_name(klass, "LoadAll", 1);
+            GetBuiltinResource_Type_string = il2cpp_functions::class_get_method_from_name(klass, "GetBuiltinResource", 2);
+            GetBuiltinResource_string_generic = il2cpp_functions::class_get_method_from_name(klass, "GetBuiltinResource", 1);
+            UnloadUnusedAssets = il2cpp_functions::class_get_method_from_name(klass, "UnloadUnusedAssets", 0);
+            __cached = true;
+        }
     }
 }
