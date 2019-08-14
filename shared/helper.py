@@ -17,6 +17,8 @@ class writer:
         self.suffix = ""
     def write(self, text):
         self.arr.append(self.prefix + text + self.suffix)
+    def writeNoPrefix(self, text):
+        self.arr.append(text + self.suffix)
     def indent(self):
         self.prefix += "    "
     def deindent(self):
@@ -55,7 +57,7 @@ def getParamTypes(method_header):
         i += 1
     return [item for item in spl]
 
-def class_parse(dump_data, namespace, name, dst):
+def class_parse(dump_data, namespace, name, dst, trace_types=False):
     dst = os.path.join(dst, namespace.replace(".", "_") + "_" + name + ".h")
     arr = []
     for i in range(len(dump_data)):
@@ -104,6 +106,8 @@ def class_parse(dump_data, namespace, name, dst):
                     if m_name.startswith("."):
                         continue
                     p = getParamTypes(m)
+                    # TODO Iterate over all parameter types, find their namespaces, find their names, cache them and call GetClassFromName on them
+                    # TODO Then, use these classes' type params along with type_equals (or some helper) to get the correct method
                     m_params = len(p)
                     desc_name = m_name + "_" + "_".join(p) if m_params > 0 and not m_name.startswith("set") else m_name
                     desc_name = desc_name.replace("[]", "_arr").replace("*", "_ptr").replace("`", "").replace(".", "_")
@@ -143,7 +147,9 @@ def class_parse(dump_data, namespace, name, dst):
 def parse_many(data, dat, dst):
     for item in dat:
         if type(item) == dict:
-            class_parse(data, item['namespace'], item['class'], dst)
+            if not 'traceUsedTypes' in item:
+                item['traceUsedTypes'] = False
+            class_parse(data, item['namespace'], item['class'], dst, trace_types=item['traceUsedTypes'])
         elif type(item) == list or type(item) == tuple:
             class_parse(data, item[0], item[1], dst)
         else:

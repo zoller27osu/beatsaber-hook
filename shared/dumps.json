@@ -41,6 +41,10 @@
         {
             "namespace": "TMPro",
             "class": "TMP_Text"
+        },
+        {
+            "namespace": "UnityEngine",
+            "class": "Canvas"
         }
     ]
 }
