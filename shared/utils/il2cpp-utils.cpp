@@ -19,13 +19,17 @@ namespace il2cpp_utils {
             // auto img = il2cpp_assembly_get_image(assemb);
             // auto klass = il2cpp_class_from_name(img, name_space, type_name);
             auto img = il2cpp_functions::assembly_get_image(assemb);
+            if (!img) {
+                log(ERROR, "Assembly with name: %s has a null image!", assemb->aname.name);
+                continue;
+            }
             auto klass = il2cpp_functions::class_from_name(img, name_space, type_name);
             if (klass) {
                 return klass;
             }
         }
         log(ERROR, "il2cpp_utils: GetClassFromName: Could not find class with namepace: %s and name: %s", name_space, type_name);
-        return NULL;
+        return nullptr;
     }
 
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types) {
