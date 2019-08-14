@@ -40,7 +40,12 @@ def getParamTypes(method_header):
     spl = method_header[start+1:end].split(" ")
     i = 0
     while i < len(spl):
-        if "," in spl[i]:
+        bracket = False
+        if "<" in spl[i]:
+            bracket = True
+        if ">" in spl[i]:
+            bracket = False
+        if "," in spl[i] and not bracket:
             del(spl[i])
             i -= 1
         if i == len(spl) - 1:
@@ -51,14 +56,14 @@ def getParamTypes(method_header):
     return [item for item in spl]
 
 def class_parse(dump_data, namespace, name, dst):
-    dst = os.path.join(dst, namespace + "_" + name + ".h")
+    dst = os.path.join(dst, namespace.replace(".", "_") + "_" + name + ".h")
     arr = []
     for i in range(len(dump_data)):
         if dump_data[i].startswith("// Namespace: " + namespace):
             # Reasonable to expect classname within 20 of i
             found = False
             for j in range(i, i + 20):
-                if "class " + name in dump_data[j]:
+                if "class " + name + " " in dump_data[j]:
                     found = True
                     break
             if found:
@@ -83,7 +88,7 @@ def class_parse(dump_data, namespace, name, dst):
                 w.write(PARSE_HEADER)
                 w.write("// Contains MethodInfo/Il2CppClass data for: " + namespace + "." + name)
                 klass_name = "klass"
-                w.write("namespace " + namespace + "_" + name + " {")
+                w.write("namespace " + namespace.replace(".", "_") + "_" + name + " {")
                 w.indent()
                 w.prefix += "static "
                 w.suffix = ";"
@@ -105,12 +110,9 @@ def class_parse(dump_data, namespace, name, dst):
                     if m_ret == "T":
                         desc_name += "_generic"
                     generic_removal = desc_name.split("<")
-                    index = 0
-                    while index < len(generic_removal):
-                        if ">" in generic_removal[index]:
-                            del(generic_removal[index])
-                            index -= 1
-                        index += 1
+                    for i in range(len(generic_removal)):
+                        if ">" in generic_removal[i]:
+                            generic_removal[i] = generic_removal[i][generic_removal[i].index(">") + 1:]
                     desc_name = ''.join(generic_removal)
                     func_lines.append(desc_name + " = il2cpp_functions::class_get_method_from_name(" + klass_name + ", \"" + m_name + "\", " + str(m_params) + ")")
                     w.write(desc_name)

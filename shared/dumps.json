@@ -25,6 +25,22 @@
         {
             "namespace": "TMPro",
             "class": "TextMeshProUGUI"
+        },
+        {
+            "namespace": "System",
+            "class": "Type"
+        },
+        {
+            "namespace": "System.Reflection",
+            "class": "Assembly"
+        },
+        {
+            "namespace": "TMPro",
+            "class": "TMP_FontAsset"
+        },
+        {
+            "namespace": "TMPro",
+            "class": "TMP_Text"
         }
     ]
 }
