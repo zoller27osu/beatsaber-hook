@@ -251,6 +251,9 @@ namespace il2cpp_utils {
         for (int i = 0; i < il2cpp_functions::method_get_param_count(method); i++) {
             if (i > 0) paramStream << ", ";
             auto paramType = il2cpp_functions::method_get_param(method, i);
+            if (il2cpp_functions::type_is_byref(paramType)) {
+                paramStream << "out/ref ";
+            }
             paramStream << TypeGetSimpleName(paramType) << " ";
             paramStream << il2cpp_functions::method_get_param_name(method, i);
         }
@@ -276,7 +279,7 @@ namespace il2cpp_utils {
 
     // Some parts provided by zoller27osu
     // Logs information about the given Il2CppClass* as log(DEBUG)
-    inline void LogClass(const Il2CppClass* klass) {
+    inline void LogClass(const Il2CppClass* klass, bool logParents = true) {
         InitFunctions();
 
         auto unconst = const_cast<Il2CppClass*>(klass);
@@ -328,7 +331,7 @@ namespace il2cpp_utils {
 
         auto parent = il2cpp_functions::class_get_parent(unconst);
         log(DEBUG, "parent: %p", parent);
-        if (parent) LogClass(parent);
+        if (parent && logParents) LogClass(parent);
         log(DEBUG, "==================================================================================");
     }
 
@@ -359,6 +362,24 @@ namespace il2cpp_utils {
     [[nodiscard]] inline auto down_cast(From* in) noexcept {
         static_assert(std::is_convertible<To*, From*>::value);
         return static_cast<To*>(in);
+    }
+
+    template<typename... TArgs>
+    // Returns if a given MethodInfo's parameter match the Il2CppTypes provided as args
+    inline bool ParameterMatch(const MethodInfo* method, TArgs* ...args) {
+        InitFunctions();
+
+        constexpr auto count = sizeof...(TArgs);
+        Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
+        if (method->parameters_count != count) {
+            return false;
+        }
+        for (int i = 0; i < method->parameters_count; i++) {
+            if (!il2cpp_functions::type_equals(method->parameters[i].parameter_type, argarr[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 #endif /* IL2CPP_UTILS_H */
