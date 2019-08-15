@@ -396,5 +396,15 @@ namespace il2cpp_utils {
         }
         return true;
     }
+
+    template<typename... TArgs>
+    // Runtime Invoke, but with a list initializer for args
+    inline Il2CppObject* RuntimeInvoke(const MethodInfo* method, Il2CppObject* reference, Il2CppException** exc, TArgs* ...args) {
+        InitFunctions();
+
+        
+        void* invoke_params[] = {reinterpret_cast<void*>(args)...};
+        return il2cpp_functions::runtime_invoke(method, reference, invoke_params, exc);
+    }
 }
 #endif /* IL2CPP_UTILS_H */
