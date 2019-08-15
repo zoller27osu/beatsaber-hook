@@ -84,18 +84,20 @@ namespace il2cpp_utils {
         const MethodInfo* current;
         const MethodInfo* ctor = nullptr;
         constexpr auto count = sizeof...(TArgs);
-        Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
+        const Il2CppType* argarr[count];
+        for (int i = 0; i < count; i++) {
+            // // TODO Make this work with i instead of 0
+            // if (!std::is_convertible<std::tuple_element_t<0, std::tuple<TArgs...>>, Il2CppObject>::value) {
+            //     // It's not an Il2CppObject
+            //     // Deal with this alternatively
+            // }
+            argarr[i] = il2cpp_functions::class_get_type(il2cpp_functions::object_get_class(reinterpret_cast<Il2CppObject*>(invoke_params[i])));
+        }
+        // Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
         while ((current = il2cpp_functions::class_get_methods(klass, &myIter))) {
-            if (current->parameters_count != count) {
-                continue;
+            if (ParameterMatch(current, argarr, count)) {
+                ctor = current;
             }
-            for (int i = 0; i < current->parameters_count; i++) {
-                if (!il2cpp_functions::type_equals(current->parameters[i].parameter_type, argarr[i])) {
-                    goto next_method;
-                }
-            }
-            ctor = current;
-            next_method:;
         }
         if (!ctor) {
             log(ERROR, "il2cpp_utils: New: Could not find constructor for provided class!");
@@ -365,7 +367,7 @@ namespace il2cpp_utils {
     }
 
     template<typename... TArgs>
-    // Returns if a given MethodInfo's parameter match the Il2CppTypes provided as args
+    // Returns if a given MethodInfo's parameters match the Il2CppTypes provided as args
     inline bool ParameterMatch(const MethodInfo* method, TArgs* ...args) {
         InitFunctions();
 
@@ -376,6 +378,19 @@ namespace il2cpp_utils {
         }
         for (int i = 0; i < method->parameters_count; i++) {
             if (!il2cpp_functions::type_equals(method->parameters[i].parameter_type, argarr[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Returns if a given MethodInfo's parameters match the Il2CppType array provided as type_arr
+    inline bool ParameterMatch(const MethodInfo* method, Il2CppType** type_arr, int count) {
+        if (method->parameters_count != count) {
+            return false;
+        }
+        for (int i = 0; i < method->parameters_count; i++) {
+            if (!il2cpp_functions::type_equals(method->parameters[i].parameter_type, type_arr[i])) {
                 return false;
             }
         }
