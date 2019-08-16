@@ -11,3 +11,5 @@ customcolors/libs/*
 customcolors/obj/*
 
 shared/libil2cpp/
+
+*.pyc
