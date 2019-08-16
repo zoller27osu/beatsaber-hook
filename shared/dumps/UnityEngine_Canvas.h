@@ -1,3 +1,5 @@
+#ifndef UnityEngine_Canvas_DEFINED
+#define UnityEngine_Canvas_DEFINED
 // This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
@@ -8,6 +10,10 @@
 #include "../utils/il2cpp-utils.h"
 // Contains MethodInfo/Il2CppClass data for: UnityEngine.Canvas
 namespace UnityEngine_Canvas {
+    // UnityEngine.Canvas
+    typedef struct Class {
+        static void* willRenderCanvases; // 0x0
+    } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
     static const MethodInfo* add_willRenderCanvases_Canvas_WillRenderCanvases;
@@ -74,3 +80,4 @@ namespace UnityEngine_Canvas {
         }
     }
 }
+#endif /* UnityEngine_Canvas_DEFINED */

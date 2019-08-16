@@ -57,6 +57,29 @@ def getParamTypes(method_header):
         i += 1
     return [item for item in spl]
 
+def convertCsTypeToC(typ):
+    if typ == "int" or typ == "float" or typ == "double" or typ == "IntPtr":
+        return typ
+    if typ == "bool":
+        return "uint32_t"
+    if typ == "byte":
+        return "char"
+    if typ == "char":
+        return "char16_t"
+    if typ == "string":
+        return "Il2CppString*"
+    if "*" in typ:
+        return "void*"
+    return "void*"
+
+def getFieldLine(line):
+    spl = line.strip().split(";")[0].split(" ")
+    name = spl[-1]
+    cs_type = spl[len(spl) - 2]
+    comment = line.strip().split("; ")[1]
+    static = "static " if "static" in line.strip() else ""
+    return static + convertCsTypeToC(cs_type) + " " + name + "; " + comment
+
 def class_parse(dump_data, namespace, name, dst, trace_types=False):
     dst = os.path.join(dst, namespace.replace(".", "_") + "_" + name + ".h")
     arr = []
@@ -64,34 +87,63 @@ def class_parse(dump_data, namespace, name, dst, trace_types=False):
         if dump_data[i].startswith("// Namespace: " + namespace):
             # Reasonable to expect classname within 20 of i
             found = False
+            parent = ""
             for j in range(i, i + 20):
                 if "class " + name + " " in dump_data[j]:
                     found = True
+                    if " : " in dump_data[j]:
+                        parent = dump_data[j].split(" : ")[1]
                     break
             if found:
                 # Found matching class, let's start defining stuff!
                 # 1000 lines past start of the class is reasonable
                 methods_found = False
+                fields_found = False
                 methods = []
+                fields = []
                 for q in range(j + 2, j + 1000):
+                    if dump_data[q].strip().startswith("// Fields"):
+                        fields_found = True
+                        continue
                     if dump_data[q].strip().startswith("// Methods"):
                         methods_found = True
                         continue
                     if dump_data[q].strip() == "}":
                         # Found matching class with no methods
-                        if not methods_found:
+                        if not methods_found and not fields_found:
                             return
                         else:
                             break
-                    if methods_found and not dump_data[q].strip().startswith("["):
-                        # Found a method!
-                        methods.append(dump_data[q].strip())
+                    if fields_found and dump_data[q].strip() == "":
+                        fields_found = False
+                    if not dump_data[q].strip().startswith("["):
+                        if fields_found and not methods_found:
+                            # Found a field!
+                            fields.append(dump_data[q].strip())
+                        if methods_found:
+                            # Found a method!
+                            methods.append(dump_data[q].strip())
                 w = writer()
+                w.write("#ifndef " + namespace.replace(".", "_") + "_" + name + "_DEFINED")
+                w.write("#define " + namespace.replace(".", "_") + "_" + name + "_DEFINED")
                 w.write(PARSE_HEADER)
                 w.write("// Contains MethodInfo/Il2CppClass data for: " + namespace + "." + name)
                 klass_name = "klass"
                 w.write("namespace " + namespace.replace(".", "_") + "_" + name + " {")
                 w.indent()
+                # TODO Add Field Dump to struct called Class
+                # Check if recusrive dump allowed (to dump parents)
+                w.write("// " + namespace + "." + name)
+                w.write("typedef struct Class {")
+                w.indent()
+                for f in fields:
+                    if "const" in f:
+                        continue
+                    if "" == f:
+                        continue
+                    w.write(getFieldLine(f))
+                w.deindent()
+                w.write("} Class;")
                 w.prefix += "static "
                 w.suffix = ";"
                 w.write("bool __cached = false")
@@ -139,6 +191,7 @@ def class_parse(dump_data, namespace, name, dst, trace_types=False):
                 w.write("}")
                 w.deindent()
                 w.write("}")
+                w.write("#endif /* " + namespace.replace(".", "_") + "_" + name + "_DEFINED */")
 
                 w.flush(dst)
                 return

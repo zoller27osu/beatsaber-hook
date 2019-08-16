@@ -1,3 +1,5 @@
+#ifndef TMPro_TMP_Text_DEFINED
+#define TMPro_TMP_Text_DEFINED
 // This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
@@ -8,6 +10,214 @@
 #include "../utils/il2cpp-utils.h"
 // Contains MethodInfo/Il2CppClass data for: TMPro.TMP_Text
 namespace TMPro_TMP_Text {
+    // TMPro.TMP_Text
+    typedef struct Class {
+        Il2CppString* m_text; // 0x64
+        uint32_t m_isRightToLeft; // 0x68
+        void* m_fontAsset; // 0x6C
+        void* m_currentFontAsset; // 0x70
+        uint32_t m_isSDFShader; // 0x74
+        void* m_sharedMaterial; // 0x78
+        void* m_currentMaterial; // 0x7C
+        void* m_materialReferences; // 0x80
+        void* m_materialReferenceIndexLookup; // 0x84
+        void* m_materialReferenceStack; // 0x88
+        int m_currentMaterialIndex; // 0xB4
+        void* m_fontSharedMaterials; // 0xB8
+        void* m_fontMaterial; // 0xBC
+        void* m_fontMaterials; // 0xC0
+        uint32_t m_isMaterialDirty; // 0xC4
+        void* m_fontColor32; // 0xC8
+        void* m_fontColor; // 0xCC
+        static void* s_colorWhite; // 0x0
+        void* m_underlineColor; // 0xDC
+        void* m_strikethroughColor; // 0xE0
+        void* m_highlightColor; // 0xE4
+        uint32_t m_enableVertexGradient; // 0xE8
+        void* m_colorMode; // 0xEC
+        void* m_fontColorGradient; // 0xF0
+        void* m_fontColorGradientPreset; // 0x130
+        void* m_spriteAsset; // 0x134
+        uint32_t m_tintAllSprites; // 0x138
+        uint32_t m_tintSprite; // 0x139
+        void* m_spriteColor; // 0x13C
+        uint32_t m_overrideHtmlColors; // 0x140
+        void* m_faceColor; // 0x144
+        void* m_outlineColor; // 0x148
+        float m_outlineWidth; // 0x14C
+        float m_fontSize; // 0x150
+        float m_currentFontSize; // 0x154
+        float m_fontSizeBase; // 0x158
+        void* m_sizeStack; // 0x15C
+        int m_fontWeight; // 0x16C
+        int m_fontWeightInternal; // 0x170
+        void* m_fontWeightStack; // 0x174
+        uint32_t m_enableAutoSizing; // 0x184
+        float m_maxFontSize; // 0x188
+        float m_minFontSize; // 0x18C
+        float m_fontSizeMin; // 0x190
+        float m_fontSizeMax; // 0x194
+        void* m_fontStyle; // 0x198
+        void* m_style; // 0x19C
+        void* m_fontStyleStack; // 0x1A0
+        uint32_t m_isUsingBold; // 0x1AA
+        void* m_textAlignment; // 0x1AC
+        void* m_lineJustification; // 0x1B0
+        void* m_lineJustificationStack; // 0x1B4
+        void* m_textContainerLocalCorners; // 0x1C4
+        uint32_t m_isAlignmentEnumConverted; // 0x1C8
+        float m_characterSpacing; // 0x1CC
+        float m_cSpacing; // 0x1D0
+        float m_monoSpacing; // 0x1D4
+        float m_wordSpacing; // 0x1D8
+        float m_lineSpacing; // 0x1DC
+        float m_lineSpacingDelta; // 0x1E0
+        float m_lineHeight; // 0x1E4
+        float m_lineSpacingMax; // 0x1E8
+        float m_paragraphSpacing; // 0x1EC
+        float m_charWidthMaxAdj; // 0x1F0
+        float m_charWidthAdjDelta; // 0x1F4
+        uint32_t m_enableWordWrapping; // 0x1F8
+        uint32_t m_isCharacterWrappingEnabled; // 0x1F9
+        uint32_t m_isNonBreakingSpace; // 0x1FA
+        uint32_t m_isIgnoringAlignment; // 0x1FB
+        float m_wordWrappingRatios; // 0x1FC
+        void* m_overflowMode; // 0x200
+        int m_firstOverflowCharacterIndex; // 0x204
+        void* m_linkedTextComponent; // 0x208
+        uint32_t m_isLinkedTextComponent; // 0x20C
+        uint32_t m_isTextTruncated; // 0x20D
+        uint32_t m_enableKerning; // 0x20E
+        uint32_t m_enableExtraPadding; // 0x20F
+        uint32_t checkPaddingRequired; // 0x210
+        uint32_t m_isRichText; // 0x211
+        uint32_t m_parseCtrlCharacters; // 0x212
+        uint32_t m_isOverlay; // 0x213
+        uint32_t m_isOrthographic; // 0x214
+        uint32_t m_isCullingEnabled; // 0x215
+        uint32_t m_ignoreRectMaskCulling; // 0x216
+        uint32_t m_ignoreCulling; // 0x217
+        void* m_horizontalMapping; // 0x218
+        void* m_verticalMapping; // 0x21C
+        float m_uvLineOffset; // 0x220
+        void* m_renderMode; // 0x224
+        void* m_geometrySortingOrder; // 0x228
+        int m_firstVisibleCharacter; // 0x22C
+        int m_maxVisibleCharacters; // 0x230
+        int m_maxVisibleWords; // 0x234
+        int m_maxVisibleLines; // 0x238
+        uint32_t m_useMaxVisibleDescender; // 0x23C
+        int m_pageToDisplay; // 0x240
+        uint32_t m_isNewPage; // 0x244
+        void* m_margin; // 0x248
+        float m_marginLeft; // 0x258
+        float m_marginRight; // 0x25C
+        float m_marginWidth; // 0x260
+        float m_marginHeight; // 0x264
+        float m_width; // 0x268
+        void* m_textInfo; // 0x26C
+        uint32_t m_havePropertiesChanged; // 0x270
+        uint32_t m_isUsingLegacyAnimationComponent; // 0x271
+        void* m_transform; // 0x274
+        void* m_rectTransform; // 0x278
+        bool k__BackingField; // 0x27C
+        uint32_t m_autoSizeTextContainer; // 0x27D
+        void* m_mesh; // 0x280
+        uint32_t m_isVolumetricText; // 0x284
+        void* m_spriteAnimator; // 0x288
+        float m_flexibleHeight; // 0x28C
+        float m_flexibleWidth; // 0x290
+        float m_minWidth; // 0x294
+        float m_minHeight; // 0x298
+        float m_maxWidth; // 0x29C
+        float m_maxHeight; // 0x2A0
+        void* m_LayoutElement; // 0x2A4
+        float m_preferredWidth; // 0x2A8
+        float m_renderedWidth; // 0x2AC
+        uint32_t m_isPreferredWidthDirty; // 0x2B0
+        float m_preferredHeight; // 0x2B4
+        float m_renderedHeight; // 0x2B8
+        uint32_t m_isPreferredHeightDirty; // 0x2BC
+        uint32_t m_isCalculatingPreferredValues; // 0x2BD
+        int m_recursiveCount; // 0x2C0
+        int m_layoutPriority; // 0x2C4
+        uint32_t m_isCalculateSizeRequired; // 0x2C8
+        uint32_t m_isLayoutDirty; // 0x2C9
+        uint32_t m_verticesAlreadyDirty; // 0x2CA
+        uint32_t m_layoutAlreadyDirty; // 0x2CB
+        uint32_t m_isAwake; // 0x2CC
+        uint32_t m_isWaitingOnResourceLoad; // 0x2CD
+        uint32_t m_isInputParsingRequired; // 0x2CE
+        void* m_inputSource; // 0x2D0
+        Il2CppString* old_text; // 0x2D4
+        float m_fontScale; // 0x2D8
+        float m_fontScaleMultiplier; // 0x2DC
+        void* m_htmlTag; // 0x2E0
+        void* m_xmlAttribute; // 0x2E4
+        void* m_attributeParameterValues; // 0x2E8
+        float tag_LineIndent; // 0x2EC
+        float tag_Indent; // 0x2F0
+        void* m_indentStack; // 0x2F4
+        uint32_t tag_NoParsing; // 0x304
+        uint32_t m_isParsingText; // 0x305
+        void* m_FXMatrix; // 0x308
+        uint32_t m_isFXMatrixSet; // 0x348
+        void* m_char_buffer; // 0x34C
+        void* m_internalCharacterInfo; // 0x350
+        void* m_input_CharArray; // 0x354
+        int m_charArray_Length; // 0x358
+        int m_totalCharacterCount; // 0x35C
+        void* m_SavedWordWrapState; // 0x360
+        void* m_SavedLineState; // 0x55C
+        int m_characterCount; // 0x758
+        int m_firstCharacterOfLine; // 0x75C
+        int m_firstVisibleCharacterOfLine; // 0x760
+        int m_lastCharacterOfLine; // 0x764
+        int m_lastVisibleCharacterOfLine; // 0x768
+        int m_lineNumber; // 0x76C
+        int m_lineVisibleCharacterCount; // 0x770
+        int m_pageNumber; // 0x774
+        float m_maxAscender; // 0x778
+        float m_maxCapHeight; // 0x77C
+        float m_maxDescender; // 0x780
+        float m_maxLineAscender; // 0x784
+        float m_maxLineDescender; // 0x788
+        float m_startOfLineAscender; // 0x78C
+        float m_lineOffset; // 0x790
+        void* m_meshExtents; // 0x794
+        void* m_htmlColor; // 0x7A4
+        void* m_colorStack; // 0x7A8
+        void* m_underlineColorStack; // 0x7B8
+        void* m_strikethroughColorStack; // 0x7C8
+        void* m_highlightColorStack; // 0x7D8
+        void* m_colorGradientPreset; // 0x7E8
+        void* m_colorGradientStack; // 0x7EC
+        float m_tabSpacing; // 0x7FC
+        float m_spacing; // 0x800
+        void* m_styleStack; // 0x804
+        void* m_actionStack; // 0x814
+        float m_padding; // 0x824
+        float m_baselineOffset; // 0x828
+        void* m_baselineOffsetStack; // 0x82C
+        float m_xAdvance; // 0x83C
+        void* m_textElementType; // 0x840
+        void* m_cached_TextElement; // 0x844
+        void* m_cached_Underline_GlyphInfo; // 0x848
+        void* m_cached_Ellipsis_GlyphInfo; // 0x84C
+        void* m_defaultSpriteAsset; // 0x850
+        void* m_currentSpriteAsset; // 0x854
+        int m_spriteCount; // 0x858
+        int m_spriteIndex; // 0x85C
+        int m_spriteAnimationID; // 0x860
+        uint32_t m_ignoreActiveState; // 0x864
+        void* k_Power; // 0x868
+        static void* k_LargePositiveVector2; // 0x4
+        static void* k_LargeNegativeVector2; // 0xC
+        static float k_LargePositiveFloat; // 0x14
+        static float k_LargeNegativeFloat; // 0x18
+        static int k_LargePositiveInt; // 0x1C
+        static int k_LargeNegativeInt; // 0x20
+    } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
     static const MethodInfo* get_text;
@@ -548,3 +758,4 @@ namespace TMPro_TMP_Text {
         }
     }
 }
+#endif /* TMPro_TMP_Text_DEFINED */

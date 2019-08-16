@@ -1,3 +1,5 @@
+#ifndef UnityEngine_Object_DEFINED
+#define UnityEngine_Object_DEFINED
 // This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
@@ -8,6 +10,11 @@
 #include "../utils/il2cpp-utils.h"
 // Contains MethodInfo/Il2CppClass data for: UnityEngine.Object
 namespace UnityEngine_Object {
+    // UnityEngine.Object
+    typedef struct Class {
+        IntPtr m_CachedPtr; // 0x8
+        static int OffsetOfInstanceIDInCPlusPlusObject; // 0x0
+    } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
     static const MethodInfo* GetInstanceID;
@@ -106,3 +113,4 @@ namespace UnityEngine_Object {
         }
     }
 }
+#endif /* UnityEngine_Object_DEFINED */

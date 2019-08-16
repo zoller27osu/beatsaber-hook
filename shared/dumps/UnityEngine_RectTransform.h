@@ -1,3 +1,5 @@
+#ifndef UnityEngine_RectTransform_DEFINED
+#define UnityEngine_RectTransform_DEFINED
 // This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
@@ -8,6 +10,10 @@
 #include "../utils/il2cpp-utils.h"
 // Contains MethodInfo/Il2CppClass data for: UnityEngine.RectTransform
 namespace UnityEngine_RectTransform {
+    // UnityEngine.RectTransform
+    typedef struct Class {
+        static void* reapplyDrivenProperties; // 0x0
+    } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
     static const MethodInfo* add_reapplyDrivenProperties_RectTransform_ReapplyDrivenProperties;
@@ -84,3 +90,4 @@ namespace UnityEngine_RectTransform {
         }
     }
 }
+#endif /* UnityEngine_RectTransform_DEFINED */

@@ -1,3 +1,5 @@
+#ifndef System_Type_DEFINED
+#define System_Type_DEFINED
 // This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
@@ -8,6 +10,17 @@
 #include "../utils/il2cpp-utils.h"
 // Contains MethodInfo/Il2CppClass data for: System.Type
 namespace System_Type {
+    // System.Type
+    typedef struct Class {
+        static void* FilterAttribute; // 0x0
+        static void* FilterName; // 0x4
+        static void* FilterNameIgnoreCase; // 0x8
+        static void* Missing; // 0xC
+        static char16_t Delimiter; // 0x10
+        static void* EmptyTypes; // 0x14
+        static void* defaultBinder; // 0x18
+        void* _impl; // 0x8
+    } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
     static const MethodInfo* get_MemberType;
@@ -270,3 +283,4 @@ namespace System_Type {
         }
     }
 }
+#endif /* System_Type_DEFINED */

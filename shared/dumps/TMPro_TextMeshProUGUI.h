@@ -1,3 +1,5 @@
+#ifndef TMPro_TextMeshProUGUI_DEFINED
+#define TMPro_TextMeshProUGUI_DEFINED
 // This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
@@ -8,6 +10,27 @@
 #include "../utils/il2cpp-utils.h"
 // Contains MethodInfo/Il2CppClass data for: TMPro.TextMeshProUGUI
 namespace TMPro_TextMeshProUGUI {
+    // TMPro.TextMeshProUGUI
+    typedef struct Class {
+        uint32_t m_isRebuildingLayout; // 0x86C
+        uint32_t m_hasFontAssetChanged; // 0x86D
+        void* m_subTextObjects; // 0x870
+        float m_previousLossyScaleY; // 0x874
+        void* m_RectTransformCorners; // 0x878
+        void* m_canvasRenderer; // 0x87C
+        void* m_canvas; // 0x880
+        uint32_t m_isFirstAllocation; // 0x884
+        int m_max_characters; // 0x888
+        uint32_t m_isMaskingEnabled; // 0x88C
+        void* m_baseMaterial; // 0x890
+        uint32_t m_isScrollRegionSet; // 0x894
+        int m_stencilID; // 0x898
+        void* m_maskOffset; // 0x89C
+        void* m_EnvMapMatrix; // 0x8AC
+        uint32_t m_isRegisteredForEvents; // 0x8EC
+        int m_recursiveCountA; // 0x8F0
+        int loopCountA; // 0x8F4
+    } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
     static const MethodInfo* get_materialForRendering;
@@ -156,3 +179,4 @@ namespace TMPro_TextMeshProUGUI {
         }
     }
 }
+#endif /* TMPro_TextMeshProUGUI_DEFINED */

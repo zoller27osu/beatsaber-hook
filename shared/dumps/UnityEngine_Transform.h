@@ -1,3 +1,5 @@
+#ifndef UnityEngine_Transform_DEFINED
+#define UnityEngine_Transform_DEFINED
 // This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
@@ -8,6 +10,9 @@
 #include "../utils/il2cpp-utils.h"
 // Contains MethodInfo/Il2CppClass data for: UnityEngine.Transform
 namespace UnityEngine_Transform {
+    // UnityEngine.Transform
+    typedef struct Class {
+    } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
     static const MethodInfo* get_position;
@@ -174,3 +179,4 @@ namespace UnityEngine_Transform {
         }
     }
 }
+#endif /* UnityEngine_Transform_DEFINED */

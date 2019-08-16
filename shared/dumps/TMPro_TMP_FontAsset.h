@@ -1,3 +1,5 @@
+#ifndef TMPro_TMP_FontAsset_DEFINED
+#define TMPro_TMP_FontAsset_DEFINED
 // This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
@@ -8,6 +10,29 @@
 #include "../utils/il2cpp-utils.h"
 // Contains MethodInfo/Il2CppClass data for: TMPro.TMP_FontAsset
 namespace TMPro_TMP_FontAsset {
+    // TMPro.TMP_FontAsset
+    typedef struct Class {
+        static void* s_defaultFontAsset; // 0x0
+        void* fontAssetType; // 0x18
+        void* m_fontInfo; // 0x1C
+        void* atlas; // 0x20
+        void* m_glyphInfoList; // 0x24
+        void* m_characterDictionary; // 0x28
+        void* m_kerningDictionary; // 0x2C
+        void* m_kerningInfo; // 0x30
+        void* m_kerningPair; // 0x34
+        void* fallbackFontAssets; // 0x38
+        void* m_CreationSettings; // 0x3C
+        void* fontWeights; // 0x7C
+        void* m_characterSet; // 0x80
+        float normalStyle; // 0x84
+        float normalSpacingOffset; // 0x88
+        float boldStyle; // 0x8C
+        float boldSpacing; // 0x90
+        char italicStyle; // 0x94
+        char tabSize; // 0x95
+        char m_oldTabSize; // 0x96
+    } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
     static const MethodInfo* get_defaultFontAsset;
@@ -62,3 +87,4 @@ namespace TMPro_TMP_FontAsset {
         }
     }
 }
+#endif /* TMPro_TMP_FontAsset_DEFINED */

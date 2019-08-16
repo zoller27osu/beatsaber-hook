@@ -71,28 +71,110 @@ namespace il2cpp_utils {
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
     Il2CppClass* GetClassFromName(const char* name_space, const char* type_name);
 
+    // Framework provided by DaNike
+    namespace il2cpp_type_check {
+        template<typename T>
+        struct il2cpp_arg_type_ {};
+
+        template<typename T>
+        using il2cpp_arg_type = il2cpp_arg_type_<std::decay_t<T>>;
+
+        template<typename T>
+        struct il2cpp_arg_type_<T*> { // we assume that pointers are already objects to get the type of
+            static inline Il2CppType const* get(T const* arg) {
+                return il2cpp_functions::class_get_type(
+                    il2cpp_functions::object_get_class(reinterpret_cast<Il2CppObject*>(arg)));
+            }
+        };
+
+        template<>
+        struct il2cpp_arg_type_<int8_t> {
+            static inline Il2CppType const* get(int8_t) {
+                // return System.SByte
+                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "SByte"));
+            }
+        };
+
+        template<>
+        struct il2cpp_arg_type_<uint8_t> {
+            static inline Il2CppType const* get(uint8_t) {
+                // return System.Byte
+                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "SByte"));
+            }
+        };
+
+        template<>
+        struct il2cpp_arg_type_<float> {
+            static inline Il2CppType const* get(float) {
+                // return System.Single
+                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "Single"));
+            }
+        };
+
+        template<>
+        struct il2cpp_arg_type_<double> {
+            static inline Il2CppType const* get(double) {
+                // return System.Double
+                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "Double"));
+            }
+        };
+
+        template<>
+        struct il2cpp_arg_type_<int16_t> {
+            static inline Il2CppType const* get(int16_t) {
+                // return System.Int16
+                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "Int16"));
+            }
+        };
+
+        template<>
+        struct il2cpp_arg_type_<int> {
+            static inline Il2CppType const* get(int) {
+                // return System.Int32
+                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "Int32"));
+            }
+        };
+
+        template<>
+        struct il2cpp_arg_type_<int64_t> {
+            static inline Il2CppType const* get(int64_t) {
+                // return System.Int64
+                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "Int64"));
+            }
+        };
+
+        // TODO Add more types
+
+        template<typename T>
+        struct il2cpp_arg_ptr {
+            static inline void* get(T const& arg) {
+                return reinterpret_cast<void*>(&arg);
+            }
+        };
+        template<typename T>
+        struct il2cpp_arg_ptr<T*> {
+            static inline void* get(T* arg) {
+                return reinterpret_cast<void*>(arg);
+            }
+        };
+    }
+
     template<typename TObj = Il2CppObject, typename... TArgs>
     // Creates a new object of the given class and Il2CppTypes parameters and casts it to TObj*
-    TObj* New(Il2CppClass* klass, TArgs* ...args) {
+    TObj* New(Il2CppClass* klass, TArgs const& ...args) {
         InitFunctions();
 
-        void* invoke_params[] = {reinterpret_cast<void*>(args)...};
+        constexpr auto count = sizeof...(TArgs);
+
+        void* invoke_params[] = { il2cpp_type_check::il2cpp_arg_ptr<decltype(args)>::get(args)... };
+        Il2CppType const* argarr[] = { il2cpp_type_check::il2cpp_arg_type<decltype(args)>::get(args)... };
         // object_new call
         auto obj = il2cpp_functions::object_new(klass);
         // runtime_invoke constructor with right number of args, return null if multiple matches (or take a vector of type pointers to resolve it), return null if constructor errors
+        
         void* myIter = nullptr;
         const MethodInfo* current;
         const MethodInfo* ctor = nullptr;
-        constexpr auto count = sizeof...(TArgs);
-        const Il2CppType* argarr[count];
-        for (int i = 0; i < count; i++) {
-            // // TODO Make this work with i instead of 0
-            // if (!std::is_convertible<std::tuple_element_t<0, std::tuple<TArgs...>>, Il2CppObject>::value) {
-            //     // It's not an Il2CppObject
-            //     // Deal with this alternatively
-            // }
-            argarr[i] = il2cpp_functions::class_get_type(il2cpp_functions::object_get_class(reinterpret_cast<Il2CppObject*>(invoke_params[i])));
-        }
         // Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
         while ((current = il2cpp_functions::class_get_methods(klass, &myIter))) {
             if (ParameterMatch(current, argarr, count)) {
@@ -127,16 +209,15 @@ namespace il2cpp_utils {
         // object_new call
         auto obj = il2cpp_functions::object_new(klass);
         // runtime_invoke constructor with right number of args, return null if constructor errors
-        void* myIter = nullptr;
         constexpr auto count = sizeof...(TArgs);
-
+        log(DEBUG, "Attempting to find .ctor with paramCount: %i for class name: %s", count, il2cpp_functions::class_get_name(klass));
         const MethodInfo* ctor = il2cpp_functions::class_get_method_from_name(klass, ".ctor", count);
 
         if (!ctor) {
             log(ERROR, "il2cpp_utils: New: Could not find constructor for provided class!");
             return nullptr;
         }
-        Il2CppException* exp = nullptr;
+        Il2CppException* exp;
         il2cpp_functions::runtime_invoke(ctor, obj, invoke_params, &exp);
         if (exp) {
             log(ERROR, "il2cpp_utils: New: Failed with exception: %s", ExceptionToString(exp).c_str());
@@ -298,12 +379,25 @@ namespace il2cpp_utils {
         log(DEBUG, "Is Abstract: %i", il2cpp_functions::class_is_abstract(klass));
         log(DEBUG, "=========METHODS=========");
         void* myIter = nullptr;
-        const MethodInfo* current;
-        int i = 0;
-        while ((current = il2cpp_functions::class_get_methods(unconst, &myIter))) {
-            log(DEBUG, "Method %i:", i);
-            LogMethod(current);
-            i++;
+        // const MethodInfo* current;
+        // int i = 0;
+        // while ((current = il2cpp_functions::class_get_methods(unconst, &myIter))) {
+        //     log(DEBUG, "Method %i:", i);
+        //     if (!current) {
+        //         log(DEBUG, "Null MethodInfo found!");
+        //         continue;
+        //     }
+        //     log(DEBUG, "Name: %s Params: %i", current->name, current->parameters_count);
+        //     // LogMethod(current);
+        //     i++;
+        // }
+        for (int i = 0; i < unconst->method_count; i++) {
+            if (unconst->methods[i]) {
+                log(DEBUG, "Method %i:", i);
+                log(DEBUG, "Name: %s Params: %i", unconst->methods[i]->name, unconst->methods[i]->parameters_count);
+            } else {
+                log(DEBUG, "Method: %i Does not exist!", i);
+            }
         }
         auto genClass = klass->generic_class;
         if (genClass) {
@@ -402,7 +496,7 @@ namespace il2cpp_utils {
     inline Il2CppObject* RuntimeInvoke(const MethodInfo* method, Il2CppObject* reference, Il2CppException** exc, TArgs* ...args) {
         InitFunctions();
 
-        
+
         void* invoke_params[] = {reinterpret_cast<void*>(args)...};
         return il2cpp_functions::runtime_invoke(method, reference, invoke_params, exc);
     }

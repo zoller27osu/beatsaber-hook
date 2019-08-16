@@ -1,3 +1,5 @@
+#ifndef System.Reflection_Assembly_DEFINED
+#define System.Reflection_Assembly_DEFINED
 // This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
@@ -8,6 +10,19 @@
 #include "../utils/il2cpp-utils.h"
 // Contains MethodInfo/Il2CppClass data for: System.Reflection.Assembly
 namespace System_Reflection_Assembly {
+    // System.Reflection.Assembly
+    typedef struct Class {
+        IntPtr _mono_assembly; // 0x8
+        void* resolve_event_holder; // 0xC
+        void* _evidence; // 0x10
+        void* _minimum; // 0x14
+        void* _optional; // 0x18
+        void* _refuse; // 0x1C
+        void* _granted; // 0x20
+        void* _denied; // 0x24
+        uint32_t fromByteArray; // 0x28
+        Il2CppString* assemblyName; // 0x2C
+    } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
     static const MethodInfo* get_code_base_bool;
@@ -90,3 +105,4 @@ namespace System_Reflection_Assembly {
         }
     }
 }
+#endif /* System.Reflection_Assembly_DEFINED */

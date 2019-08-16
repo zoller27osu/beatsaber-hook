@@ -119,8 +119,9 @@ u16string_view csstrtostr(Il2CppString* in)
 
 // Thanks DaNike!
 void dump(int before, int after, void* ptr) {
-    auto begin = static_cast<char*>(ptr) + before;
-    auto end = static_cast<char*>(ptr) + after;
+    log(DEBUG, "Dumping Immediate Pointer: %p: %08x", ptr, *reinterpret_cast<int*>(ptr));
+    auto begin = static_cast<int*>(ptr) - before;
+    auto end = static_cast<int*>(ptr) + after;
     for (auto cur = begin; cur != end; ++cur) {
         log(DEBUG, "%p: %08x", cur, *cur);
     }

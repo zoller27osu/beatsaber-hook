@@ -1,3 +1,5 @@
+#ifndef UnityEngine_GameObject_DEFINED
+#define UnityEngine_GameObject_DEFINED
 // This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
@@ -8,6 +10,9 @@
 #include "../utils/il2cpp-utils.h"
 // Contains MethodInfo/Il2CppClass data for: UnityEngine.GameObject
 namespace UnityEngine_GameObject {
+    // UnityEngine.GameObject
+    typedef struct Class {
+    } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
     static const MethodInfo* CreatePrimitive_PrimitiveType;
@@ -100,3 +105,4 @@ namespace UnityEngine_GameObject {
         }
     }
 }
+#endif /* UnityEngine_GameObject_DEFINED */

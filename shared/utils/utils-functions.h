@@ -37,7 +37,5 @@ bool fileexists(const char* filename);
 void* loadfromasset(const char* assetFilePath, const char* assetName);
 // Returns the config path for the current mod
 std::string getconfigpath();
-// Creates a custom TMP_TextMeshProUGUI object and returns it
-Il2CppObject* createtext(Il2CppObject* parent_transform, std::string_view text, Vector2 anchoredPosition, Vector2 sizeDelta);
 
 #endif /* UTILS_FUNCTIONS_H */
