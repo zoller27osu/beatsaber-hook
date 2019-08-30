@@ -589,13 +589,5 @@ extern "C" {
         } //if
     }
 }
-enum ele7en_status registerInlineHook(uint32_t target_addr, uint32_t new_addr, uint32_t **proto_addr)
-{
-    A64HookFunction((void *const)target_addr, (void *const)new_addr,(void **)proto_addr); 
-    return ELE7EN_OK;
-}
-enum ele7en_status inlineUnHook(uint32_t target_addr)
-{
-    return ELE7EN_OK;
-}
+
 #endif // defined(__aarch64__)

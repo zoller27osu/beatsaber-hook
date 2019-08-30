@@ -28,30 +28,18 @@
  */
 
 #pragma once
-#define A64_MAX_BACKUPS 256
+#define A64_MAX_BACKUPS 1024
 #ifdef __aarch64__
 #ifdef __cplusplus
 extern "C" {
 #endif
-enum ele7en_status {
-	ELE7EN_ERROR_UNKNOWN = -1,
-	ELE7EN_OK = 0,
-	ELE7EN_ERROR_NOT_INITIALIZED,
-	ELE7EN_ERROR_NOT_EXECUTABLE,
-	ELE7EN_ERROR_NOT_REGISTERED,
-	ELE7EN_ERROR_NOT_HOOKED,
-	ELE7EN_ERROR_ALREADY_REGISTERED,
-	ELE7EN_ERROR_ALREADY_HOOKED,
-	ELE7EN_ERROR_SO_NOT_FOUND,
-	ELE7EN_ERROR_FUNCTION_NOT_FOUND
-};
+
 
 
     void A64HookFunction(void *const symbol, void *const replace, void **result);
     void *A64HookFunctionV(void *const symbol, void *const replace,
                            void *const rwx, const uintptr_t rwx_size);
-enum ele7en_status registerInlineHook(uint32_t target_addr, uint32_t new_addr, uint32_t **proto_addr);
-enum ele7en_status inlineUnHook(uint32_t target_addr);
+
 #ifdef __cplusplus
 }
 #endif

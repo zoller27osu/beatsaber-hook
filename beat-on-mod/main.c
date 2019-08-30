@@ -14,6 +14,7 @@
 #include "../shared/inline-hook/inlineHook.h"
 #include "../shared/utils/utils.h"
 #include <regex.h>
+#include "../shared/inline-hook/And64InlineHook.hpp"
 
 #define ASSETS_REGEX "\\/data\\/app\\/com\\.beatgames\\.beatsaber-[0-9]\\/base\\.apk\\/assets\\/bin\\/Data\\/(.*)"
 const char* ASSETS_TARGET = "/sdcard/BeatOnData/BeatSaberAssets/";
