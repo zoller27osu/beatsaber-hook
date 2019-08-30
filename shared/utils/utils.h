@@ -9,6 +9,7 @@
 #include "rapidjson-utils.h"
 #include "il2cpp-utils.h"
 #include "utils-functions.h"
+#include "../inline-hook/And64InlineHook.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,19 +22,32 @@ long addr_ ## name = (long) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
 retval hook_ ## name(__VA_ARGS__) 
 
-#define INSTALL_HOOK(name) \
-registerInlineHook((uint32_t)getRealOffset(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name);\
-inlineHook((uint32_t)getRealOffset(addr_ ## name));\
-
-
 #define MAKE_HOOK_NAT(name, addr, retval, ...) \
 long addr_ ## name = (long) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
 retval hook_ ## name(__VA_ARGS__) 
 
+#if defined(__aarch64__)
+
+#define INSTALL_HOOK(name) \
+A64HookFunction((void*)getRealOffset(addr_ ## name),(void*) hook_ ## name, (void**)&name);\
+
+
+#define INSTALL_HOOK_NAT(name) \
+A64HookFunction((void*)(addr_ ## name),(void*) hook_ ## name, (void**)&name);\
+
+
+#else
+
+#define INSTALL_HOOK(name) \
+registerInlineHook((uint32_t)getRealOffset(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name);\
+inlineHook((uint32_t)getRealOffset(addr_ ## name));\
+
 #define INSTALL_HOOK_NAT(name) \
 registerInlineHook((uint32_t)(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name);\
 inlineHook((uint32_t)(addr_ ## name));\
+
+#endif
 
 // OFFSETS
 

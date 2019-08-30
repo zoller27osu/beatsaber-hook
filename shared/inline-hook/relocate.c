@@ -6,7 +6,7 @@ website: ele7enxxh.com
 modified time: 2016-10-17
 created time: 2015-01-17
 */
-
+#ifndef __aarch64__
 #include "relocate.h"
 
 #define ALIGN_PC(pc)	(pc & 0xFFFFFFFC)
@@ -614,3 +614,4 @@ void relocateInstruction(uint32_t target_addr, void *orig_instructions, int leng
 		relocateInstructionInArm(target_addr, (uint32_t *) orig_instructions, length, (uint32_t *) trampoline_instructions, orig_boundaries, trampoline_boundaries, count);
 	}
 }
+#endif
