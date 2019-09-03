@@ -78,7 +78,7 @@ namespace il2cpp_utils {
         // Call Type.MakeGenericType on it
         auto a = il2cpp_functions::array_new_specific(typ, args.size());
         if (!a) {
-            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to make new array with length: %i", args.size());
+            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to make new array with length: %zu", args.size());
             return nullptr;
         }
  

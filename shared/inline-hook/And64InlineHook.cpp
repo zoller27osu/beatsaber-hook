@@ -33,7 +33,8 @@
 #include <android/log.h>
 #include <errno.h>
 #include <string.h>
-#if defined(__aarch64__)
+#include "../utils/logging.h"
+#ifdef __aarch64__
 
 #include "And64InlineHook.hpp"
 #define   A64_MAX_INSTRUCTIONS 5

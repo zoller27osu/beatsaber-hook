@@ -210,7 +210,7 @@ namespace il2cpp_utils {
         auto obj = il2cpp_functions::object_new(klass);
         // runtime_invoke constructor with right number of args, return null if constructor errors
         constexpr auto count = sizeof...(TArgs);
-        log(DEBUG, "Attempting to find .ctor with paramCount: %i for class name: %s", count, il2cpp_functions::class_get_name(klass));
+        log(DEBUG, "Attempting to find .ctor with paramCount: %lu for class name: %s", count, il2cpp_functions::class_get_name(klass));
         const MethodInfo* ctor = il2cpp_functions::class_get_method_from_name(klass, ".ctor", count);
 
         if (!ctor) {
@@ -357,7 +357,7 @@ namespace il2cpp_utils {
         auto name = il2cpp_functions::field_get_name(field);
         auto offset = il2cpp_functions::field_get_offset(field);
 
-        log(DEBUG, "%s%s %s; // 0x%.2X, flags: 0x%.4X", flagStr, typeStr, name, offset, flags);
+        log(DEBUG, "%s%s %s; // 0x%lx, flags: 0x%.4X", flagStr, typeStr, name, offset, flags);
     }
 
     // Some parts provided by zoller27osu

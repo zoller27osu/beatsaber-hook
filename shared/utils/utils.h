@@ -27,9 +27,10 @@ long addr_ ## name = (long) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
 retval hook_ ## name(__VA_ARGS__) 
 
-#if defined(__aarch64__)
+#ifdef __aarch64__
 
 #define INSTALL_HOOK(name) \
+log(INFO, "Installing 64 bit hook!");\
 A64HookFunction((void*)getRealOffset(addr_ ## name),(void*) hook_ ## name, (void**)&name);\
 
 
@@ -40,6 +41,7 @@ A64HookFunction((void*)(addr_ ## name),(void*) hook_ ## name, (void**)&name);\
 #else
 
 #define INSTALL_HOOK(name) \
+log(INFO, "Installing 32 bit hook!");\
 registerInlineHook((uint32_t)getRealOffset(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name);\
 inlineHook((uint32_t)getRealOffset(addr_ ## name));\
 
