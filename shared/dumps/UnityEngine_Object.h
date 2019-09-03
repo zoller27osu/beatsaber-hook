@@ -11,8 +11,8 @@
 // Contains MethodInfo/Il2CppClass data for: UnityEngine.Object
 namespace UnityEngine_Object {
     // UnityEngine.Object
-    typedef struct Class {
-        IntPtr m_CachedPtr; // 0x8
+    typedef struct Class : Il2CppObject {
+        IntPtr m_CachedPtr; // 0x10
         static int OffsetOfInstanceIDInCPlusPlusObject; // 0x0
     } Class;
     static bool __cached = false;

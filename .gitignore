@@ -13,3 +13,5 @@ customcolors/obj/*
 shared/libil2cpp/
 
 *.pyc
+
+shared/dumps.json

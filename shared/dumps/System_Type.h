@@ -13,13 +13,13 @@ namespace System_Type {
     // System.Type
     typedef struct Class {
         static void* FilterAttribute; // 0x0
-        static void* FilterName; // 0x4
-        static void* FilterNameIgnoreCase; // 0x8
-        static void* Missing; // 0xC
-        static char16_t Delimiter; // 0x10
-        static void* EmptyTypes; // 0x14
-        static void* defaultBinder; // 0x18
-        void* _impl; // 0x8
+        static void* FilterName; // 0x8
+        static void* FilterNameIgnoreCase; // 0x10
+        static void* Missing; // 0x18
+        static char16_t Delimiter; // 0x20
+        static void* EmptyTypes; // 0x28
+        static void* defaultBinder; // 0x30
+        void* _impl; // 0x10
     } Class;
     static bool __cached = false;
     static Il2CppClass* klass;

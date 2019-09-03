@@ -81,7 +81,8 @@ def getFieldLine(line):
     return static + convertCsTypeToC(cs_type) + " " + name + "; " + comment
 
 def class_parse(dump_data, namespace, name, dst, trace_types=False):
-    dst = os.path.join(dst, namespace.replace(".", "_") + "_" + name + ".h")
+    fixed_name = name.replace(".", "_")
+    dst = os.path.join(dst, namespace.replace(".", "_") + "_" + fixed_name + ".h")
     arr = []
     for i in range(len(dump_data)):
         if dump_data[i].startswith("// Namespace: " + namespace):
@@ -124,12 +125,12 @@ def class_parse(dump_data, namespace, name, dst, trace_types=False):
                             # Found a method!
                             methods.append(dump_data[q].strip())
                 w = writer()
-                w.write("#ifndef " + namespace.replace(".", "_") + "_" + name + "_DEFINED")
-                w.write("#define " + namespace.replace(".", "_") + "_" + name + "_DEFINED")
+                w.write("#ifndef " + namespace.replace(".", "_") + "_" + fixed_name + "_DEFINED")
+                w.write("#define " + namespace.replace(".", "_") + "_" + fixed_name + "_DEFINED")
                 w.write(PARSE_HEADER)
                 w.write("// Contains MethodInfo/Il2CppClass data for: " + namespace + "." + name)
                 klass_name = "klass"
-                w.write("namespace " + namespace.replace(".", "_") + "_" + name + " {")
+                w.write("namespace " + namespace.replace(".", "_") + "_" + fixed_name + " {")
                 w.indent()
                 # TODO Add Field Dump to struct called Class
                 # Check if recusrive dump allowed (to dump parents)

@@ -1,5 +1,5 @@
-#ifndef System.Reflection_Assembly_DEFINED
-#define System.Reflection_Assembly_DEFINED
+#ifndef System_Reflection_Assembly_DEFINED
+#define System_Reflection_Assembly_DEFINED
 // This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
@@ -12,16 +12,16 @@
 namespace System_Reflection_Assembly {
     // System.Reflection.Assembly
     typedef struct Class {
-        IntPtr _mono_assembly; // 0x8
-        void* resolve_event_holder; // 0xC
-        void* _evidence; // 0x10
-        void* _minimum; // 0x14
-        void* _optional; // 0x18
-        void* _refuse; // 0x1C
-        void* _granted; // 0x20
-        void* _denied; // 0x24
-        uint32_t fromByteArray; // 0x28
-        Il2CppString* assemblyName; // 0x2C
+        IntPtr _mono_assembly; // 0x10
+        void* resolve_event_holder; // 0x18
+        void* _evidence; // 0x20
+        void* _minimum; // 0x28
+        void* _optional; // 0x30
+        void* _refuse; // 0x38
+        void* _granted; // 0x40
+        void* _denied; // 0x48
+        uint32_t fromByteArray; // 0x50
+        Il2CppString* assemblyName; // 0x58
     } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
@@ -105,4 +105,4 @@ namespace System_Reflection_Assembly {
         }
     }
 }
-#endif /* System.Reflection_Assembly_DEFINED */
+#endif /* System_Reflection_Assembly_DEFINED */

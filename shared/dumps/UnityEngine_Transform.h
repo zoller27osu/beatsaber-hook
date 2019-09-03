@@ -19,7 +19,6 @@ namespace UnityEngine_Transform {
     static const MethodInfo* set_position;
     static const MethodInfo* get_localPosition;
     static const MethodInfo* set_localPosition;
-    static const MethodInfo* get_eulerAngles;
     static const MethodInfo* set_eulerAngles;
     static const MethodInfo* get_localEulerAngles;
     static const MethodInfo* set_localEulerAngles;
@@ -101,7 +100,6 @@ namespace UnityEngine_Transform {
             set_position = il2cpp_functions::class_get_method_from_name(klass, "set_position", 1);
             get_localPosition = il2cpp_functions::class_get_method_from_name(klass, "get_localPosition", 0);
             set_localPosition = il2cpp_functions::class_get_method_from_name(klass, "set_localPosition", 1);
-            get_eulerAngles = il2cpp_functions::class_get_method_from_name(klass, "get_eulerAngles", 0);
             set_eulerAngles = il2cpp_functions::class_get_method_from_name(klass, "set_eulerAngles", 1);
             get_localEulerAngles = il2cpp_functions::class_get_method_from_name(klass, "get_localEulerAngles", 0);
             set_localEulerAngles = il2cpp_functions::class_get_method_from_name(klass, "set_localEulerAngles", 1);

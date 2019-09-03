@@ -12,24 +12,24 @@
 namespace TMPro_TextMeshProUGUI {
     // TMPro.TextMeshProUGUI
     typedef struct Class {
-        uint32_t m_isRebuildingLayout; // 0x86C
-        uint32_t m_hasFontAssetChanged; // 0x86D
-        void* m_subTextObjects; // 0x870
-        float m_previousLossyScaleY; // 0x874
-        void* m_RectTransformCorners; // 0x878
-        void* m_canvasRenderer; // 0x87C
-        void* m_canvas; // 0x880
-        uint32_t m_isFirstAllocation; // 0x884
-        int m_max_characters; // 0x888
-        uint32_t m_isMaskingEnabled; // 0x88C
-        void* m_baseMaterial; // 0x890
-        uint32_t m_isScrollRegionSet; // 0x894
-        int m_stencilID; // 0x898
-        void* m_maskOffset; // 0x89C
-        void* m_EnvMapMatrix; // 0x8AC
-        uint32_t m_isRegisteredForEvents; // 0x8EC
-        int m_recursiveCountA; // 0x8F0
-        int loopCountA; // 0x8F4
+        uint32_t m_isRebuildingLayout; // 0xB20
+        uint32_t m_hasFontAssetChanged; // 0xB21
+        void* m_subTextObjects; // 0xB28
+        float m_previousLossyScaleY; // 0xB30
+        void* m_RectTransformCorners; // 0xB38
+        void* m_canvasRenderer; // 0xB40
+        void* m_canvas; // 0xB48
+        uint32_t m_isFirstAllocation; // 0xB50
+        int m_max_characters; // 0xB54
+        uint32_t m_isMaskingEnabled; // 0xB58
+        void* m_baseMaterial; // 0xB60
+        uint32_t m_isScrollRegionSet; // 0xB68
+        int m_stencilID; // 0xB6C
+        void* m_maskOffset; // 0xB70
+        void* m_EnvMapMatrix; // 0xB80
+        uint32_t m_isRegisteredForEvents; // 0xBC0
+        int m_recursiveCountA; // 0xBC4
+        int loopCountA; // 0xBC8
     } Class;
     static bool __cached = false;
     static Il2CppClass* klass;
@@ -88,13 +88,13 @@ namespace TMPro_TextMeshProUGUI {
     static const MethodInfo* GetPaddingForMaterial_Material;
     static const MethodInfo* GetPaddingForMaterial;
     static const MethodInfo* SetMeshArrays_int;
-    static const MethodInfo* SetArraySizes_int_arr;
+    static const MethodInfo* SetArraySizes_TMP_Text_UnicodeChar_arr;
     static const MethodInfo* ComputeMarginSize;
     static const MethodInfo* OnDidApplyAnimationProperties;
     static const MethodInfo* OnCanvasHierarchyChanged;
     static const MethodInfo* OnTransformParentChanged;
     static const MethodInfo* OnRectTransformDimensionsChange;
-    static const MethodInfo* LateUpdate;
+    static const MethodInfo* InternalUpdate;
     static const MethodInfo* OnPreRenderCanvas;
     static const MethodInfo* GenerateTextMesh;
     static const MethodInfo* GetTextContainerLocalCorners;
@@ -161,13 +161,13 @@ namespace TMPro_TextMeshProUGUI {
             GetPaddingForMaterial_Material = il2cpp_functions::class_get_method_from_name(klass, "GetPaddingForMaterial", 1);
             GetPaddingForMaterial = il2cpp_functions::class_get_method_from_name(klass, "GetPaddingForMaterial", 0);
             SetMeshArrays_int = il2cpp_functions::class_get_method_from_name(klass, "SetMeshArrays", 1);
-            SetArraySizes_int_arr = il2cpp_functions::class_get_method_from_name(klass, "SetArraySizes", 1);
+            SetArraySizes_TMP_Text_UnicodeChar_arr = il2cpp_functions::class_get_method_from_name(klass, "SetArraySizes", 1);
             ComputeMarginSize = il2cpp_functions::class_get_method_from_name(klass, "ComputeMarginSize", 0);
             OnDidApplyAnimationProperties = il2cpp_functions::class_get_method_from_name(klass, "OnDidApplyAnimationProperties", 0);
             OnCanvasHierarchyChanged = il2cpp_functions::class_get_method_from_name(klass, "OnCanvasHierarchyChanged", 0);
             OnTransformParentChanged = il2cpp_functions::class_get_method_from_name(klass, "OnTransformParentChanged", 0);
             OnRectTransformDimensionsChange = il2cpp_functions::class_get_method_from_name(klass, "OnRectTransformDimensionsChange", 0);
-            LateUpdate = il2cpp_functions::class_get_method_from_name(klass, "LateUpdate", 0);
+            InternalUpdate = il2cpp_functions::class_get_method_from_name(klass, "InternalUpdate", 0);
             OnPreRenderCanvas = il2cpp_functions::class_get_method_from_name(klass, "OnPreRenderCanvas", 0);
             GenerateTextMesh = il2cpp_functions::class_get_method_from_name(klass, "GenerateTextMesh", 0);
             GetTextContainerLocalCorners = il2cpp_functions::class_get_method_from_name(klass, "GetTextContainerLocalCorners", 0);
