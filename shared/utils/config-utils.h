@@ -10,15 +10,19 @@
 
 #ifdef __cplusplus
 // Provides helper functions for configuration.
+typedef rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigDocument;
+typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigValue;
 // You are responsible for Loading and Writing to it as necessary.
-namespace Configuration {
+class Configuration {
+public:    
+    static ConfigDocument config;
     // Loads JSON config
-    rapidjson::Document& Load();
+    static void Load();
     // Reloads JSON config
-    rapidjson::Document& Reload();
+    static void Reload();
     // Writes JSON config
-    void Write();
-}
+    static void Write();
+};
 #endif /* __cplusplus */
 
 #endif /* CONFIG_UTILS_H */

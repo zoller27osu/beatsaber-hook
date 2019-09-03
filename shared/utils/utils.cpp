@@ -178,7 +178,7 @@ void* loadfromasset(const char* assetFilePath, const char* assetName) {
     return nullptr;
 }
 
-bool parsejson(rapidjson::Document& doc, string_view js) {
+bool parsejson(ConfigDocument& doc, string_view js) {
     char temp[js.length()];
     memcpy(temp, js.data(), js.length());
     
@@ -188,7 +188,7 @@ bool parsejson(rapidjson::Document& doc, string_view js) {
     return true;
 }
 
-bool parsejsonfile(rapidjson::Document& doc, string filename) {
+bool parsejsonfile(ConfigDocument& doc, string filename) {
     if (!fileexists(filename.c_str())) {
         return {};
     }
@@ -215,13 +215,13 @@ string getconfigpath() {
 
 // CONFIG
 
-rapidjson::Document document;
+ConfigDocument Configuration::config;
 bool readJson = false;
 
 // Loads the config for the given MOD_ID, if it doesn't exist, will leave it as an empty object.
-rapidjson::Document& Configuration::Load() {
+void Configuration::Load() {
     if (readJson) {
-        return document;
+        return;
     }
     // document = {};
     if (!direxists(CONFIG_PATH)) {
@@ -232,25 +232,23 @@ rapidjson::Document& Configuration::Load() {
     if (!fileexists(filename.c_str())) {
         writefile(filename.c_str(), "{}");
     }
-    if (!parsejsonfile(document, filename)) {
+    if (!parsejsonfile(config, filename)) {
         readJson = false;
     }
-    if (!document.IsObject()) {
-        document.SetObject();
+    if (!config.IsObject()) {
+        config.SetObject();
     }
     readJson = true;
-    return document;
 }
 
-rapidjson::Document& Configuration::Reload() {
+void Configuration::Reload() {
     string filename = getconfigpath();
 
-    parsejsonfile(document, filename);
-    if (!document.IsObject()) {
-        document.SetObject();
+    parsejsonfile(config, filename);
+    if (!config.IsObject()) {
+        config.SetObject();
     }
     readJson = true;
-    return document;
 }
 
 void Configuration::Write() {
@@ -261,6 +259,6 @@ void Configuration::Write() {
 
     StringBuffer buf;
     PrettyWriter<StringBuffer> writer(buf);
-    document.Accept(writer);
+    config.Accept(writer);
     writefile(filename.c_str(), buf.GetString());
 }
