@@ -101,7 +101,7 @@ int load_mods()
         if (strlen(dp->d_name) > 3 && !strcmp(dp->d_name + strlen(dp->d_name) - 3, ".so"))
         {
             char full_path[PATH_MAX];
-            strcat(full_path, modPath);
+            strcpy(full_path, modPath);
             strcat(full_path, dp->d_name);
             __android_log_print(ANDROID_LOG_INFO, "QuestHook", "Loading mod: %s", full_path);
             int infile = open(full_path, O_RDONLY);
