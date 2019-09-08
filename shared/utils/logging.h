@@ -31,29 +31,17 @@ enum LOG_VERBOSE_TYPE {
 #define VERSION "0.0.0"
 #endif
 
-namespace logging {
-    #ifdef log
-    #undef log
-    #endif
-    #define log_base(...) __android_log_print(ANDROID_LOG_INFO, "QuestHook [" MOD_ID " v" VERSION "] ", __VA_ARGS__)
+#ifdef log
+#undef log
+#endif
+#define log_base(...) __android_log_print(ANDROID_LOG_INFO, "QuestHook [" MOD_ID " v" VERSION "] ", __VA_ARGS__)
 
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wformat-security"
-    template<typename... TArgs>
-    int log(LOG_VERBOSE_TYPE level, TArgs ...args) {
-        if ((LOG_LEVEL & level) != 0) {
-            if (level == CRITICAL) return log_base("[CRITICAL] ", args...);
-            if (level == ERROR) return log_base("[ERROR] ", args...);
-            if (level == WARNING) return log_base("[WARNING] ", args...);
-            if (level == INFO) return log_base("[INFO] ", args...);
-            if (level == DEBUG) return log_base("[DEBUG] ", args...);
-        }
-        return 0;
-    }
-    #pragma clang diagnostic pop
-}
-using logging::log;
-
+#define log(level, ...) if (((LOG_LEVEL) & level) != 0) {\
+if (level == CRITICAL) log_base("[CRITICAL] " __VA_ARGS__); \
+if (level == ERROR) log_base("[ERROR] " __VA_ARGS__); \
+if (level == WARNING) log_base("[WARNING] " __VA_ARGS__); \
+if (level == INFO) log_base("[INFO] " __VA_ARGS__); \
+if (level == DEBUG) log_base("[DEBUG] " __VA_ARGS__); }
 
 #ifndef STD_BUFFER_SIZE
 #define STD_BUFFER_SIZE 256
