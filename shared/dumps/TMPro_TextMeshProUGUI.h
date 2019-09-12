@@ -12,22 +12,22 @@
 namespace TMPro_TextMeshProUGUI {
     // TMPro.TextMeshProUGUI
     typedef struct Class {
-        uint32_t m_isRebuildingLayout; // 0xB20
-        uint32_t m_hasFontAssetChanged; // 0xB21
+        uint8_t m_isRebuildingLayout; // 0xB20
+        uint8_t m_hasFontAssetChanged; // 0xB21
         void* m_subTextObjects; // 0xB28
         float m_previousLossyScaleY; // 0xB30
         void* m_RectTransformCorners; // 0xB38
         void* m_canvasRenderer; // 0xB40
         void* m_canvas; // 0xB48
-        uint32_t m_isFirstAllocation; // 0xB50
+        uint8_t m_isFirstAllocation; // 0xB50
         int m_max_characters; // 0xB54
-        uint32_t m_isMaskingEnabled; // 0xB58
+        uint8_t m_isMaskingEnabled; // 0xB58
         void* m_baseMaterial; // 0xB60
-        uint32_t m_isScrollRegionSet; // 0xB68
+        uint8_t m_isScrollRegionSet; // 0xB68
         int m_stencilID; // 0xB6C
         void* m_maskOffset; // 0xB70
         void* m_EnvMapMatrix; // 0xB80
-        uint32_t m_isRegisteredForEvents; // 0xBC0
+        uint8_t m_isRegisteredForEvents; // 0xBC0
         int m_recursiveCountA; // 0xBC4
         int loopCountA; // 0xBC8
     } Class;

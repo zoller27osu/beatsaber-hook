@@ -47,7 +47,7 @@ namespace TMPro_TMP_FontAsset {
         char italicStyle; // 0x1B0
         char tabSize; // 0x1B1
         char m_oldTabSize; // 0x1B2
-        uint32_t m_IsFontAssetLookupTablesDirty; // 0x1B3
+        uint8_t m_IsFontAssetLookupTablesDirty; // 0x1B3
         void* m_GlyphsToPack; // 0x1B8
         void* m_GlyphsPacked; // 0x1C0
         void* m_GlyphsToRender; // 0x1C8
@@ -179,17 +179,17 @@ namespace TMPro_TMP_FontAsset {
             HasCharacter_char = il2cpp_functions::class_get_method_from_name(klass, "HasCharacter", 1);
             HasCharacter_char_bool = il2cpp_functions::class_get_method_from_name(klass, "HasCharacter", 2);
             HasCharacter_Internal_char_bool = il2cpp_functions::class_get_method_from_name(klass, "HasCharacter_Internal", 2);
-            HasCharacters_string_out_List1 = il2cpp_functions::class_get_method_from_name(klass, "HasCharacters", 3);
+            HasCharacters_string_out_List1 = il2cpp_functions::class_get_method_from_name(klass, "HasCharacters", 2);
             HasCharacters_string = il2cpp_functions::class_get_method_from_name(klass, "HasCharacters", 1);
             GetCharacters_TMP_FontAsset = il2cpp_functions::class_get_method_from_name(klass, "GetCharacters", 1);
             GetCharactersArray_TMP_FontAsset = il2cpp_functions::class_get_method_from_name(klass, "GetCharactersArray", 1);
             TryAddCharacters_uint_arr = il2cpp_functions::class_get_method_from_name(klass, "TryAddCharacters", 1);
-            TryAddCharacters_uint_arr_out_uint_arr = il2cpp_functions::class_get_method_from_name(klass, "TryAddCharacters", 3);
+            TryAddCharacters_uint_arr_out_uint_arr = il2cpp_functions::class_get_method_from_name(klass, "TryAddCharacters", 2);
             TryAddCharacters_string = il2cpp_functions::class_get_method_from_name(klass, "TryAddCharacters", 1);
-            TryAddCharacters_string_out_string = il2cpp_functions::class_get_method_from_name(klass, "TryAddCharacters", 3);
+            TryAddCharacters_string_out_string = il2cpp_functions::class_get_method_from_name(klass, "TryAddCharacters", 2);
             TryAddCharacter_Internal_uint = il2cpp_functions::class_get_method_from_name(klass, "TryAddCharacter_Internal", 1);
             AddCharacter_Internal_uint_Glyph = il2cpp_functions::class_get_method_from_name(klass, "AddCharacter_Internal", 2);
-            TryAddCharacterInternal_uint_out_TMP_Character = il2cpp_functions::class_get_method_from_name(klass, "TryAddCharacterInternal", 3);
+            TryAddCharacterInternal_uint_out_TMP_Character = il2cpp_functions::class_get_method_from_name(klass, "TryAddCharacterInternal", 2);
             GetGlyphIndex_uint = il2cpp_functions::class_get_method_from_name(klass, "GetGlyphIndex", 1);
             UpdateAtlasTexture = il2cpp_functions::class_get_method_from_name(klass, "UpdateAtlasTexture", 0);
             UpdateGlyphAdjustmentRecords_uint_uint = il2cpp_functions::class_get_method_from_name(klass, "UpdateGlyphAdjustmentRecords", 2);

@@ -75,16 +75,16 @@ namespace UnityEngine_RectTransform {
             SetSizeWithCurrentAnchors_RectTransform_Axis_float = il2cpp_functions::class_get_method_from_name(klass, "SetSizeWithCurrentAnchors", 2);
             SendReapplyDrivenProperties_RectTransform = il2cpp_functions::class_get_method_from_name(klass, "SendReapplyDrivenProperties", 1);
             GetParentSize = il2cpp_functions::class_get_method_from_name(klass, "GetParentSize", 0);
-            get_rect_Injected_out_Rect = il2cpp_functions::class_get_method_from_name(klass, "get_rect_Injected", 2);
-            get_anchorMin_Injected_out_Vector2 = il2cpp_functions::class_get_method_from_name(klass, "get_anchorMin_Injected", 2);
+            get_rect_Injected_out_Rect = il2cpp_functions::class_get_method_from_name(klass, "get_rect_Injected", 1);
+            get_anchorMin_Injected_out_Vector2 = il2cpp_functions::class_get_method_from_name(klass, "get_anchorMin_Injected", 1);
             set_anchorMin_Injected = il2cpp_functions::class_get_method_from_name(klass, "set_anchorMin_Injected", 1);
-            get_anchorMax_Injected_out_Vector2 = il2cpp_functions::class_get_method_from_name(klass, "get_anchorMax_Injected", 2);
+            get_anchorMax_Injected_out_Vector2 = il2cpp_functions::class_get_method_from_name(klass, "get_anchorMax_Injected", 1);
             set_anchorMax_Injected = il2cpp_functions::class_get_method_from_name(klass, "set_anchorMax_Injected", 1);
-            get_anchoredPosition_Injected_out_Vector2 = il2cpp_functions::class_get_method_from_name(klass, "get_anchoredPosition_Injected", 2);
+            get_anchoredPosition_Injected_out_Vector2 = il2cpp_functions::class_get_method_from_name(klass, "get_anchoredPosition_Injected", 1);
             set_anchoredPosition_Injected = il2cpp_functions::class_get_method_from_name(klass, "set_anchoredPosition_Injected", 1);
-            get_sizeDelta_Injected_out_Vector2 = il2cpp_functions::class_get_method_from_name(klass, "get_sizeDelta_Injected", 2);
+            get_sizeDelta_Injected_out_Vector2 = il2cpp_functions::class_get_method_from_name(klass, "get_sizeDelta_Injected", 1);
             set_sizeDelta_Injected = il2cpp_functions::class_get_method_from_name(klass, "set_sizeDelta_Injected", 1);
-            get_pivot_Injected_out_Vector2 = il2cpp_functions::class_get_method_from_name(klass, "get_pivot_Injected", 2);
+            get_pivot_Injected_out_Vector2 = il2cpp_functions::class_get_method_from_name(klass, "get_pivot_Injected", 1);
             set_pivot_Injected = il2cpp_functions::class_get_method_from_name(klass, "set_pivot_Injected", 1);
             __cached = true;
         }

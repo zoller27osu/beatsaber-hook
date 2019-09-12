@@ -13,10 +13,10 @@ namespace TMPro_TMP_Text {
     // TMPro.TMP_Text
     typedef struct Class {
         Il2CppString* m_text; // 0xB0
-        uint32_t m_isRightToLeft; // 0xB8
+        uint8_t m_isRightToLeft; // 0xB8
         void* m_fontAsset; // 0xC0
         void* m_currentFontAsset; // 0xC8
-        uint32_t m_isSDFShader; // 0xD0
+        uint8_t m_isSDFShader; // 0xD0
         void* m_sharedMaterial; // 0xD8
         void* m_currentMaterial; // 0xE0
         void* m_materialReferences; // 0xE8
@@ -26,7 +26,7 @@ namespace TMPro_TMP_Text {
         void* m_fontSharedMaterials; // 0x148
         void* m_fontMaterial; // 0x150
         void* m_fontMaterials; // 0x158
-        uint32_t m_isMaterialDirty; // 0x160
+        uint8_t m_isMaterialDirty; // 0x160
         void* m_fontColor32; // 0x164
         void* m_fontColor; // 0x168
         static void* s_colorWhite; // 0x0
@@ -34,15 +34,15 @@ namespace TMPro_TMP_Text {
         void* m_strikethroughColor; // 0x17C
         void* m_highlightColor; // 0x180
         void* m_highlightPadding; // 0x184
-        uint32_t m_enableVertexGradient; // 0x194
+        uint8_t m_enableVertexGradient; // 0x194
         void* m_colorMode; // 0x198
         void* m_fontColorGradient; // 0x19C
         void* m_fontColorGradientPreset; // 0x1E0
         void* m_spriteAsset; // 0x1E8
-        uint32_t m_tintAllSprites; // 0x1F0
-        uint32_t m_tintSprite; // 0x1F1
+        uint8_t m_tintAllSprites; // 0x1F0
+        uint8_t m_tintSprite; // 0x1F1
         void* m_spriteColor; // 0x1F4
-        uint32_t m_overrideHtmlColors; // 0x1F8
+        uint8_t m_overrideHtmlColors; // 0x1F8
         void* m_faceColor; // 0x1FC
         void* m_outlineColor; // 0x200
         float m_outlineWidth; // 0x204
@@ -53,7 +53,7 @@ namespace TMPro_TMP_Text {
         void* m_fontWeight; // 0x230
         void* m_FontWeightInternal; // 0x234
         void* m_FontWeightStack; // 0x238
-        uint32_t m_enableAutoSizing; // 0x250
+        uint8_t m_enableAutoSizing; // 0x250
         float m_maxFontSize; // 0x254
         float m_minFontSize; // 0x258
         float m_fontSizeMin; // 0x25C
@@ -61,7 +61,7 @@ namespace TMPro_TMP_Text {
         void* m_fontStyle; // 0x264
         void* m_FontStyleInternal; // 0x268
         void* m_fontStyleStack; // 0x26C
-        uint32_t m_isUsingBold; // 0x276
+        uint8_t m_isUsingBold; // 0x276
         void* m_textAlignment; // 0x278
         void* m_lineJustification; // 0x27C
         void* m_lineJustificationStack; // 0x280
@@ -77,39 +77,39 @@ namespace TMPro_TMP_Text {
         float m_paragraphSpacing; // 0x2C0
         float m_charWidthMaxAdj; // 0x2C4
         float m_charWidthAdjDelta; // 0x2C8
-        uint32_t m_enableWordWrapping; // 0x2CC
-        uint32_t m_isCharacterWrappingEnabled; // 0x2CD
-        uint32_t m_isNonBreakingSpace; // 0x2CE
-        uint32_t m_isIgnoringAlignment; // 0x2CF
+        uint8_t m_enableWordWrapping; // 0x2CC
+        uint8_t m_isCharacterWrappingEnabled; // 0x2CD
+        uint8_t m_isNonBreakingSpace; // 0x2CE
+        uint8_t m_isIgnoringAlignment; // 0x2CF
         float m_wordWrappingRatios; // 0x2D0
         void* m_overflowMode; // 0x2D4
         int m_firstOverflowCharacterIndex; // 0x2D8
         void* m_linkedTextComponent; // 0x2E0
-        uint32_t m_isLinkedTextComponent; // 0x2E8
-        uint32_t m_isTextTruncated; // 0x2E9
-        uint32_t m_enableKerning; // 0x2EA
-        uint32_t m_enableExtraPadding; // 0x2EB
-        uint32_t checkPaddingRequired; // 0x2EC
-        uint32_t m_isRichText; // 0x2ED
-        uint32_t m_parseCtrlCharacters; // 0x2EE
-        uint32_t m_isOverlay; // 0x2EF
-        uint32_t m_isOrthographic; // 0x2F0
-        uint32_t m_isCullingEnabled; // 0x2F1
-        uint32_t m_ignoreRectMaskCulling; // 0x2F2
-        uint32_t m_ignoreCulling; // 0x2F3
+        uint8_t m_isLinkedTextComponent; // 0x2E8
+        uint8_t m_isTextTruncated; // 0x2E9
+        uint8_t m_enableKerning; // 0x2EA
+        uint8_t m_enableExtraPadding; // 0x2EB
+        uint8_t checkPaddingRequired; // 0x2EC
+        uint8_t m_isRichText; // 0x2ED
+        uint8_t m_parseCtrlCharacters; // 0x2EE
+        uint8_t m_isOverlay; // 0x2EF
+        uint8_t m_isOrthographic; // 0x2F0
+        uint8_t m_isCullingEnabled; // 0x2F1
+        uint8_t m_ignoreRectMaskCulling; // 0x2F2
+        uint8_t m_ignoreCulling; // 0x2F3
         void* m_horizontalMapping; // 0x2F4
         void* m_verticalMapping; // 0x2F8
         float m_uvLineOffset; // 0x2FC
         void* m_renderMode; // 0x300
         void* m_geometrySortingOrder; // 0x304
-        uint32_t m_VertexBufferAutoSizeReduction; // 0x308
+        uint8_t m_VertexBufferAutoSizeReduction; // 0x308
         int m_firstVisibleCharacter; // 0x30C
         int m_maxVisibleCharacters; // 0x310
         int m_maxVisibleWords; // 0x314
         int m_maxVisibleLines; // 0x318
-        uint32_t m_useMaxVisibleDescender; // 0x31C
+        uint8_t m_useMaxVisibleDescender; // 0x31C
         int m_pageToDisplay; // 0x320
-        uint32_t m_isNewPage; // 0x324
+        uint8_t m_isNewPage; // 0x324
         void* m_margin; // 0x328
         float m_marginLeft; // 0x338
         float m_marginRight; // 0x33C
@@ -117,14 +117,14 @@ namespace TMPro_TMP_Text {
         float m_marginHeight; // 0x344
         float m_width; // 0x348
         void* m_textInfo; // 0x350
-        uint32_t m_havePropertiesChanged; // 0x358
-        uint32_t m_isUsingLegacyAnimationComponent; // 0x359
+        uint8_t m_havePropertiesChanged; // 0x358
+        uint8_t m_isUsingLegacyAnimationComponent; // 0x359
         void* m_transform; // 0x360
         void* m_rectTransform; // 0x368
-        uint32_t autoSizeTextContainer_k__BackingField; // 0x370
-        uint32_t m_autoSizeTextContainer; // 0x371
+        uint8_t autoSizeTextContainer_k__BackingField; // 0x370
+        uint8_t m_autoSizeTextContainer; // 0x371
         void* m_mesh; // 0x378
-        uint32_t m_isVolumetricText; // 0x380
+        uint8_t m_isVolumetricText; // 0x380
         void* m_spriteAnimator; // 0x388
         float m_flexibleHeight; // 0x390
         float m_flexibleWidth; // 0x394
@@ -135,20 +135,20 @@ namespace TMPro_TMP_Text {
         void* m_LayoutElement; // 0x3A8
         float m_preferredWidth; // 0x3B0
         float m_renderedWidth; // 0x3B4
-        uint32_t m_isPreferredWidthDirty; // 0x3B8
+        uint8_t m_isPreferredWidthDirty; // 0x3B8
         float m_preferredHeight; // 0x3BC
         float m_renderedHeight; // 0x3C0
-        uint32_t m_isPreferredHeightDirty; // 0x3C4
-        uint32_t m_isCalculatingPreferredValues; // 0x3C5
+        uint8_t m_isPreferredHeightDirty; // 0x3C4
+        uint8_t m_isCalculatingPreferredValues; // 0x3C5
         int m_recursiveCount; // 0x3C8
         int m_layoutPriority; // 0x3CC
-        uint32_t m_isCalculateSizeRequired; // 0x3D0
-        uint32_t m_isLayoutDirty; // 0x3D1
-        uint32_t m_verticesAlreadyDirty; // 0x3D2
-        uint32_t m_layoutAlreadyDirty; // 0x3D3
-        uint32_t m_isAwake; // 0x3D4
-        uint32_t m_isWaitingOnResourceLoad; // 0x3D5
-        uint32_t m_isInputParsingRequired; // 0x3D6
+        uint8_t m_isCalculateSizeRequired; // 0x3D0
+        uint8_t m_isLayoutDirty; // 0x3D1
+        uint8_t m_verticesAlreadyDirty; // 0x3D2
+        uint8_t m_layoutAlreadyDirty; // 0x3D3
+        uint8_t m_isAwake; // 0x3D4
+        uint8_t m_isWaitingOnResourceLoad; // 0x3D5
+        uint8_t m_isInputParsingRequired; // 0x3D6
         void* m_inputSource; // 0x3D8
         Il2CppString* old_text; // 0x3E0
         float m_fontScale; // 0x3E8
@@ -159,10 +159,10 @@ namespace TMPro_TMP_Text {
         float tag_LineIndent; // 0x408
         float tag_Indent; // 0x40C
         void* m_indentStack; // 0x410
-        uint32_t tag_NoParsing; // 0x428
-        uint32_t m_isParsingText; // 0x429
+        uint8_t tag_NoParsing; // 0x428
+        uint8_t m_isParsingText; // 0x429
         void* m_FXMatrix; // 0x42C
-        uint32_t m_isFXMatrixSet; // 0x46C
+        uint8_t m_isFXMatrixSet; // 0x46C
         void* m_TextParsingBuffer; // 0x470
         void* m_internalCharacterInfo; // 0x478
         void* m_input_CharArray; // 0x480
@@ -210,7 +210,7 @@ namespace TMPro_TMP_Text {
         int m_spriteCount; // 0xB08
         int m_spriteIndex; // 0xB0C
         int m_spriteAnimationID; // 0xB10
-        uint32_t m_ignoreActiveState; // 0xB14
+        uint8_t m_ignoreActiveState; // 0xB14
         void* k_Power; // 0xB18
         static void* k_LargePositiveVector2; // 0x4
         static void* k_LargeNegativeVector2; // 0xC
@@ -686,10 +686,10 @@ namespace TMPro_TMP_Text {
             SetTextArrayToCharArray_char_arr_TMP_Text_UnicodeChar_arr = il2cpp_functions::class_get_method_from_name(klass, "SetTextArrayToCharArray", 2);
             StringToCharArray_string_TMP_Text_UnicodeChar_arr = il2cpp_functions::class_get_method_from_name(klass, "StringToCharArray", 2);
             StringBuilderToIntArray_StringBuilder_TMP_Text_UnicodeChar_arr = il2cpp_functions::class_get_method_from_name(klass, "StringBuilderToIntArray", 2);
-            ReplaceOpeningStyleTag_string_int_out_int_TMP_Text_UnicodeChar_arr_int = il2cpp_functions::class_get_method_from_name(klass, "ReplaceOpeningStyleTag", 6);
-            ReplaceOpeningStyleTag_int_arr_int_out_int_TMP_Text_UnicodeChar_arr_int = il2cpp_functions::class_get_method_from_name(klass, "ReplaceOpeningStyleTag", 6);
-            ReplaceOpeningStyleTag_char_arr_int_out_int_TMP_Text_UnicodeChar_arr_int = il2cpp_functions::class_get_method_from_name(klass, "ReplaceOpeningStyleTag", 6);
-            ReplaceOpeningStyleTag_StringBuilder_int_out_int_TMP_Text_UnicodeChar_arr_int = il2cpp_functions::class_get_method_from_name(klass, "ReplaceOpeningStyleTag", 6);
+            ReplaceOpeningStyleTag_string_int_out_int_TMP_Text_UnicodeChar_arr_int = il2cpp_functions::class_get_method_from_name(klass, "ReplaceOpeningStyleTag", 5);
+            ReplaceOpeningStyleTag_int_arr_int_out_int_TMP_Text_UnicodeChar_arr_int = il2cpp_functions::class_get_method_from_name(klass, "ReplaceOpeningStyleTag", 5);
+            ReplaceOpeningStyleTag_char_arr_int_out_int_TMP_Text_UnicodeChar_arr_int = il2cpp_functions::class_get_method_from_name(klass, "ReplaceOpeningStyleTag", 5);
+            ReplaceOpeningStyleTag_StringBuilder_int_out_int_TMP_Text_UnicodeChar_arr_int = il2cpp_functions::class_get_method_from_name(klass, "ReplaceOpeningStyleTag", 5);
             ReplaceClosingStyleTag_string_int_TMP_Text_UnicodeChar_arr_int = il2cpp_functions::class_get_method_from_name(klass, "ReplaceClosingStyleTag", 4);
             ReplaceClosingStyleTag_int_arr_int_TMP_Text_UnicodeChar_arr_int = il2cpp_functions::class_get_method_from_name(klass, "ReplaceClosingStyleTag", 4);
             ReplaceClosingStyleTag_char_arr_int_TMP_Text_UnicodeChar_arr_int = il2cpp_functions::class_get_method_from_name(klass, "ReplaceClosingStyleTag", 4);
@@ -698,10 +698,10 @@ namespace TMPro_TMP_Text {
             IsTagName_char_arr_string_int = il2cpp_functions::class_get_method_from_name(klass, "IsTagName", 3);
             IsTagName_int_arr_string_int = il2cpp_functions::class_get_method_from_name(klass, "IsTagName", 3);
             IsTagName_StringBuilder_string_int = il2cpp_functions::class_get_method_from_name(klass, "IsTagName", 3);
-            GetTagHashCode_string_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "GetTagHashCode", 4);
-            GetTagHashCode_char_arr_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "GetTagHashCode", 4);
-            GetTagHashCode_int_arr_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "GetTagHashCode", 4);
-            GetTagHashCode_StringBuilder_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "GetTagHashCode", 4);
+            GetTagHashCode_string_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "GetTagHashCode", 3);
+            GetTagHashCode_char_arr_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "GetTagHashCode", 3);
+            GetTagHashCode_int_arr_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "GetTagHashCode", 3);
+            GetTagHashCode_StringBuilder_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "GetTagHashCode", 3);
             ResizeInternalArray_T_arr = il2cpp_functions::class_get_method_from_name(klass, "ResizeInternalArray", 1);
             AddFloatToCharArray_double_int_int = il2cpp_functions::class_get_method_from_name(klass, "AddFloatToCharArray", 3);
             AddIntToCharArray_double_int_int = il2cpp_functions::class_get_method_from_name(klass, "AddIntToCharArray", 3);
@@ -759,8 +759,8 @@ namespace TMPro_TMP_Text {
             HexCharsToColor_char_arr_int_int = il2cpp_functions::class_get_method_from_name(klass, "HexCharsToColor", 3);
             GetAttributeParameters_char_arr_int_int_float_arr = il2cpp_functions::class_get_method_from_name(klass, "GetAttributeParameters", 4);
             ConvertToFloat_char_arr_int_int = il2cpp_functions::class_get_method_from_name(klass, "ConvertToFloat", 3);
-            ConvertToFloat_char_arr_int_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "ConvertToFloat", 5);
-            ValidateHtmlTag_TMP_Text_UnicodeChar_arr_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "ValidateHtmlTag", 4);
+            ConvertToFloat_char_arr_int_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "ConvertToFloat", 4);
+            ValidateHtmlTag_TMP_Text_UnicodeChar_arr_int_out_int = il2cpp_functions::class_get_method_from_name(klass, "ValidateHtmlTag", 3);
             __cached = true;
         }
     }

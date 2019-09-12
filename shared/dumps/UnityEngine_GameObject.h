@@ -100,7 +100,7 @@ namespace UnityEngine_GameObject {
             Find_string = il2cpp_functions::class_get_method_from_name(klass, "Find", 1);
             get_scene = il2cpp_functions::class_get_method_from_name(klass, "get_scene", 0);
             get_gameObject = il2cpp_functions::class_get_method_from_name(klass, "get_gameObject", 0);
-            get_scene_Injected_out_Scene = il2cpp_functions::class_get_method_from_name(klass, "get_scene_Injected", 2);
+            get_scene_Injected_out_Scene = il2cpp_functions::class_get_method_from_name(klass, "get_scene_Injected", 1);
             __cached = true;
         }
     }

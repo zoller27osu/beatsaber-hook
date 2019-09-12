@@ -1,5 +1,5 @@
 {
-    "dump": "C:\\Users\\adamz\\Desktop\\Code\\AndroidModding\\IL2CPPDumper\\dump_1.2.0.cs",
+    "dump": "C:\\Users\\adamz\\Desktop\\Code\\AndroidModding\\IL2CPPDumper\\dump_1.3.0p1.cs",
     "dst": "beatsaber-hook/shared/dumps",
     "classes": [
         {
@@ -45,6 +45,14 @@
         {
             "namespace": "UnityEngine",
             "class": "Canvas"
+        },
+        {
+            "namespace": "",
+            "class": "ScoreController"
+        },
+        {
+            "namespace": "UnityEngine",
+            "class": "Component"
         }
     ]
 }

@@ -20,7 +20,7 @@ namespace System_Reflection_Assembly {
         void* _refuse; // 0x38
         void* _granted; // 0x40
         void* _denied; // 0x48
-        uint32_t fromByteArray; // 0x50
+        uint8_t fromByteArray; // 0x50
         Il2CppString* assemblyName; // 0x58
     } Class;
     static bool __cached = false;
@@ -76,7 +76,7 @@ namespace System_Reflection_Assembly {
             GetObjectData_SerializationInfo_StreamingContext = il2cpp_functions::class_get_method_from_name(klass, "GetObjectData", 2);
             IsDefined_Type_bool = il2cpp_functions::class_get_method_from_name(klass, "IsDefined", 2);
             GetCustomAttributes_Type_bool = il2cpp_functions::class_get_method_from_name(klass, "GetCustomAttributes", 2);
-            GetManifestResourceInternal_string_out_int_out_Module = il2cpp_functions::class_get_method_from_name(klass, "GetManifestResourceInternal", 5);
+            GetManifestResourceInternal_string_out_int_out_Module = il2cpp_functions::class_get_method_from_name(klass, "GetManifestResourceInternal", 3);
             GetTypes_bool = il2cpp_functions::class_get_method_from_name(klass, "GetTypes", 1);
             GetTypes = il2cpp_functions::class_get_method_from_name(klass, "GetTypes", 0);
             GetType_string = il2cpp_functions::class_get_method_from_name(klass, "GetType", 1);

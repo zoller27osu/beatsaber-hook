@@ -50,6 +50,12 @@ def getParamTypes(method_header):
         if "," in spl[i] and not bracket:
             del(spl[i])
             i -= 1
+        elif "out" in spl[i]:
+            del(spl[i])
+            spl[i] = "out_" + spl[i]
+        elif "ref" in spl[i]:
+            del(spl[i])
+            spl[i] = "ref_" + spl[i]
         if i == len(spl) - 1:
             # Ignore last item as well, even though it has no comma
             del(spl[i])
@@ -61,7 +67,7 @@ def convertCsTypeToC(typ):
     if typ == "int" or typ == "float" or typ == "double" or typ == "IntPtr":
         return typ
     if typ == "bool":
-        return "uint32_t"
+        return "uint8_t"
     if typ == "byte":
         return "char"
     if typ == "char":
@@ -75,6 +81,7 @@ def convertCsTypeToC(typ):
 def getFieldLine(line):
     spl = line.strip().split(";")[0].split(" ")
     name = spl[-1]
+    name = name.replace("<", "").replace(">", "_")
     cs_type = spl[len(spl) - 2]
     comment = line.strip().split("; ")[1]
     static = "static " if "static" in line.strip() else ""

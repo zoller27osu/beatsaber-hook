@@ -252,7 +252,7 @@ namespace System_Type {
             GetEnumNames = il2cpp_functions::class_get_method_from_name(klass, "GetEnumNames", 0);
             GetEnumValues = il2cpp_functions::class_get_method_from_name(klass, "GetEnumValues", 0);
             GetEnumRawConstantValues = il2cpp_functions::class_get_method_from_name(klass, "GetEnumRawConstantValues", 0);
-            GetEnumData_out_string_arr_out_Array = il2cpp_functions::class_get_method_from_name(klass, "GetEnumData", 4);
+            GetEnumData_out_string_arr_out_Array = il2cpp_functions::class_get_method_from_name(klass, "GetEnumData", 2);
             GetEnumUnderlyingType = il2cpp_functions::class_get_method_from_name(klass, "GetEnumUnderlyingType", 0);
             IsEnumDefined_object = il2cpp_functions::class_get_method_from_name(klass, "IsEnumDefined", 1);
             GetEnumName_object = il2cpp_functions::class_get_method_from_name(klass, "GetEnumName", 1);

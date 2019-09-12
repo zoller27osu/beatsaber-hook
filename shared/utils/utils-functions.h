@@ -33,6 +33,8 @@ char* readfile(const char* filename);
 int writefile(const char* filename, const char* text);
 // Returns if a file exists and can be written to / read from
 bool fileexists(const char* filename);
+// Returns if a directory exists and can be written to / read from
+bool direxists(const char* dirname);
 // Returns a loaded UnityEngine.Object from an asset
 void* loadfromasset(const char* assetFilePath, const char* assetName);
 // Returns the config path for the current mod
