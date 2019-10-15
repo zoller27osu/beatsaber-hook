@@ -17,10 +17,10 @@
 #include "../shared/inline-hook/And64InlineHook.hpp"
 
 #define ASSETS_REGEX "\\/data\\/app\\/com\\.beatgames\\.beatsaber-[0-9]\\/base\\.apk\\/assets\\/bin\\/Data\\/(.*)"
-const char* ASSETS_TARGET = "/sdcard/BeatOnData/BeatSaberAssets/";
+const char* ASSETS_TARGET = "/sdcard/BMBFData/BeatSaberAssets/";
 
 #define SONGS_REGEX "\\/data\\/app\\/com\\.beatgames\\.beatsaber-[0-9]\\/base\\.apk\\/assets\\/bin\\/Data\\/CustomSongs\\/(.*)"
-const char* SONGS_TARGET = "/sdcard/BeatOnData/CustomSongs/";
+const char* SONGS_TARGET = "/sdcard/BMBFData/CustomSongs/";
 
 #define STARTSWITH(pre, str) ((strlen(str) < strlen(pre)) ? 0 : strncmp(pre, str, strlen(pre)) == 0)
 
