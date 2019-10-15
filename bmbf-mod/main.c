@@ -189,7 +189,7 @@ MAKE_HOOK_NAT(fstat_nat, fstat, int, int filedes, struct stat *buf)
 
 __attribute__((constructor)) void lib_main()
 {
-    log("Init of Beat On file remapper");
+    log("Init of BMBF file remapper");
     if (regcomp(&assetsRegex, ASSETS_REGEX,REG_ICASE|REG_EXTENDED) != 0) {
         log("Failed to compile regex for assets!");
     }

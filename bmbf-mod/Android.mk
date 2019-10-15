@@ -26,7 +26,7 @@ LOCAL_MODULE := hook
 
 include $(CLEAR_VARS)
 LOCAL_LDLIBS := -llog
-LOCAL_MODULE    := beatonmod
+LOCAL_MODULE    := bmbfmod
 LOCAL_SRC_FILES := main.c ../shared/utils/utils.c ../shared/inline-hook/inlineHook.c ../shared/inline-hook/relocate.c ../shared/inline-hook/And64InlineHook.cpp
 #LOCAL_STATIC_LIBRARIES := libhook
 include $(BUILD_SHARED_LIBRARY)
