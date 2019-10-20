@@ -14,9 +14,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <fstream>
-#include "customui.h"
-
-using namespace std;
+#include "customui.hpp"
 
 #include "../dumps/UnityEngine_GameObject.hpp"
 #include "../dumps/UnityEngine_RectTransform.hpp"
@@ -29,7 +27,7 @@ using namespace std;
 #include "../dumps/TMPro_TMP_Text.hpp"
 
 namespace CustomUI {
-    Il2CppObject* createtext(Il2CppObject* parent_transform, string_view text, Vector2 anchoredPosition, Vector2 sizeDelta) {
+    Il2CppObject* createtext(Il2CppObject* parent_transform, std::string_view text, Vector2 anchoredPosition, Vector2 sizeDelta) {
         // Initialize necessary MethodInfos
         UnityEngine_GameObject::Init();
         UnityEngine_Object::Init();
@@ -41,49 +39,40 @@ namespace CustomUI {
         TMPro_TMP_FontAsset::Init();
         TMPro_TMP_Text::Init();
 
+        // Make new GameObject("CustomUIText")
         Il2CppObject* gameObj = il2cpp_utils::NewUnsafe(UnityEngine_GameObject::klass, il2cpp_utils::createcsstr("CustomUIText"));
-        Il2CppException* exp;
         bool value = false;
-        void* args1[] = {&value};
-        il2cpp_functions::runtime_invoke(UnityEngine_GameObject::SetActive_bool, gameObj, args1, &exp);
-        if (exp) {
+        
+        if (!il2cpp_utils::RunMethod(gameObj, UnityEngine_GameObject::SetActive_bool, &value)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Get Type of TMPro.TextMeshProUGUI
-        void* args2[] = {il2cpp_utils::createcsstr("TMPro.TextMeshProUGUI")};
-        Il2CppObject* type_tmprougui = il2cpp_functions::runtime_invoke(System_Type::GetType_string, nullptr, args2, &exp);
-        if (exp) {
+        Il2CppObject* type_tmprougui;
+        if (!il2cpp_utils::RunMethod(&type_tmprougui, nullptr, System_Type::GetType_string, il2cpp_utils::createcsstr("TMPro.TextMeshProUGUI"))) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
+
         // Add Component via type
-        void* args3[] = {type_tmprougui};
-        Il2CppObject* textMesh = il2cpp_functions::runtime_invoke(UnityEngine_GameObject::AddComponent_Type, gameObj, args3, &exp);
-        if (exp) {
+        Il2CppObject* textMesh;
+        if (!il2cpp_utils::RunMethod(&textMesh, gameObj, UnityEngine_GameObject::AddComponent_Type, type_tmprougui)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Get Type of TMPro.TMP_FontAsset
-        void* args4[] = {il2cpp_utils::createcsstr("TMPro.TMP_FontAsset")};
-        Il2CppObject* type_fontasset = il2cpp_functions::runtime_invoke(System_Type::GetType_string, nullptr, args4, &exp);
-        if (exp) {
+        Il2CppObject* type_fontasset;
+        if (!il2cpp_utils::RunMethod(&type_fontasset, nullptr, System_Type::GetType_string, il2cpp_utils::createcsstr("TMPro.TMP_FontAsset"))) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Find Font Assets
-        void* args5[] = {type_fontasset};
-        auto allObjects = reinterpret_cast<Array<Il2CppObject*>*>(il2cpp_functions::runtime_invoke(UnityEngine_Resources::FindObjectsOfTypeAll_Type, nullptr, args5, &exp));
-        if (exp) {
+        Array<Il2CppObject*>* allObjects;
+        if (!il2cpp_utils::RunMethod(&allObjects, nullptr, UnityEngine_Resources::FindObjectsOfTypeAll_Type, type_fontasset)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
@@ -91,10 +80,9 @@ namespace CustomUI {
         int match = -1;
         for (int i = 0; i < allObjects->Length(); i++) {
             // Treat it as a UnityEngine.Object (which it is) and call the name getter
-            Il2CppString* assetName = reinterpret_cast<Il2CppString*>(il2cpp_functions::runtime_invoke(UnityEngine_Object::get_name, allObjects->values[i], nullptr, &exp));
-            if (exp) {
+            Il2CppString* assetName;
+            if (!il2cpp_utils::RunMethod(&assetName, allObjects->values[i], UnityEngine_Object::get_name)) {
                 // EXCEPTION
-                log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
                 return nullptr;
             }
             if (strcmp(to_utf8(csstrtostr(assetName)).c_str(), "Teko-Medium SDF No Glow") == 0) {
@@ -109,115 +97,83 @@ namespace CustomUI {
         }
 
         // Instantiate font
-        void* args6[] = {allObjects->values[match]};
-        auto font = il2cpp_functions::runtime_invoke(UnityEngine_Object::Instantiate_Object, nullptr, args6, &exp);
-        if (exp) {
+        Il2CppObject* font;
+        if (!il2cpp_utils::RunMethod(&font, nullptr, UnityEngine_Object::Instantiate_Object, allObjects->values[match])) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Set font
         void* args7[] = {font};
-        il2cpp_functions::runtime_invoke(TMPro_TMP_Text::set_font, textMesh, args7, &exp);
-        if (exp) {
+        if (!il2cpp_utils::RunMethod(textMesh, TMPro_TMP_Text::set_font, font)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Get RectTransform
-        auto rectTransform = il2cpp_functions::runtime_invoke(TMPro_TMP_Text::get_rectTransform, textMesh, nullptr, &exp);
-        if (exp) {
+        Il2CppObject* rectTransform;
+        if (!il2cpp_utils::RunMethod(textMesh, TMPro_TMP_Text::get_rectTransform)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Set Parent
         bool placeholder = false;
-        void* args8[] = {parent_transform, &placeholder};
-        il2cpp_functions::runtime_invoke(UnityEngine_Transform::SetParent_Transform_bool, rectTransform, args8, &exp);
-        if (exp) {
+        if (!il2cpp_utils::RunMethod(rectTransform, UnityEngine_Transform::SetParent_Transform_bool, parent_transform, &placeholder)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Set text
-        void* args9[] = {il2cpp_utils::createcsstr(text)};
-        il2cpp_functions::runtime_invoke(TMPro_TMP_Text::set_text, textMesh, args9, &exp);
-        if (exp) {
+        if (!il2cpp_utils::RunMethod(textMesh, TMPro_TMP_Text::set_text, il2cpp_utils::createcsstr(text))) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Set fontSize
         float val = 4;
-        void* args10[] = {&val};
-        il2cpp_functions::runtime_invoke(TMPro_TMP_Text::set_fontSize, textMesh, args10, &exp);
-        if (exp) {
+        if (!il2cpp_utils::RunMethod(textMesh, TMPro_TMP_Text::set_fontSize, &val)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Set color
-        Color c = {0.0, 0.0, 0.0, 0.0};
-        void* args11[] = {&c};
-        il2cpp_functions::runtime_invoke(TMPro_TMP_Text::set_color, textMesh, args11, &exp);
-        if (exp) {
+        Color c = {1.0, 1.0, 1.0, 1.0};
+        if (!il2cpp_utils::RunMethod(textMesh, TMPro_TMP_Text::set_color, &c)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Set rectTransform.anchorMin
         Vector2 anch_min = {0.5, 0.5};
-        void* args12[] = {&anch_min};
-        il2cpp_functions::runtime_invoke(UnityEngine_RectTransform::set_anchorMin, rectTransform, args12, &exp);
-        if (exp) {
+        if (!il2cpp_utils::RunMethod(rectTransform, UnityEngine_RectTransform::set_anchorMin, &anch_min)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Set rectTransform.anchorMax
         Vector2 anch_max = {0.5, 0.5};
-        void* args13[] = {&anch_max};
-        il2cpp_functions::runtime_invoke(UnityEngine_RectTransform::set_anchorMax, rectTransform, args13, &exp);
-        if (exp) {
+        if (!il2cpp_utils::RunMethod(rectTransform, UnityEngine_RectTransform::set_anchorMax, &anch_max)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Set rectTransform.sizeDelta
-        void* args14[] = {&sizeDelta};
-        il2cpp_functions::runtime_invoke(UnityEngine_RectTransform::set_sizeDelta, rectTransform, args14, &exp);
-        if (exp) {
+        if (!il2cpp_utils::RunMethod(rectTransform, UnityEngine_RectTransform::set_sizeDelta, &sizeDelta)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // Set rectTransform.anchoredPosition
-        void* args15[] = {&anchoredPosition};
-        il2cpp_functions::runtime_invoke(UnityEngine_RectTransform::set_anchoredPosition, rectTransform, args15, &exp);
-        if (exp) {
+        if (!il2cpp_utils::RunMethod(rectTransform, UnityEngine_RectTransform::set_anchoredPosition, &anchoredPosition)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
         // SetActive
         bool place = true;
-        void* args16[] = {&place};
-        il2cpp_functions::runtime_invoke(UnityEngine_GameObject::SetActive_bool, gameObj, args16, &exp);
-        if (exp) {
+        if (!il2cpp_utils::RunMethod(gameObj, UnityEngine_GameObject::SetActive_bool, &place)) {
             // EXCEPTION
-            log(CRITICAL, "%s", il2cpp_utils::ExceptionToString(exp).c_str());
             return nullptr;
         }
 
