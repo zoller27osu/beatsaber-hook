@@ -1,17 +1,17 @@
 #ifndef _ScoreController_DEFINED
 #define _ScoreController_DEFINED
-// This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
+// This .hpp file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
 #include <dlfcn.h>
 #include <string_view>
 #include "../utils/typedefs.h"
-#include "../utils/il2cpp-functions.h"
-#include "../utils/il2cpp-utils.h"
+#include "../utils/il2cpp-functions.hpp"
+#include "../utils/il2cpp-utils.hpp"
 // Contains MethodInfo/Il2CppClass data for: .ScoreController
 namespace _ScoreController {
     // .ScoreController
-    typedef struct Class {
+    typedef struct Class : Il2CppObject {
         int _feverModeRequiredCombo; // 0x18
         float _feverModeDuration; // 0x1C
         void* _gameplayModifiersModel; // 0x20

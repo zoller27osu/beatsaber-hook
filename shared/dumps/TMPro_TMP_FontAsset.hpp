@@ -1,17 +1,17 @@
 #ifndef TMPro_TMP_FontAsset_DEFINED
 #define TMPro_TMP_FontAsset_DEFINED
-// This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
+// This .hpp file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
 #include <dlfcn.h>
 #include <string_view>
 #include "../utils/typedefs.h"
-#include "../utils/il2cpp-functions.h"
-#include "../utils/il2cpp-utils.h"
+#include "../utils/il2cpp-functions.hpp"
+#include "../utils/il2cpp-utils.hpp"
 // Contains MethodInfo/Il2CppClass data for: TMPro.TMP_FontAsset
 namespace TMPro_TMP_FontAsset {
     // TMPro.TMP_FontAsset
-    typedef struct Class {
+    typedef struct Class : Il2CppObject {
         Il2CppString* m_Version; // 0x30
         Il2CppString* m_SourceFontFileGUID; // 0x38
         void* m_SourceFontFile; // 0x40

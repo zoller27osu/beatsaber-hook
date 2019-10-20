@@ -6,9 +6,9 @@ import json
 
 modes = ["Property Method Convert", "Single Class Parse", "Multiple Class Parse"]
 
-INCLUDES = ["#include <dlfcn.h>", "#include <string_view>", "#include \"../utils/typedefs.h\"", "#include \"../utils/il2cpp-functions.h\"", "#include \"../utils/il2cpp-utils.h\""]
+INCLUDES = ["#include <dlfcn.h>", "#include <string_view>", "#include \"../utils/typedefs.h\"", "#include \"../utils/il2cpp-functions.hpp\"", "#include \"../utils/il2cpp-utils.hpp\""]
 
-PARSE_HEADER = "// This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.\n// Created by Sc2ad.\n// Methods may not be valid!\n" + "\n".join(INCLUDES)
+PARSE_HEADER = "// This .hpp file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.\n// Created by Sc2ad.\n// Methods may not be valid!\n" + "\n".join(INCLUDES)
 
 class writer:
     def __init__(self):
@@ -87,9 +87,9 @@ def getFieldLine(line):
     static = "static " if "static" in line.strip() else ""
     return static + convertCsTypeToC(cs_type) + " " + name + "; " + comment
 
-def class_parse(dump_data, namespace, name, dst, trace_types=False):
+def class_parse(dump_data, namespace, name, dst, inherits=None, trace_types=False):
     fixed_name = name.replace(".", "_")
-    dst = os.path.join(dst, namespace.replace(".", "_") + "_" + fixed_name + ".h")
+    dst = os.path.join(dst, namespace.replace(".", "_") + "_" + fixed_name + ".hpp")
     arr = []
     for i in range(len(dump_data)):
         if dump_data[i].startswith("// Namespace: " + namespace):
@@ -142,7 +142,10 @@ def class_parse(dump_data, namespace, name, dst, trace_types=False):
                 # TODO Add Field Dump to struct called Class
                 # Check if recusrive dump allowed (to dump parents)
                 w.write("// " + namespace + "." + name)
-                w.write("typedef struct Class {")
+                if inherits:
+                    w.write("typedef struct Class : " + inherits + " {")
+                else:
+                    w.write("typedef struct Class {")
                 w.indent()
                 for f in fields:
                     if "const" in f:
@@ -210,9 +213,9 @@ def parse_many(data, dat, dst):
         if type(item) == dict:
             if not 'traceUsedTypes' in item:
                 item['traceUsedTypes'] = False
-            class_parse(data, item['namespace'], item['class'], dst, trace_types=item['traceUsedTypes'])
+            class_parse(data, item['namespace'], item['class'], dst, inherits=item['inherits'] if 'inherits' in item.keys() else None, trace_types=item['traceUsedTypes'])
         elif type(item) == list or type(item) == tuple:
-            class_parse(data, item[0], item[1], dst)
+            class_parse(data, item[0], item[1], dst, inherits=item[2] if len(item) > 2 else None)
         else:
             raise TypeError("dat must be list of type dict, list, or tuple!")
     

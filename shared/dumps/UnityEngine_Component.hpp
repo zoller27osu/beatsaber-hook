@@ -1,17 +1,17 @@
 #ifndef UnityEngine_Component_DEFINED
 #define UnityEngine_Component_DEFINED
-// This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
+// This .hpp file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
 #include <dlfcn.h>
 #include <string_view>
 #include "../utils/typedefs.h"
-#include "../utils/il2cpp-functions.h"
-#include "../utils/il2cpp-utils.h"
+#include "../utils/il2cpp-functions.hpp"
+#include "../utils/il2cpp-utils.hpp"
 // Contains MethodInfo/Il2CppClass data for: UnityEngine.Component
 namespace UnityEngine_Component {
     // UnityEngine.Component
-    typedef struct Class {
+    typedef struct Class : Il2CppObject {
     } Class;
     static bool __cached = false;
     static Il2CppClass* klass;

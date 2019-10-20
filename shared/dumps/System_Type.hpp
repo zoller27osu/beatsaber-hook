@@ -1,13 +1,13 @@
 #ifndef System_Type_DEFINED
 #define System_Type_DEFINED
-// This .h file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
+// This .hpp file was compiled via beatsaber-hook/shared/helper.py's Parse Mode.
 // Created by Sc2ad.
 // Methods may not be valid!
 #include <dlfcn.h>
 #include <string_view>
 #include "../utils/typedefs.h"
-#include "../utils/il2cpp-functions.h"
-#include "../utils/il2cpp-utils.h"
+#include "../utils/il2cpp-functions.hpp"
+#include "../utils/il2cpp-utils.hpp"
 // Contains MethodInfo/Il2CppClass data for: System.Type
 namespace System_Type {
     // System.Type
