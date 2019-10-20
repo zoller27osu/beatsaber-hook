@@ -22,6 +22,10 @@ void* addr_ ## name = (void*) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
 retval hook_ ## name(__VA_ARGS__) 
 
+#define MAKE_HOOK_OFFSETLESS(name, retval, ...) \
+retval (*name)(__VA_ARGS__) = NULL; \
+retval hook_ ## name(__VA_ARGS__)
+
 #define MAKE_HOOK_NAT(name, addr, retval, ...) \
 void* addr_ ## name = (void*) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
@@ -30,12 +34,15 @@ retval hook_ ## name(__VA_ARGS__)
 #ifdef __aarch64__
 
 #define INSTALL_HOOK(name) \
-log(INFO, "Installing 64 bit hook!");\
-A64HookFunction((void*)getRealOffset(addr_ ## name),(void*) hook_ ## name, (void**)&name);\
+log(INFO, "Installing 64 bit hook!"); \
+A64HookFunction((void*)getRealOffset(addr_ ## name),(void*) hook_ ## name, (void**)&name); \
 
+#define INSTALL_HOOK_OFFSETLESS(name, methodInfo) \
+log(INFO, "Installing 64 bit offsetless hook!"); \
+A64HookFunction((void*)methodInfo->methodPointer,(void*) hook_ ## name, (void**)&name); \
 
 #define INSTALL_HOOK_NAT(name) \
-A64HookFunction((void*)(addr_ ## name),(void*) hook_ ## name, (void**)&name);\
+A64HookFunction((void*)(addr_ ## name),(void*) hook_ ## name, (void**)&name); \
 
 
 #else
@@ -44,6 +51,11 @@ A64HookFunction((void*)(addr_ ## name),(void*) hook_ ## name, (void**)&name);\
 log(INFO, "Installing 32 bit hook!");\
 registerInlineHook((uint32_t)getRealOffset(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name);\
 inlineHook((uint32_t)getRealOffset(addr_ ## name));\
+
+#define INSTALL_HOOK_OFFSETLESS(name, methodInfo) \
+log(INFO, "Installing 32 bit offsetless hook!");\
+registerInlineHook((uint32_t)methodInfo->methodPointer, (uint32_t)hook_ ## name, (uint32_t **)&name);\
+inlineHook((uint32_t)methodInfo->methodPointer);\
 
 #define INSTALL_HOOK_NAT(name) \
 registerInlineHook((uint32_t)(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name);\
