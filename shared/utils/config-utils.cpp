@@ -2,9 +2,14 @@
 #define CONFIG_DEFINED_H
 
 #include <stddef.h>
-#include <utils.h>
-#include <config-utils.h>
-#include <utils-functions.h>
+#include <jni.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include "utils.h"
+#include "config-utils.hpp"
+
+#include <android/log.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,11 +23,10 @@
 ConfigDocument Configuration::config;
 bool readJson = false;
 
-using namespace std;
 using namespace rapidjson;
 
 
-bool parsejsonfile(ConfigDocument& doc, string filename) {
+bool parsejsonfile(ConfigDocument& doc, std::string filename) {
     if (!fileexists(filename.c_str())) {
         return {};
     }
@@ -48,7 +52,7 @@ void Configuration::Load() {
     if (!direxists(CONFIG_PATH)) {
         mkdir(CONFIG_PATH, 0700);
     }
-    string filename = getconfigpath();
+    std::string filename = getconfigpath();
 
     if (!fileexists(filename.c_str())) {
         writefile(filename.c_str(), "{}");
@@ -63,7 +67,7 @@ void Configuration::Load() {
 }
 
 void Configuration::Reload() {
-    string filename = getconfigpath();
+    std::string filename = getconfigpath();
 
     parsejsonfile(config, filename);
     if (!config.IsObject()) {
@@ -76,7 +80,7 @@ void Configuration::Write() {
     if (!direxists(CONFIG_PATH)) {
         mkdir(CONFIG_PATH, 0700);
     }
-    string filename = getconfigpath();
+    std::string filename = getconfigpath();
 
     StringBuffer buf;
     PrettyWriter<StringBuffer> writer(buf);

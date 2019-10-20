@@ -18,15 +18,15 @@
 
 using namespace std;
 
-#include "../dumps/UnityEngine_GameObject.h"
-#include "../dumps/UnityEngine_RectTransform.h"
-#include "../dumps/UnityEngine_Transform.h"
-#include "../dumps/TMPro_TextMeshProUGUI.h"
-#include "../dumps/UnityEngine_Resources.h"
-#include "../dumps/UnityEngine_Object.h"
-#include "../dumps/System_Type.h"
-#include "../dumps/TMPro_TMP_FontAsset.h"
-#include "../dumps/TMPro_TMP_Text.h"
+#include "../dumps/UnityEngine_GameObject.hpp"
+#include "../dumps/UnityEngine_RectTransform.hpp"
+#include "../dumps/UnityEngine_Transform.hpp"
+#include "../dumps/TMPro_TextMeshProUGUI.hpp"
+#include "../dumps/UnityEngine_Resources.hpp"
+#include "../dumps/UnityEngine_Object.hpp"
+#include "../dumps/System_Type.hpp"
+#include "../dumps/TMPro_TMP_FontAsset.hpp"
+#include "../dumps/TMPro_TMP_Text.hpp"
 
 namespace CustomUI {
     Il2CppObject* createtext(Il2CppObject* parent_transform, string_view text, Vector2 anchoredPosition, Vector2 sizeDelta) {

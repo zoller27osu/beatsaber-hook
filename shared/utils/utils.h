@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include "typedefs.h"
-#include "config-utils.h"
-#include "rapidjson-utils.h"
-#include "il2cpp-utils.h"
+#include "config-utils.hpp"
+#include "rapidjson-utils.hpp"
+#include "il2cpp-utils.hpp"
 #include "utils-functions.h"
 #include "../inline-hook/And64InlineHook.hpp"
 
@@ -15,15 +15,15 @@
 extern "C" {
 #endif /* __cplusplus */
 
-long getRealOffset(long offset);
+long getRealOffset(void* offset);
 
 #define MAKE_HOOK(name, addr, retval, ...) \
-long addr_ ## name = (long) addr; \
+void* addr_ ## name = (void*) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
 retval hook_ ## name(__VA_ARGS__) 
 
 #define MAKE_HOOK_NAT(name, addr, retval, ...) \
-long addr_ ## name = (long) addr; \
+void* addr_ ## name = (void*) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
 retval hook_ ## name(__VA_ARGS__) 
 

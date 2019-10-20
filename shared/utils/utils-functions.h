@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include "typedefs.h"
-#include "rapidjson-utils.h"
 #include <string>
 #include <string_view>
+#include "rapidjson-utils.hpp"
 
 #ifndef __cplusplus
 bool = uchar8_t;

@@ -4,11 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
-#include "rapidjson-utils.h"
+#include "rapidjson-utils.hpp"
 #include "../../rapidjson/include/rapidjson/document.h"
 #include "../../rapidjson/include/rapidjson/allocators.h"
 
-#ifdef __cplusplus
 // Provides helper functions for configuration.
 typedef rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigDocument;
 typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigValue;
@@ -23,6 +22,5 @@ public:
     // Writes JSON config
     static void Write();
 };
-#endif /* __cplusplus */
 
 #endif /* CONFIG_UTILS_H */

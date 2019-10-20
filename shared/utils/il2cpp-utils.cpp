@@ -3,7 +3,7 @@
 #include <dlfcn.h>
 #include <string>
 #include <string_view>
-#include "il2cpp-utils.h"
+#include "il2cpp-utils.hpp"
 #include "logging.h"
 
 namespace il2cpp_utils {

@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <sstream>
 #include "typedefs.h"
-#include "il2cpp-functions.h"
+#include "il2cpp-functions.hpp"
 #include "utils-functions.h"
 #include "logging.h"
 
@@ -159,6 +159,38 @@ namespace il2cpp_utils {
         };
     }
 
+    
+    template<typename... TArgs>
+    // Returns if a given MethodInfo's parameters match the Il2CppTypes provided as args
+    inline bool ParameterMatch(const MethodInfo* method, TArgs* ...args) {
+        InitFunctions();
+
+        constexpr auto count = sizeof...(TArgs);
+        Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
+        if (method->parameters_count != count) {
+            return false;
+        }
+        for (int i = 0; i < method->parameters_count; i++) {
+            if (!il2cpp_functions::type_equals(method->parameters[i].parameter_type, argarr[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Returns if a given MethodInfo's parameters match the Il2CppType array provided as type_arr
+    inline bool ParameterMatch(const MethodInfo* method, Il2CppType** type_arr, int count) {
+        if (method->parameters_count != count) {
+            return false;
+        }
+        for (int i = 0; i < method->parameters_count; i++) {
+            if (!il2cpp_functions::type_equals(method->parameters[i].parameter_type, type_arr[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     template<typename TObj = Il2CppObject, typename... TArgs>
     // Creates a new object of the given class and Il2CppTypes parameters and casts it to TObj*
     TObj* New(Il2CppClass* klass, TArgs const& ...args) {
@@ -177,7 +209,7 @@ namespace il2cpp_utils {
         const MethodInfo* ctor = nullptr;
         // Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
         while ((current = il2cpp_functions::class_get_methods(klass, &myIter))) {
-            if (ParameterMatch(current, argarr, count)) {
+            if (ParameterMatch(current, argarr, count) && strcmp(ctor->name, ".ctor") == 0) {
                 ctor = current;
             }
         }
@@ -226,19 +258,69 @@ namespace il2cpp_utils {
         return reinterpret_cast<TObj*>(obj);
     }
 
-    // TODO: add a version with a return like New instead (TObj*)
-    template<class... TArgs>
-    // Runs a MethodInfo method with the specified parameters, returns false if it errors
-    bool RunMethod(void* instance, const MethodInfo* method, TArgs* ...params) {
+    template<class TOut, class... TArgs>
+    // Runs a MethodInfo method with the specified parameters and instance, with return type TOut
+    // Returns false if it fails
+    // Created by zoller27osu, modified by Sc2ad
+    bool RunMethod(TOut* out, void* instance, const MethodInfo* method, TArgs* ...params) {
+        InitFunctions();
         Il2CppException* exp = nullptr;
         void* invoke_params[] = {reinterpret_cast<void*>(params)...};
-        il2cpp_functions::runtime_invoke(method, instance, invoke_params, &exp);
+        auto ret = il2cpp_functions::runtime_invoke(method, instance, invoke_params, &exp);
+        if constexpr (std::is_pointer<TOut>::value) {
+            *out = reinterpret_cast<TOut>(ret);
+        } else {
+            *out = *reinterpret_cast<TOut*>(il2cpp_functions::object_unbox(ret));
+        }
+
         if (exp) {
-            log(ERROR, "%s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
+            log(ERROR, "il2cpp_utils: RunMethod: %s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
                 il2cpp_utils::ExceptionToString(exp).c_str());
             return false;
         }
         return true;
+    }
+
+    template<class... TArgs>
+    // Runs a MethodInfo method with the specified parameters and instance, assuming a void return type.
+    // Returns false if it fails
+    // Created by zoller27osu
+    bool RunMethod(void* instance, const MethodInfo* method, TArgs* ...params) {
+        void* out = nullptr;
+        return RunMethod(&out, instance, method, params...);
+    }
+
+    template<class TOut, class... TArgs>
+    // Runs a method with the specified method name, with return type TOut
+    // Returns false if it fails
+    // Created by zoller27osu, modified by Sc2ad
+    bool RunMethod(TOut* out, Il2CppObject* instance, std::string_view methodName, TArgs* ...params) {
+        InitFunctions();
+        if (!instance) {
+            log(ERROR, "il2cpp_utils: RunMethod: Null instance parameter!");
+            return false;
+        }
+        auto klass = il2cpp_functions::object_get_class(instance);
+        if (!klass) {
+            log(ERROR, "il2cpp_utils: RunMethod: Could not get object class!");
+            return false;
+        }
+        auto method = il2cpp_functions::class_get_method_from_name(klass, methodName.data(), sizeof...(TArgs));
+        if (!method) {
+            log(ERROR, "il2cpp_utils: RunMethod: Could not find method %s with %i parameters in class %s (namespace '%s')!", methodName,
+                sizeof...(TArgs), il2cpp_functions::class_get_name(klass), il2cpp_functions::class_get_namespace(klass));
+            return false;
+        }
+        return RunMethod(out, instance, method, params...);
+    }
+
+    template<class... TArgs>
+    // Runs a method with the specified method name, assuming a void return type
+    // Returns false if it fails
+    // Created by zoller27osu
+    bool RunMethod(Il2CppObject* instance, std::string_view methodName, TArgs* ...params) {
+        void* out = nullptr;
+        return RunMethod(&out, instance, methodName, params...);
     }
 
     template<typename T = MulticastDelegate, typename R, typename... TArgs>
@@ -330,6 +412,7 @@ namespace il2cpp_utils {
         auto retType = il2cpp_functions::method_get_return_type(method);
         auto retTypeStr = TypeGetSimpleName(retType);
         auto methodName = il2cpp_functions::method_get_name(method);
+        methodName = methodName ? methodName : "__noname__";
         std::stringstream paramStream;
         for (int i = 0; i < il2cpp_functions::method_get_param_count(method); i++) {
             if (i > 0) paramStream << ", ";
@@ -338,7 +421,8 @@ namespace il2cpp_utils {
                 paramStream << "out/ref ";
             }
             paramStream << TypeGetSimpleName(paramType) << " ";
-            paramStream << il2cpp_functions::method_get_param_name(method, i);
+            auto name = il2cpp_functions::method_get_param_name(method, i);
+            paramStream << (name ? name : "__noname__");
         }
         const auto& paramStrRef = paramStream.str();
         const char* paramStr = paramStrRef.c_str();
@@ -355,6 +439,7 @@ namespace il2cpp_utils {
         auto type = il2cpp_functions::field_get_type(field);
         auto typeStr = TypeGetSimpleName(type);
         auto name = il2cpp_functions::field_get_name(field);
+        name = name ? name : "__noname__";
         auto offset = il2cpp_functions::field_get_offset(field);
 
         log(DEBUG, "%s%s %s; // 0x%lx, flags: 0x%.4X", flagStr, typeStr, name, offset, flags);
@@ -406,7 +491,7 @@ namespace il2cpp_utils {
             if (genInst) {
                 for (int i = 0; i < genInst->type_argc; i++) {
                     auto typ = genInst->type_argv[i];
-                    log(DEBUG, "  generic type %i: %s", i + 1, TypeGetSimpleName(typ));
+                    log(DEBUG, " generic type %i: %s", i + 1, TypeGetSimpleName(typ));
                 }
             }
         }
@@ -438,11 +523,13 @@ namespace il2cpp_utils {
     }
 
     // Returns if a given source object is an object of the given class
+    // Created by zoller27osu
     [[nodiscard]] inline bool Match(const Il2CppObject* source, const Il2CppClass* klass) noexcept {
         return (source->klass == klass);
     }
 
     // Asserts that a given source object is an object of the given class
+    // Created by zoller27osu
     inline bool AssertMatch(const Il2CppObject* source, const Il2CppClass* klass) {
         InitFunctions();
         if (!Match(source, klass)) {
@@ -458,37 +545,6 @@ namespace il2cpp_utils {
     [[nodiscard]] inline auto down_cast(From* in) noexcept {
         static_assert(std::is_convertible<To*, From*>::value);
         return static_cast<To*>(in);
-    }
-
-    template<typename... TArgs>
-    // Returns if a given MethodInfo's parameters match the Il2CppTypes provided as args
-    inline bool ParameterMatch(const MethodInfo* method, TArgs* ...args) {
-        InitFunctions();
-
-        constexpr auto count = sizeof...(TArgs);
-        Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
-        if (method->parameters_count != count) {
-            return false;
-        }
-        for (int i = 0; i < method->parameters_count; i++) {
-            if (!il2cpp_functions::type_equals(method->parameters[i].parameter_type, argarr[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Returns if a given MethodInfo's parameters match the Il2CppType array provided as type_arr
-    inline bool ParameterMatch(const MethodInfo* method, Il2CppType** type_arr, int count) {
-        if (method->parameters_count != count) {
-            return false;
-        }
-        for (int i = 0; i < method->parameters_count; i++) {
-            if (!il2cpp_functions::type_equals(method->parameters[i].parameter_type, type_arr[i])) {
-                return false;
-            }
-        }
-        return true;
     }
 
     template<typename... TArgs>

@@ -68,14 +68,14 @@ long baseAddr(const char *soname)  // credits to https://github.com/ikoz/Android
 
 long location; // save lib.so base address so we do not have to recalculate every time causing lag.
 
-long getRealOffset(long offset) // calculate dump.cs address + lib.so base address.
+long getRealOffset(void* offset) // calculate dump.cs address + lib.so base address.
 {
     if (location == 0)
     {
         //arm
         location = baseAddr("/data/app/com.beatgames.beatsaber-1/lib/arm64/libil2cpp.so"); // replace the com.package.name with the package name of the app you are modding.
     }
-    return location + offset;
+    return location + (long long)offset;
 }
 
 // BEAT SABER SPECIFIC
