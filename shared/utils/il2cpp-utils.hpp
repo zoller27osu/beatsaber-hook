@@ -307,7 +307,7 @@ namespace il2cpp_utils {
         }
         auto method = il2cpp_functions::class_get_method_from_name(klass, methodName.data(), sizeof...(TArgs));
         if (!method) {
-            log(ERROR, "il2cpp_utils: RunMethod: Could not find method %s with %i parameters in class %s (namespace '%s')!", methodName,
+            log(ERROR, "il2cpp_utils: RunMethod: Could not find method %s with %lu parameters in class %s (namespace '%s')!", methodName.data(),
                 sizeof...(TArgs), il2cpp_functions::class_get_name(klass), il2cpp_functions::class_get_namespace(klass));
             return false;
         }
