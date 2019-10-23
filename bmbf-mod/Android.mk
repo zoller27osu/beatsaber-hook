@@ -27,6 +27,8 @@ LOCAL_MODULE := hook
 include $(CLEAR_VARS)
 LOCAL_LDLIBS := -llog
 LOCAL_MODULE    := bmbfmod
-LOCAL_SRC_FILES := main.c ../shared/utils/utils.c ../shared/inline-hook/inlineHook.c ../shared/inline-hook/relocate.c ../shared/inline-hook/And64InlineHook.cpp
+LOCAL_CFLAGS := -std=c17
+LOCAL_CPPFLAGS := -std=c++2a
+LOCAL_SRC_FILES := ../shared/utils/utils.cpp main.cpp ../shared/inline-hook/inlineHook.c ../shared/inline-hook/relocate.c ../shared/inline-hook/And64InlineHook.cpp
 #LOCAL_STATIC_LIBRARIES := libhook
 include $(BUILD_SHARED_LIBRARY)
