@@ -31,12 +31,17 @@ enum LOG_VERBOSE_TYPE {
 #define VERSION "0.0.0"
 #endif
 
-#ifdef log
-#undef log
+#ifdef log_base
+#undef log_base
 #endif
+
 #define log_base(...) __android_log_print(ANDROID_LOG_INFO, "QuestHook [" MOD_ID " v" VERSION "] ", __VA_ARGS__)
 
-#define log(level, ...) if (((LOG_LEVEL) & level) != 0) {\
+#ifdef log_print
+#undef log_print
+#endif
+
+#define log_print(level, ...) if (((LOG_LEVEL) & level) != 0) {\
 if (level == CRITICAL) log_base("[CRITICAL] " __VA_ARGS__); \
 if (level == ERROR) log_base("[ERROR] " __VA_ARGS__); \
 if (level == WARNING) log_base("[WARNING] " __VA_ARGS__); \

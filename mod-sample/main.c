@@ -25,6 +25,6 @@ MAKE_HOOK_NAT(open_nat, open, int, char* path, int oflag, mode_t mode)
 
 __attribute__((constructor)) void lib_main()
 {
-    log("sample-plugin loaded!");
+    log_print("sample-plugin loaded!");
     INSTALL_HOOK_NAT(open_nat);
 }

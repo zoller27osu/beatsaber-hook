@@ -69,5 +69,5 @@ __attribute__((constructor)) void lib_main()
     INSTALL_HOOK(get_colorA);
     INSTALL_HOOK(get_colorB);
     INSTALL_HOOK(get_color);
-    log("custom-colors loaded!");
+    log_print("custom-colors loaded!");
 }
