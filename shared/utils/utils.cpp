@@ -16,13 +16,13 @@
 
 using namespace std;
 
-long baseAddr(const char *soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
+long long baseAddr(const char *soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
 {
     void *imagehandle = dlopen(soname, RTLD_LOCAL | RTLD_LAZY);
     if (soname == NULL)
-        return (long)NULL;
+        return (long long)NULL;
     if (imagehandle == NULL){
-        return (long)NULL;
+        return (long long)NULL;
     }
     uintptr_t * irc = NULL;
     FILE *f = NULL;
@@ -31,7 +31,7 @@ long baseAddr(const char *soname)  // credits to https://github.com/ikoz/Android
     char *tok = NULL;
     char * baseAddr = NULL;
     if ((f = fopen("/proc/self/maps", "r")) == NULL)
-        return (long)NULL;
+        return (long long)NULL;
     while (fgets(line, 199, f) != NULL)
     {
         tok = strtok_r(line, "-", &state);
@@ -56,24 +56,24 @@ long baseAddr(const char *soname)  // credits to https://github.com/ikoz/Android
                 if (toklen > 0) {
                     if (toklen >= solen && strcmp(tok + (toklen - solen), soname) == 0) {
                         fclose(f);
-                        return (long)strtoll(baseAddr,NULL,16);
+                        return (long long)strtoll(baseAddr,NULL,16);
                     }
                 }
             }
         }
     }
     fclose(f);
-    return (long)NULL;
+    return (long long)NULL;
 }
 
-long location; // save lib.so base address so we do not have to recalculate every time causing lag.
+long long location; // save lib.so base address so we do not have to recalculate every time causing lag.
 
-long getRealOffset(void* offset) // calculate dump.cs address + lib.so base address.
+long long getRealOffset(void* offset) // calculate dump.cs address + lib.so base address.
 {
     if (location == 0)
     {
         //arm
-        location = baseAddr("/data/app/com.beatgames.beatsaber-1/lib/arm64/libil2cpp.so"); // replace the com.package.name with the package name of the app you are modding.
+        location = baseAddr(IL2CPP_SO_PATH); // replace the com.package.name with the package name of the app you are modding.
     }
     return location + (long long)offset;
 }

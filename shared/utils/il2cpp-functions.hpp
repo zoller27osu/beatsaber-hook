@@ -6,6 +6,7 @@
 #include <dlfcn.h>
 #include "typedefs.h"
 #include "logging.h"
+#include "utils.h"
 
 namespace il2cpp_functions {
 	static void (*init)(const char* domain_name);
@@ -219,7 +220,7 @@ namespace il2cpp_functions {
     static void Init() {
         if (initialized) return;
         log(INFO, "il2cpp_functions: Init: Initializing all IL2CPP Functions...");
-        void *imagehandle = dlopen("/data/app/com.beatgames.beatsaber-1/lib/arm64/libil2cpp.so", 0x00000 | 0x00001);
+        void *imagehandle = dlopen(IL2CPP_SO_PATH, RTLD_LOCAL | RTLD_LAZY);
 
 		*(void**)(&init) = dlsym(imagehandle, "il2cpp_init");
 		log(INFO, "Loaded: il2cpp_init");
