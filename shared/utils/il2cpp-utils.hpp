@@ -53,7 +53,7 @@ namespace il2cpp_utils {
     // Init all of the usable il2cpp API, if it has yet to be initialized
     inline void InitFunctions() {
         if (!il2cpp_functions::initialized) {
-            log(WARNING, "il2cpp_utils: IL2CPP Functions Not Initialized!");
+            log_print(WARNING, "il2cpp_utils: IL2CPP Functions Not Initialized!");
             il2cpp_functions::Init();
         }
     }
@@ -214,18 +214,18 @@ namespace il2cpp_utils {
             }
         }
         if (!ctor) {
-            log(ERROR, "il2cpp_utils: New: Could not find constructor for provided class!");
+            log_print(ERROR, "il2cpp_utils: New: Could not find constructor for provided class!");
             return nullptr;
         }
         // TODO FIX CTOR CHECKING
         if (strcmp(ctor->name, ".ctor") != 0) {
-            log(ERROR, "il2cpp_utils: New: Found a method matching parameter count and types, but it is not a constructor!");
+            log_print(ERROR, "il2cpp_utils: New: Found a method matching parameter count and types, but it is not a constructor!");
             return nullptr;
         }
         Il2CppException* exp = nullptr;
         il2cpp_functions::runtime_invoke(ctor, obj, invoke_params, &exp);
         if (exp) {
-            log(ERROR, "il2cpp_utils: New: Failed with exception: %s", ExceptionToString(exp).c_str());
+            log_print(ERROR, "il2cpp_utils: New: Failed with exception: %s", ExceptionToString(exp).c_str());
             return nullptr;
         }
         return reinterpret_cast<TObj*>(obj);
@@ -242,17 +242,17 @@ namespace il2cpp_utils {
         auto obj = il2cpp_functions::object_new(klass);
         // runtime_invoke constructor with right number of args, return null if constructor errors
         constexpr auto count = sizeof...(TArgs);
-        log(DEBUG, "Attempting to find .ctor with paramCount: %lu for class name: %s", count, il2cpp_functions::class_get_name(klass));
+        log_print(DEBUG, "Attempting to find .ctor with paramCount: %lu for class name: %s", count, il2cpp_functions::class_get_name(klass));
         const MethodInfo* ctor = il2cpp_functions::class_get_method_from_name(klass, ".ctor", count);
 
         if (!ctor) {
-            log(ERROR, "il2cpp_utils: New: Could not find constructor for provided class!");
+            log_print(ERROR, "il2cpp_utils: New: Could not find constructor for provided class!");
             return nullptr;
         }
         Il2CppException* exp;
         il2cpp_functions::runtime_invoke(ctor, obj, invoke_params, &exp);
         if (exp) {
-            log(ERROR, "il2cpp_utils: New: Failed with exception: %s", ExceptionToString(exp).c_str());
+            log_print(ERROR, "il2cpp_utils: New: Failed with exception: %s", ExceptionToString(exp).c_str());
             return nullptr;
         }
         return reinterpret_cast<TObj*>(obj);
@@ -274,7 +274,7 @@ namespace il2cpp_utils {
         }
 
         if (exp) {
-            log(ERROR, "il2cpp_utils: RunMethod: %s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
+            log_print(ERROR, "il2cpp_utils: RunMethod: %s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
                 il2cpp_utils::ExceptionToString(exp).c_str());
             return false;
         }
@@ -297,17 +297,17 @@ namespace il2cpp_utils {
     bool RunMethod(TOut* out, Il2CppObject* instance, std::string_view methodName, TArgs* ...params) {
         InitFunctions();
         if (!instance) {
-            log(ERROR, "il2cpp_utils: RunMethod: Null instance parameter!");
+            log_print(ERROR, "il2cpp_utils: RunMethod: Null instance parameter!");
             return false;
         }
         auto klass = il2cpp_functions::object_get_class(instance);
         if (!klass) {
-            log(ERROR, "il2cpp_utils: RunMethod: Could not get object class!");
+            log_print(ERROR, "il2cpp_utils: RunMethod: Could not get object class!");
             return false;
         }
         auto method = il2cpp_functions::class_get_method_from_name(klass, methodName.data(), sizeof...(TArgs));
         if (!method) {
-            log(ERROR, "il2cpp_utils: RunMethod: Could not find method %s with %lu parameters in class %s (namespace '%s')!", methodName.data(),
+            log_print(ERROR, "il2cpp_utils: RunMethod: Could not find method %s with %lu parameters in class %s (namespace '%s')!", methodName.data(),
                 sizeof...(TArgs), il2cpp_functions::class_get_name(klass), il2cpp_functions::class_get_namespace(klass));
             return false;
         }
@@ -348,7 +348,7 @@ namespace il2cpp_utils {
         auto action = il2cpp_utils::NewUnsafe<T>(actionClass, obj, &method);
         auto asDelegate = reinterpret_cast<Delegate*>(action);
         if (asDelegate->method_ptr != (void*)callback) {
-            log(ERROR, "Created Action's method_ptr (%p) is incorrect (should be %p)!", asDelegate->method_ptr, callback);
+            log_print(ERROR, "Created Action's method_ptr (%p) is incorrect (should be %p)!", asDelegate->method_ptr, callback);
             return nullptr;
         }
 
@@ -426,7 +426,7 @@ namespace il2cpp_utils {
         }
         const auto& paramStrRef = paramStream.str();
         const char* paramStr = paramStrRef.c_str();
-        log(DEBUG, "%s%s %s(%s);", flagStr, retTypeStr, methodName, paramStr);
+        log_print(DEBUG, "%s%s %s(%s);", flagStr, retTypeStr, methodName, paramStr);
     }
 
     // Created by zoller27osu
@@ -442,7 +442,7 @@ namespace il2cpp_utils {
         name = name ? name : "__noname__";
         auto offset = il2cpp_functions::field_get_offset(field);
 
-        log(DEBUG, "%s%s %s; // 0x%lx, flags: 0x%.4X", flagStr, typeStr, name, offset, flags);
+        log_print(DEBUG, "%s%s %s; // 0x%lx, flags: 0x%.4X", flagStr, typeStr, name, offset, flags);
     }
 
     // Some parts provided by zoller27osu
@@ -451,18 +451,18 @@ namespace il2cpp_utils {
         InitFunctions();
 
         auto unconst = const_cast<Il2CppClass*>(klass);
-        log(DEBUG, "======================CLASS INFO FOR CLASS: %s::%s======================", il2cpp_functions::class_get_namespace(unconst), il2cpp_functions::class_get_name(unconst));
-        log(DEBUG, "Assembly Name: %s", il2cpp_functions::class_get_assemblyname(klass));
-        log(DEBUG, "Rank: %i", il2cpp_functions::class_get_rank(klass));
-        log(DEBUG, "Type Token: %i", il2cpp_functions::class_get_type_token(unconst));
-        log(DEBUG, "Flags: 0x%.8X", il2cpp_functions::class_get_flags(klass));
-        log(DEBUG, "Event Count: %i", klass->event_count);
-        log(DEBUG, "Field Count: %i", klass->field_count);
-        log(DEBUG, "Method Count: %i", klass->method_count);
-        log(DEBUG, "Property Count: %i", klass->property_count);
-        log(DEBUG, "Is Generic: %i", il2cpp_functions::class_is_generic(klass));
-        log(DEBUG, "Is Abstract: %i", il2cpp_functions::class_is_abstract(klass));
-        log(DEBUG, "=========METHODS=========");
+        log_print(DEBUG, "======================CLASS INFO FOR CLASS: %s::%s======================", il2cpp_functions::class_get_namespace(unconst), il2cpp_functions::class_get_name(unconst));
+        log_print(DEBUG, "Assembly Name: %s", il2cpp_functions::class_get_assemblyname(klass));
+        log_print(DEBUG, "Rank: %i", il2cpp_functions::class_get_rank(klass));
+        log_print(DEBUG, "Type Token: %i", il2cpp_functions::class_get_type_token(unconst));
+        log_print(DEBUG, "Flags: 0x%.8X", il2cpp_functions::class_get_flags(klass));
+        log_print(DEBUG, "Event Count: %i", klass->event_count);
+        log_print(DEBUG, "Field Count: %i", klass->field_count);
+        log_print(DEBUG, "Method Count: %i", klass->method_count);
+        log_print(DEBUG, "Property Count: %i", klass->property_count);
+        log_print(DEBUG, "Is Generic: %i", il2cpp_functions::class_is_generic(klass));
+        log_print(DEBUG, "Is Abstract: %i", il2cpp_functions::class_is_abstract(klass));
+        log_print(DEBUG, "=========METHODS=========");
         void* myIter = nullptr;
         // const MethodInfo* current;
         // int i = 0;
@@ -478,10 +478,10 @@ namespace il2cpp_utils {
         // }
         for (int i = 0; i < unconst->method_count; i++) {
             if (unconst->methods[i]) {
-                log(DEBUG, "Method %i:", i);
-                log(DEBUG, "Name: %s Params: %i", unconst->methods[i]->name, unconst->methods[i]->parameters_count);
+                log_print(DEBUG, "Method %i:", i);
+                log_print(DEBUG, "Name: %s Params: %i", unconst->methods[i]->name, unconst->methods[i]->parameters_count);
             } else {
-                log(DEBUG, "Method: %i Does not exist!", i);
+                log_print(DEBUG, "Method: %i Does not exist!", i);
             }
         }
         auto genClass = klass->generic_class;
@@ -491,29 +491,29 @@ namespace il2cpp_utils {
             if (genInst) {
                 for (int i = 0; i < genInst->type_argc; i++) {
                     auto typ = genInst->type_argv[i];
-                    log(DEBUG, " generic type %i: %s", i + 1, TypeGetSimpleName(typ));
+                    log_print(DEBUG, " generic type %i: %s", i + 1, TypeGetSimpleName(typ));
                 }
             }
         }
         auto declaring = il2cpp_functions::class_get_declaring_type(unconst);
-        log(DEBUG, "declaring type: %p", declaring);
+        log_print(DEBUG, "declaring type: %p", declaring);
         if (declaring) LogClass(declaring);
         auto element = il2cpp_functions::class_get_element_class(unconst);
-        log(DEBUG, "element class: %p (self = %p)", element, klass);
+        log_print(DEBUG, "element class: %p (self = %p)", element, klass);
         if (element && element != klass) LogClass(element);
 
-        log(DEBUG, "=========FIELDS=========");
+        log_print(DEBUG, "=========FIELDS=========");
         myIter = nullptr;
         FieldInfo* field;
         while ((field = il2cpp_functions::class_get_fields(unconst, &myIter))) {
             LogField(field);
         }
-        log(DEBUG, "=========END FIELDS=========");
+        log_print(DEBUG, "=========END FIELDS=========");
 
         auto parent = il2cpp_functions::class_get_parent(unconst);
-        log(DEBUG, "parent: %p", parent);
+        log_print(DEBUG, "parent: %p", parent);
         if (parent && logParents) LogClass(parent);
-        log(DEBUG, "==================================================================================");
+        log_print(DEBUG, "==================================================================================");
     }
 
     // Creates a cs string (allocates it) with the given string_view and returns it
@@ -533,7 +533,7 @@ namespace il2cpp_utils {
     inline bool AssertMatch(const Il2CppObject* source, const Il2CppClass* klass) {
         InitFunctions();
         if (!Match(source, klass)) {
-            log(CRITICAL, "il2cpp_utils: AssertMatch: Unhandled subtype: namespace %s, class %s", 
+            log_print(CRITICAL, "il2cpp_utils: AssertMatch: Unhandled subtype: namespace %s, class %s", 
                 il2cpp_functions::class_get_namespace(source->klass), il2cpp_functions::class_get_name(source->klass));
             std::terminate();
         }
