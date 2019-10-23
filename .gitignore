@@ -10,5 +10,11 @@ mod-sample/obj/*
 customcolors/libs/*
 customcolors/obj/*
 
+shared/libil2cpp/
+
+*.pyc
+
+shared/dumps.json
+
 bmbf-mod/libs/*
 bmbf-mod/obj/*

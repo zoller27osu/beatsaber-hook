@@ -1,0 +1,58 @@
+{
+    "dump": "C:\\Users\\adamz\\Desktop\\Code\\AndroidModding\\IL2CPPDumper\\dump_1.3.0p1.cs",
+    "dst": "beatsaber-hook/shared/dumps",
+    "classes": [
+        {
+            "namespace": "UnityEngine",
+            "class": "Object"
+        },
+        {
+            "namespace": "UnityEngine",
+            "class": "GameObject"
+        },
+        {
+            "namespace": "UnityEngine",
+            "class": "Transform"
+        },
+        {
+            "namespace": "UnityEngine",
+            "class": "RectTransform"
+        },
+        {
+            "namespace": "UnityEngine",
+            "class": "Resources"
+        },
+        {
+            "namespace": "TMPro",
+            "class": "TextMeshProUGUI"
+        },
+        {
+            "namespace": "System",
+            "class": "Type"
+        },
+        {
+            "namespace": "System.Reflection",
+            "class": "Assembly"
+        },
+        {
+            "namespace": "TMPro",
+            "class": "TMP_FontAsset"
+        },
+        {
+            "namespace": "TMPro",
+            "class": "TMP_Text"
+        },
+        {
+            "namespace": "UnityEngine",
+            "class": "Canvas"
+        },
+        {
+            "namespace": "",
+            "class": "ScoreController"
+        },
+        {
+            "namespace": "UnityEngine",
+            "class": "Component"
+        }
+    ]
+}

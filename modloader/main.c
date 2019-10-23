@@ -12,7 +12,6 @@
 #include <dlfcn.h>
 #include <errno.h>
 
-
 #include "../shared/inline-hook/inlineHook.h"
 #include "../shared/utils/utils.h"
 
@@ -96,14 +95,18 @@ int load_mods()
     struct dirent *dp;
     DIR *dir = opendir(modPath);
 
-    while ((dp = readdir(dir)) != NULL)
+    // Goes through all files in the mods folder alphabetically
+    for (int i = 0; i < no_files; i++)
     {
-        if (strlen(dp->d_name) > 3 && !strcmp(dp->d_name + strlen(dp->d_name) - 3, ".so"))
+        // Only attempts to load .so files
+        if (strlen(file_list[i]->d_name) > 3 && !strcmp(file_list[i]->d_name + strlen(file_list[i]->d_name) - 3, ".so"))
         {
             char full_path[PATH_MAX];
             strcpy(full_path, modPath);
             strcat(full_path, dp->d_name);
             __android_log_print(ANDROID_LOG_INFO, "QuestHook", "Loading mod: %s", full_path);
+
+            // Get filesize of mod
             int infile = open(full_path, O_RDONLY);
             off_t filesize = lseek(infile, 0, SEEK_END);
             lseek(infile, 0, SEEK_SET);
@@ -115,6 +118,7 @@ int load_mods()
             chmod(modTempPath, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP);
             dlopen(modTempPath, RTLD_NOW);
         }
+        free(file_list[i]);
     }
     closedir(dir);
     return 0;
