@@ -1,14 +1,16 @@
 {
-    "dump": "C:\\Users\\adamz\\Desktop\\Code\\AndroidModding\\IL2CPPDumper\\dump_1.3.0p1.cs",
-    "dst": "beatsaber-hook/shared/dumps",
+    "dump": "~\\Desktop\\Code\\AndroidModding\\IL2CPPDumper\\dump_1.4.2.cs",
+    "dst": "dumps",
     "classes": [
         {
             "namespace": "UnityEngine",
-            "class": "Object"
+            "class": "Object",
+            "inherits": "Il2CppObject"
         },
         {
             "namespace": "UnityEngine",
-            "class": "GameObject"
+            "class": "GameObject",
+            "inherits": "Il2CppObject"
         },
         {
             "namespace": "UnityEngine",
@@ -24,7 +26,8 @@
         },
         {
             "namespace": "TMPro",
-            "class": "TextMeshProUGUI"
+            "class": "TextMeshProUGUI",
+            "inherits": "Il2CppObject"
         },
         {
             "namespace": "System",
@@ -36,23 +39,28 @@
         },
         {
             "namespace": "TMPro",
-            "class": "TMP_FontAsset"
+            "class": "TMP_FontAsset",
+            "inherits": "Il2CppObject"
         },
         {
             "namespace": "TMPro",
-            "class": "TMP_Text"
+            "class": "TMP_Text",
+            "inherits": "Il2CppObject"
         },
         {
             "namespace": "UnityEngine",
-            "class": "Canvas"
+            "class": "Canvas",
+            "inherits": "Il2CppObject"
         },
         {
             "namespace": "",
-            "class": "ScoreController"
+            "class": "ScoreController",
+            "inherits": "Il2CppObject"
         },
         {
             "namespace": "UnityEngine",
-            "class": "Component"
+            "class": "Component",
+            "inherits": "Il2CppObject"
         }
     ]
 }
