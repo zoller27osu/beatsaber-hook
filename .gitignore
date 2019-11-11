@@ -18,3 +18,7 @@ shared/dumps.json
 
 bmbf-mod/libs/*
 bmbf-mod/obj/*
+
+*.bin
+
+*.ipch
