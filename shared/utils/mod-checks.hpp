@@ -19,7 +19,7 @@ namespace mod
     static_assert(MOD_FUNCTION_ASSERT(funcname), \
     #funcname " either has the wrong signature, or does not exist!")
 
-#define CHECK_INIT CHECK_MOD_FUNCTION(init)
-#define CHECK_CTOR CHECK_MOD_FUNCTION(lib_main)
-#define CHECK_PRELOAD CHECK_MOD_FUNCTION(preload)
-#define CHECK_LOAD CHECK_MOD_FUNCTION(load)
+#define CHECK_MOD_INIT CHECK_MOD_FUNCTION(init)
+#define CHECK_MOD_CTOR CHECK_MOD_FUNCTION(lib_main)
+#define CHECK_MOD_PRELOAD CHECK_MOD_FUNCTION(preload)
+#define CHECK_MOD_LOAD CHECK_MOD_FUNCTION(load)
