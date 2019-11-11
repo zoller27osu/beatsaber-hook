@@ -80,6 +80,9 @@ void Configuration::Write() {
     if (!direxists(CONFIG_PATH)) {
         mkdir(CONFIG_PATH, 0700);
     }
+    if (!config.IsObject()) {
+        config.SetObject();
+    }
     std::string filename = getconfigpath();
 
     StringBuffer buf;

@@ -32,6 +32,88 @@ namespace il2cpp_utils {
         return nullptr;
     }
 
+    Il2CppObject* GetFieldValueObject(Il2CppObject* instance, FieldInfo* field) {
+        InitFunctions();
+
+        if (!field) {
+            log_print(ERROR, "il2cpp_utils: GetFieldValueObject: Null field parameter!");
+            return nullptr;
+        }
+        return il2cpp_functions::field_get_value_object(field, instance);
+    }
+
+    Il2CppObject* GetFieldValueObject(Il2CppObject* instance, std::string_view fieldName) {
+        InitFunctions();
+
+        if (!instance) {
+            log_print(ERROR, "il2cpp_utils: GetFieldValueObject: Null instance parameter!");
+            return nullptr;
+        }
+        auto klass = il2cpp_functions::object_get_class(instance);
+        if (!klass) {
+            log_print(ERROR, "il2cpp_utils: GetFieldValueObject: Could not get object class!");
+            return nullptr;
+        }
+        auto field = il2cpp_functions::class_get_field_from_name(klass, fieldName.data());
+        return GetFieldValueObject(instance, field);
+    }
+
+    bool SetFieldValueObject(Il2CppObject* instance, FieldInfo* field, Il2CppObject* value) {
+        InitFunctions();
+
+        if (!field) {
+            log_print(ERROR, "il2cpp_utils: GetFieldValueObject: Null field parameter!");
+            return false;
+        }
+        il2cpp_functions::field_set_value_object(instance, field, value);
+        return true;
+    }
+
+    bool SetFieldValueObject(Il2CppObject* instance, std::string_view fieldName, Il2CppObject* value) {
+        InitFunctions();
+        if (!instance) {
+            log_print(ERROR, "il2cpp_utils: SetFieldValueObject: Null instance parameter!");
+            return false;
+        }
+        auto klass = il2cpp_functions::object_get_class(instance);
+        if (!klass) {
+            log_print(ERROR, "il2cpp_utils: SetFieldValueObject: Could not get object class!");
+            return false;
+        }
+        auto field = il2cpp_functions::class_get_field_from_name(klass, fieldName.data());
+        return SetFieldValueObject(instance, field, value);
+    }
+
+    bool SetFieldValue(Il2CppObject* instance, FieldInfo* field, void* value) {
+        InitFunctions();
+        if (!field) {
+            log_print(ERROR, "il2cpp_utils: SetFieldValue: Null field parameter!");
+            return false;
+        }
+        if (!instance) {
+            // Fallback to perform a static field set
+            il2cpp_functions::field_static_set_value(field, value);
+            return true;
+        }
+        il2cpp_functions::field_set_value(instance, field, value);
+        return true;
+    }
+
+    bool SetFieldValue(Il2CppObject* instance, std::string_view fieldName, void* value) {
+        InitFunctions();
+        if (!instance) {
+            log_print(ERROR, "il2cpp_utils: SetFieldValue: Null instance parameter!");
+            return false;
+        }
+        auto klass = il2cpp_functions::object_get_class(instance);
+        if (!klass) {
+            log_print(ERROR, "il2cpp_utils: SetFieldValue: Could not find object class!");
+            return false;
+        }
+        auto field = il2cpp_functions::class_get_field_from_name(klass, fieldName.data());
+        return SetFieldValue(instance, field, value);
+    }
+
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types) {
         InitFunctions();
 

@@ -198,7 +198,7 @@ namespace il2cpp_utils {
 
         constexpr auto count = sizeof...(TArgs);
 
-        void* invoke_params[] = { il2cpp_type_check::il2cpp_arg_ptr<decltype(args)>::get(args)... };
+        void* invokeParams[] = { il2cpp_type_check::il2cpp_arg_ptr<decltype(args)>::get(args)... };
         Il2CppType const* argarr[] = { il2cpp_type_check::il2cpp_arg_type<decltype(args)>::get(args)... };
         // object_new call
         auto obj = il2cpp_functions::object_new(klass);
@@ -223,7 +223,7 @@ namespace il2cpp_utils {
             return nullptr;
         }
         Il2CppException* exp = nullptr;
-        il2cpp_functions::runtime_invoke(ctor, obj, invoke_params, &exp);
+        il2cpp_functions::runtime_invoke(ctor, obj, invokeParams, &exp);
         if (exp) {
             log_print(ERROR, "il2cpp_utils: New: Failed with exception: %s", ExceptionToString(exp).c_str());
             return nullptr;
@@ -237,7 +237,7 @@ namespace il2cpp_utils {
     TObj* NewUnsafe(Il2CppClass* klass, TArgs* ...args) {
         InitFunctions();
 
-        void* invoke_params[] = {reinterpret_cast<void*>(args)...};
+        void* invokeParams[] = {reinterpret_cast<void*>(args)...};
         // object_new call
         auto obj = il2cpp_functions::object_new(klass);
         // runtime_invoke constructor with right number of args, return null if constructor errors
@@ -250,7 +250,7 @@ namespace il2cpp_utils {
             return nullptr;
         }
         Il2CppException* exp;
-        il2cpp_functions::runtime_invoke(ctor, obj, invoke_params, &exp);
+        il2cpp_functions::runtime_invoke(ctor, obj, invokeParams, &exp);
         if (exp) {
             log_print(ERROR, "il2cpp_utils: New: Failed with exception: %s", ExceptionToString(exp).c_str());
             return nullptr;
@@ -260,13 +260,18 @@ namespace il2cpp_utils {
 
     template<class TOut, class... TArgs>
     // Runs a MethodInfo method with the specified parameters and instance, with return type TOut
+    // Assumes a static method if instance == nullptr
     // Returns false if it fails
     // Created by zoller27osu, modified by Sc2ad
     bool RunMethod(TOut* out, void* instance, const MethodInfo* method, TArgs* ...params) {
         InitFunctions();
+        if (!method) {
+            log_print(ERROR, "il2cpp_utils: RunMethod: Null method!");
+            return false;
+        }
         Il2CppException* exp = nullptr;
-        void* invoke_params[] = {reinterpret_cast<void*>(params)...};
-        auto ret = il2cpp_functions::runtime_invoke(method, instance, invoke_params, &exp);
+        void* invokeParams[] = {reinterpret_cast<void*>(params)...};
+        auto ret = il2cpp_functions::runtime_invoke(method, instance, invokeParams, &exp);
         if constexpr (std::is_pointer<TOut>::value) {
             *out = reinterpret_cast<TOut>(ret);
         } else {
@@ -297,7 +302,7 @@ namespace il2cpp_utils {
     bool RunMethod(TOut* out, Il2CppObject* instance, std::string_view methodName, TArgs* ...params) {
         InitFunctions();
         if (!instance) {
-            log_print(ERROR, "il2cpp_utils: RunMethod: Null instance parameter!");
+            // Fallback to static RunMethod
             return false;
         }
         auto klass = il2cpp_functions::object_get_class(instance);
@@ -323,11 +328,75 @@ namespace il2cpp_utils {
         return RunMethod(&out, instance, methodName, params...);
     }
 
+    // Gets an Il2cppObject* from the given object instance and FieldInfo
+    // Returns nullptr if it fails
+    Il2CppObject* GetFieldValueObject(Il2CppObject* instance, FieldInfo* field);
+
+    // Gets an Il2CppObject* from the given object instance and field name
+    // Returns nullptr if it fails
+    // Created by darknight1050, modified by Sc2ad
+    Il2CppObject* GetFieldValueObject(Il2CppObject* instance, std::string_view fieldName);
+
+    template<typename TOut = Il2CppObject*>
+    // Gets a value from the given object instance, and FieldInfo, with return type TOut
+    // Returns false if it fails
+    // Assumes a static field if instance == nullptr
+    // Created by darknight1050, modified by Sc2ad
+    bool GetFieldValue(TOut* out, Il2CppObject* instance, FieldInfo* field) {
+        InitFunctions();
+        if (!field) {
+            log_print(ERROR, "il2cpp_utils: GetFieldValue: Null FieldInfo!");
+            return false;
+        }
+        if (!instance) {
+            // Fallback to perform a static field get
+            il2cpp_functions::field_static_get_value(field, *out);
+            return true;
+        }
+        il2cpp_functions::field_get_value(instance, field, *out);
+		return true;
+    }
+
+    template<typename TOut = Il2CppObject*>
+    // Gets a value from the given object instance and field name, with return type TOut
+    // Returns false if it fails
+    // Created by darknight1050, modified by Sc2ad
+    bool GetFieldValue(TOut* out, Il2CppObject* instance, std::string_view fieldName) {
+        InitFunctions();
+        if (!instance) {
+            log_print(ERROR, "il2cpp_utils: GetFieldValue: Null instance parameter!");
+            return false;
+        }
+        auto klass = il2cpp_functions::object_get_class(instance);
+        if (!klass) {
+            log_print(ERROR, "il2cpp_utils: GetFieldValue: Could not find object class!");
+            return false;
+        }
+        auto field = il2cpp_functions::class_get_field_from_name(klass, fieldName.data());
+        return GetFieldValue(out, instance, field);
+    }
+
+    // Sets the value of a given field to an Il2CppObject*, given an object instance and FieldInfo
+    // Returns false if it fails
+    bool SetFieldValueObject(Il2CppObject* instance, FieldInfo* field, Il2CppObject* value);
+
+    // Sets the value of a given field to an Il2CppObject*, given an object instance and field name
+    // Returns false if it fails
+    bool SetFieldValueObject(Il2CppObject* instance, std::string_view fieldName, Il2CppObject* value);
+
+    // Sets the value of a given field, given an object instance and FieldInfo
+    // Returns false if it fails
+    // Assumes static field if instance == nullptr
+    bool SetFieldValue(Il2CppObject* instance, FieldInfo* field, void* value);
+
+    // Sets the value of a given field, given an object instance and field name
+    // Returns false if it fails
+    bool SetFieldValue(Il2CppObject* instance, std::string_view fieldName, void* value);
+
     template<typename T = MulticastDelegate, typename R, typename... TArgs>
-    // Created by zoller27osu
     // Creates an Action and casts it to a MulticastDelegate*
+    // Created by zoller27osu
     T* MakeAction(Il2CppObject* obj, function_ptr_t<R, TArgs...> callback, const Il2CppType* actionType) {
-        constexpr auto count = sizeof...(TArgs);
         Il2CppClass* actionClass = il2cpp_functions::class_from_il2cpp_type(actionType);
 
         /* 
@@ -351,8 +420,13 @@ namespace il2cpp_utils {
             log_print(ERROR, "Created Action's method_ptr (%p) is incorrect (should be %p)!", asDelegate->method_ptr, callback);
             return nullptr;
         }
-
         return action;
+    }
+
+    template<typename T = MulticastDelegate>
+    T* MakeAction(Il2CppObject* obj, void* callback, const Il2CppType* actionType) {
+        auto tmp = reinterpret_cast<function_ptr_t<void>>(callback);
+        return MakeAction(obj, tmp, actionType);
     }
 
     // Calls the System.RuntimeType.MakeGenericType(System.Type gt, System.Type[] types) function
@@ -398,7 +472,7 @@ namespace il2cpp_utils {
     }
     
     // Function made by zoller27osu, modified by Sc2ad
-    // Logs information about the given MethodInfo* as log(DEBUG)
+    // Logs information about the given MethodInfo* as log_print(DEBUG)
     inline void LogMethod(const MethodInfo* method) {
         InitFunctions();
  
@@ -430,7 +504,7 @@ namespace il2cpp_utils {
     }
 
     // Created by zoller27osu
-    // Logs information about the given FieldInfo* as log(DEBUG)
+    // Logs information about the given FieldInfo* as log_print(DEBUG)
     inline void LogField(FieldInfo* field) {
         InitFunctions();
 
@@ -446,7 +520,7 @@ namespace il2cpp_utils {
     }
 
     // Some parts provided by zoller27osu
-    // Logs information about the given Il2CppClass* as log(DEBUG)
+    // Logs information about the given Il2CppClass* as log_print(DEBUG)
     inline void LogClass(const Il2CppClass* klass, bool logParents = true) {
         InitFunctions();
 
@@ -467,12 +541,12 @@ namespace il2cpp_utils {
         // const MethodInfo* current;
         // int i = 0;
         // while ((current = il2cpp_functions::class_get_methods(unconst, &myIter))) {
-        //     log(DEBUG, "Method %i:", i);
+        //     log_print(DEBUG, "Method %i:", i);
         //     if (!current) {
-        //         log(DEBUG, "Null MethodInfo found!");
+        //         log_print(DEBUG, "Null MethodInfo found!");
         //         continue;
         //     }
-        //     log(DEBUG, "Name: %s Params: %i", current->name, current->parameters_count);
+        //     log_print(DEBUG, "Name: %s Params: %i", current->name, current->parameters_count);
         //     // LogMethod(current);
         //     i++;
         // }
@@ -553,8 +627,8 @@ namespace il2cpp_utils {
         InitFunctions();
 
 
-        void* invoke_params[] = {reinterpret_cast<void*>(args)...};
-        return il2cpp_functions::runtime_invoke(method, reference, invoke_params, exc);
+        void* invokeParams[] = {reinterpret_cast<void*>(args)...};
+        return il2cpp_functions::runtime_invoke(method, reference, invokeParams, exc);
     }
 }
 #endif /* IL2CPP_UTILS_H */
