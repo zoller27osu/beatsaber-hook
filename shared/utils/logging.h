@@ -8,6 +8,14 @@
 #include <iostream>
 #include <unistd.h>
 
+enum LOG_VERBOSE_TYPE {
+    CRITICAL = 1,
+    ERROR = 2,
+    WARNING = 4,
+    INFO = 8,
+    DEBUG = 16
+};
+
 #ifndef LOG_LEVEL
 #define LOG_LEVEL WARNING | ERROR | CRITICAL
 #endif
