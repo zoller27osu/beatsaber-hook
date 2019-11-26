@@ -92,7 +92,7 @@ namespace CustomUI {
             }
         }
         if (match == -1) {
-            log_print(CRITICAL, "Could not find matching TMP_FontAsset!");
+            log(CRITICAL, "Could not find matching TMP_FontAsset!");
             return nullptr;
         }
 
