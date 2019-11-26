@@ -51,22 +51,10 @@ namespace il2cpp_utils {
             } while (0)
     }
     // Init all of the usable il2cpp API, if it has yet to be initialized
-    void InitFunctions() {
-        if (!il2cpp_functions::initialized) {
-            log_print(WARNING, "il2cpp_utils: IL2CPP Functions Not Initialized!");
-            il2cpp_functions::Init();
-        }
-    }
     // Maximum length of characters of an exception message - 1
     #define EXCEPTION_MESSAGE_SIZE 4096
     // Returns a legible string from an Il2CppException*
-    std::string ExceptionToString(Il2CppException* exp) {
-        char msg[EXCEPTION_MESSAGE_SIZE];
-        il2cpp_functions::format_exception(exp, msg, EXCEPTION_MESSAGE_SIZE);
-        // auto exception_message = csstrtostr(exp->message);
-        // return to_utf8(exception_message);
-        return msg;
-    }
+    std::string ExceptionToString(Il2CppException* exp);
 
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
     Il2CppClass* GetClassFromName(const char* name_space, const char* type_name);

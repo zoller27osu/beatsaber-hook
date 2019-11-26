@@ -9,16 +9,6 @@
 // Please see comments in il2cpp-utils.hpp
 // TODO: Make this into a static class
 namespace il2cpp_utils {
-    void InitFunctions() {
-        if (!il2cpp_functions::initialized) {
-            log(INFO, "Init: %p", il2cpp_functions::Init);
-            log(WARNING, "il2cpp_utils: IL2CPP Functions Not Initialized!");
-            il2cpp_functions::Init();
-        } else {
-            log(DEBUG, "il2cpp_utils:: IL2CPP Functions already initialized!");
-        }
-    }
-
     // Maximum length of characters of an exception message - 1
     #define EXCEPTION_MESSAGE_SIZE 4096
 
@@ -32,6 +22,7 @@ namespace il2cpp_utils {
     }
 
     bool ParameterMatch(const MethodInfo* method, Il2CppType** type_arr, int count) {
+
         if (method->parameters_count != count) {
             return false;
         }
@@ -44,7 +35,7 @@ namespace il2cpp_utils {
     }
 
     Il2CppClass* GetClassFromName(const char* name_space, const char* type_name) {
-        InitFunctions();
+        il2cpp_functions::Init();
 
         auto dom = il2cpp_functions::domain_get();
         if (!dom) {
@@ -92,7 +83,7 @@ namespace il2cpp_utils {
     }
 
     bool SetFieldValue(Il2CppObject* instance, FieldInfo* field, void* value) {
-        InitFunctions();
+        il2cpp_functions::Init();
         if (!field) {
             log(ERROR, "il2cpp_utils: SetFieldValue: Null field parameter!");
             return false;
@@ -106,7 +97,7 @@ namespace il2cpp_utils {
     }
 
     bool SetFieldValue(Il2CppClass* klass, std::string_view fieldName, void* value) {
-        InitFunctions();
+        il2cpp_functions::Init();
         if (!klass) {
             log(ERROR, "il2cpp_utils: SetFieldValue: Null klass parameter!");
             return false;
@@ -117,7 +108,7 @@ namespace il2cpp_utils {
     }
 
     bool SetFieldValue(Il2CppObject* instance, std::string_view fieldName, void* value) {
-        InitFunctions();
+        il2cpp_functions::Init();
         if (!instance) {
             log(ERROR, "il2cpp_utils: SetFieldValue: Null instance parameter!");
             return false;
@@ -133,7 +124,7 @@ namespace il2cpp_utils {
     }
 
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types) {
-        InitFunctions();
+        il2cpp_functions::Init();
 
         auto runtimeType = GetClassFromName("System", "RuntimeType");
         if (!runtimeType) {
@@ -157,7 +148,7 @@ namespace il2cpp_utils {
     }
 
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::initializer_list<const Il2CppClass*> args) {
-        InitFunctions();
+        il2cpp_functions::Init();
  
         auto typ = GetClassFromName("System", "Type");
         if (!typ) {
@@ -246,7 +237,7 @@ namespace il2cpp_utils {
     }
 
     void LogMethod(const MethodInfo* method) {
-        InitFunctions();
+        il2cpp_functions::Init();
  
         auto flags = il2cpp_functions::method_get_flags(method, nullptr);
         std::stringstream flagStream;
@@ -276,7 +267,7 @@ namespace il2cpp_utils {
     }
 
     void LogField(FieldInfo* field) {
-        InitFunctions();
+        il2cpp_functions::Init();
 
         auto flags = il2cpp_functions::field_get_flags(field);
         const char* flagStr = (flags & FIELD_ATTRIBUTE_STATIC) ? "static " : "";
@@ -290,7 +281,7 @@ namespace il2cpp_utils {
     }
 
     void LogClass(const Il2CppClass* klass, bool logParents) {
-        InitFunctions();
+        il2cpp_functions::Init();
 
         auto unconst = const_cast<Il2CppClass*>(klass);
         log(DEBUG, "======================CLASS INFO FOR CLASS: %s::%s======================", il2cpp_functions::class_get_namespace(unconst), il2cpp_functions::class_get_name(unconst));
@@ -347,7 +338,7 @@ namespace il2cpp_utils {
     }
 
     Il2CppString* createcsstr(std::string_view inp) {
-        InitFunctions();
+        il2cpp_functions::Init();
         return il2cpp_functions::string_new_len(inp.data(), (uint32_t)inp.length());
     }
 
@@ -356,7 +347,7 @@ namespace il2cpp_utils {
     }
 
     bool AssertMatch(const Il2CppObject* source, const Il2CppClass* klass) {
-        InitFunctions();
+        il2cpp_functions::Init();
         if (!Match(source, klass)) {
             log(CRITICAL, "il2cpp_utils: AssertMatch: Unhandled subtype: namespace %s, class %s", 
                 il2cpp_functions::class_get_namespace(source->klass), il2cpp_functions::class_get_name(source->klass));
