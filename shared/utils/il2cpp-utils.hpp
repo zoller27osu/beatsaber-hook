@@ -394,27 +394,30 @@ namespace il2cpp_utils {
     // Created by zoller27osu
     template<class TOut=Il2CppObject*>
     TOut GetFieldValue(Il2CppObject* instance, FieldInfo* field) {
+        static_assert(std::is_pointer<TOut>::value, "Please use the GetFieldValue that returns bool for non-pointer fields!");
         TOut out;
-        if (GetFieldValue(&out, instance, field)) return out;
-        return 0;
+        GetFieldValue(&out, instance, field);
+        return out;
     }
     
     // Gets the value of a given static field, given the field's class and name
     // Created by zoller27osu
     template<class TOut>
     TOut GetFieldValue(Il2CppClass* klass, std::string_view fieldName) {
+        static_assert(std::is_pointer<TOut>::value, "Please use the GetFieldValue that returns bool for non-pointer fields!");
         TOut out;
-        if (GetFieldValue(&out, klass, fieldName)) return out;
-        return 0;
+        GetFieldValue(&out, klass, fieldName);
+        return out;
     }
 
     // Gets the value of a given field, given an object instance and the field's name
     // Created by zoller27osu
     template<class TOut=Il2CppObject*>
     TOut GetFieldValue(Il2CppObject* instance, std::string_view fieldName) {
+        static_assert(std::is_pointer<TOut>::value, "Please use the GetFieldValue that returns bool for non-pointer fields!");
         TOut out;
-        if (GetFieldValue(&out, instance, fieldName)) return out;
-        return 0;
+        GetFieldValue(&out, instance, fieldName);
+        return out;
     }
 
     // Sets the value of a given field, given an object instance and FieldInfo

@@ -9,8 +9,10 @@
 #include "../../rapidjson/include/rapidjson/allocators.h"
 
 // Provides helper functions for configuration.
-typedef rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigDocument;
-typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigValue;
+// typedef rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigDocument;
+// typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigValue;
+typedef rapidjson::Document ConfigDocument;
+typedef rapidjson::Value ConfigValue;
 // You are responsible for Loading and Writing to it as necessary.
 class Configuration {
 public:    
