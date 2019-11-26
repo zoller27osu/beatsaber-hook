@@ -35,7 +35,7 @@ int writefile(const char* filename, const char* text);
 bool fileexists(const char* filename);
 // Returns if a directory exists and can be written to / read from
 bool direxists(const char* dirname);
-// Returns a loaded UnityEngine.Object from an asset
+// Returns a loaded UnityEngine.Object from an asset (NOT YET IMPLEMENTED!)
 void* loadfromasset(const char* assetFilePath, const char* assetName);
 // Returns the config path for the current mod
 std::string getconfigpath();
