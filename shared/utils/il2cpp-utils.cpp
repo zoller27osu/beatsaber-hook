@@ -14,6 +14,7 @@ namespace il2cpp_utils {
 
     // Returns a legible string from an Il2CppException*
     std::string ExceptionToString(Il2CppException* exp) {
+        il2cpp_functions::Init();
         char msg[EXCEPTION_MESSAGE_SIZE];
         il2cpp_functions::format_exception(exp, msg, EXCEPTION_MESSAGE_SIZE);
         // auto exception_message = csstrtostr(exp->message);
@@ -22,7 +23,7 @@ namespace il2cpp_utils {
     }
 
     bool ParameterMatch(const MethodInfo* method, Il2CppType** type_arr, int count) {
-
+        il2cpp_functions::Init();
         if (method->parameters_count != count) {
             return false;
         }
@@ -62,6 +63,8 @@ namespace il2cpp_utils {
     }
 
     const MethodInfo* GetMethod(Il2CppClass* klass, std::string_view methodName, int argsCount) {
+        il2cpp_functions::Init();
+        
         if (!klass) return nullptr;
         auto methodInfo = il2cpp_functions::class_get_method_from_name(klass, methodName.data(), argsCount);
         if (!methodInfo) {
@@ -72,7 +75,19 @@ namespace il2cpp_utils {
         return methodInfo;
     }
 
+    const MethodInfo* GetMethod(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount) {
+        return GetMethod(GetClassFromName(nameSpace.data(), className.data()), methodName, argsCount);
+    }
+
+    const MethodInfo* GetMethod(Il2CppObject* instance, std::string_view methodName, int argsCount) {
+        il2cpp_functions::Init();
+
+        return GetMethod(il2cpp_functions::object_get_class(instance), methodName, argsCount);
+    }
+
     FieldInfo* FindField(Il2CppClass* klass, std::string_view fieldName) {
+        il2cpp_functions::Init();
+
         if (!klass) return nullptr;
         auto field = il2cpp_functions::class_get_field_from_name(klass, fieldName.data());
         if (!field) {
@@ -84,6 +99,7 @@ namespace il2cpp_utils {
 
     bool SetFieldValue(Il2CppObject* instance, FieldInfo* field, void* value) {
         il2cpp_functions::Init();
+
         if (!field) {
             log(ERROR, "il2cpp_utils: SetFieldValue: Null field parameter!");
             return false;
@@ -98,6 +114,7 @@ namespace il2cpp_utils {
 
     bool SetFieldValue(Il2CppClass* klass, std::string_view fieldName, void* value) {
         il2cpp_functions::Init();
+
         if (!klass) {
             log(ERROR, "il2cpp_utils: SetFieldValue: Null klass parameter!");
             return false;
@@ -109,6 +126,7 @@ namespace il2cpp_utils {
 
     bool SetFieldValue(Il2CppObject* instance, std::string_view fieldName, void* value) {
         il2cpp_functions::Init();
+
         if (!instance) {
             log(ERROR, "il2cpp_utils: SetFieldValue: Null instance parameter!");
             return false;
@@ -211,6 +229,8 @@ namespace il2cpp_utils {
     static std::unordered_map<int, const char*> typeMap;
 
     const char* TypeGetSimpleName(const Il2CppType* type) {
+        il2cpp_functions::Init();
+
         if (typeMap.empty()) {
             typeMap[GetTypeEnum("System", "Boolean")] = "bool";
             typeMap[GetTypeEnum("System", "Byte")] = "byte";
