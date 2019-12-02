@@ -317,6 +317,7 @@ namespace il2cpp_utils {
         log(DEBUG, "Is Abstract: %i", il2cpp_functions::class_is_abstract(klass));
         log(DEBUG, "=========METHODS=========");
         void* myIter = nullptr;
+        il2cpp_functions::class_get_methods(unconst, &myIter);  // this initializes the method data
         for (int i = 0; i < unconst->method_count; i++) {
             if (unconst->methods[i]) {
                 log(DEBUG, "Method %i:", i);
