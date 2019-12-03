@@ -97,6 +97,42 @@ namespace il2cpp_utils {
         return field;
     }
 
+    Il2CppObject* GetFieldValue(Il2CppObject* instance, FieldInfo* field) {
+        il2cpp_functions::Init();
+        if (!field) {
+            log(ERROR, "il2cpp_utils: GetFieldValueObject: Null FieldInfo!");
+            return nullptr;
+        }
+        return il2cpp_functions::field_get_value_object(field, instance);
+    }
+
+    Il2CppObject* GetFieldValue(Il2CppClass* klass, std::string_view fieldName) {
+        il2cpp_functions::Init();
+        if (!klass) {
+            log(ERROR, "il2cpp_utils: GetFieldValue: Could not find object class!");
+            return nullptr;
+        }
+        auto field = FindField(klass, fieldName);
+        if (!field) return nullptr;
+        return GetFieldValue(nullptr, field);
+    }
+
+    Il2CppObject* GetFieldValue(Il2CppObject* instance, std::string_view fieldName) {
+        il2cpp_functions::Init();
+        if (!instance) {
+            log(ERROR, "il2cpp_utils: GetFieldValueObject: Null instance parameter!");
+            return nullptr;
+        }
+        auto klass = il2cpp_functions::object_get_class(instance);
+        if (!klass) {
+            log(ERROR, "il2cpp_utils: GetFieldValueObject: Could not find object class!");
+            return nullptr;
+        }
+        auto field = FindField(klass, fieldName);
+        if (!field) return nullptr;
+        return GetFieldValue(instance, field);
+    }
+
     bool SetFieldValue(Il2CppObject* instance, FieldInfo* field, void* value) {
         il2cpp_functions::Init();
 

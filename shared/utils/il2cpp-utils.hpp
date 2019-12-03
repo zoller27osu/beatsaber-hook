@@ -341,7 +341,29 @@ namespace il2cpp_utils {
     // Created by zoller27osu
     FieldInfo* FindField(Il2CppClass* klass, std::string_view fieldName);
 
-    template<typename TOut = Il2CppObject*>
+    // Gets an Il2cppObject* from the given object instance and FieldInfo
+    // instance can only be null for static fields
+    // Returns nullptr if it fails
+    Il2CppObject* GetFieldValue(Il2CppObject* instance, FieldInfo* field);
+
+    // Gets an Il2CppObject* from the given class and field name
+    // Returns nullptr if it fails
+    // Created by zoller27
+    Il2CppObject* GetFieldValue(Il2CppClass* klass, std::string_view fieldName);
+
+    // Gets an Il2CppObject* from the given object instance and field name
+    // Returns nullptr if it fails
+    // Created by darknight1050, modified by Sc2ad
+    Il2CppObject* GetFieldValue(Il2CppObject* instance, std::string_view fieldName);
+
+    // Wrapper around the non-template GetFieldValue's that casts the result for you
+    template<class TOut, class... TArgs>
+    TOut* GetFieldValue(TArgs... params) {
+        static_assert(sizeof...(TArgs) == 2);
+        return reinterpret_cast<TOut*>(GetFieldValue(params...));
+    }
+
+    template<typename TOut>
     // Gets a value from the given object instance, and FieldInfo, with return type TOut
     // Returns false if it fails
     // Assumes a static field if instance == nullptr
@@ -360,7 +382,7 @@ namespace il2cpp_utils {
 		return true;
     }
 
-    template<typename TOut = Il2CppObject*>
+    template<typename TOut>
     // Gets the value of the field with type TOut and the given name from the given class 
     // Returns false if it fails
     // Adapted by zoller27osu
@@ -375,7 +397,7 @@ namespace il2cpp_utils {
         return GetFieldValue(out, nullptr, field);
     }
 
-    template<typename TOut = Il2CppObject*>
+    template<typename TOut>
     // Gets a value from the given object instance and field name, with return type TOut
     // Returns false if it fails
     // Created by darknight1050, modified by Sc2ad and zoller27osu
@@ -395,49 +417,20 @@ namespace il2cpp_utils {
         return GetFieldValue(out, instance, field);
     }
 
-    // Gets the value of a field with type TOut, given an object instance and the FieldInfo
-    // Returns false if it fails
-    // Assumes a static field if instance == nullptr
-    // Created by zoller27osu
-    template<class TOut=Il2CppObject*>
-    TOut GetFieldValue(Il2CppObject* instance, FieldInfo* field) {
-        static_assert(std::is_pointer<TOut>::value, "Please use the GetFieldValue that returns bool for non-pointer fields!");
-        TOut out;
-        GetFieldValue(&out, instance, field);
-        return out;
-    }
-    
-    // Gets the value of a given static field, given the field's class and name
-    // Created by zoller27osu
-    template<class TOut>
-    TOut GetFieldValue(Il2CppClass* klass, std::string_view fieldName) {
-        static_assert(std::is_pointer<TOut>::value, "Please use the GetFieldValue that returns bool for non-pointer fields!");
-        TOut out;
-        GetFieldValue(&out, klass, fieldName);
-        return out;
-    }
-
-    // Gets the value of a given field, given an object instance and the field's name
-    // Created by zoller27osu
-    template<class TOut=Il2CppObject*>
-    TOut GetFieldValue(Il2CppObject* instance, std::string_view fieldName) {
-        static_assert(std::is_pointer<TOut>::value, "Please use the GetFieldValue that returns bool for non-pointer fields!");
-        TOut out;
-        GetFieldValue(&out, instance, fieldName);
-        return out;
-    }
-
     // Sets the value of a given field, given an object instance and FieldInfo
+    // Unbox "value" before passing if it is an Il2CppObject but the field is a primitive or struct!
     // Returns false if it fails
     // Assumes static field if instance == nullptr
     bool SetFieldValue(Il2CppObject* instance, FieldInfo* field, void* value);
 
     // Sets the value of a given field, given an object instance and field name
+    // Unbox "value" before passing if it is an Il2CppObject but the field is a primitive or struct!
     // Returns false if it fails
     // Adapted by zoller27osu
     bool SetFieldValue(Il2CppClass* klass, std::string_view fieldName, void* value);
 
     // Sets the value of a given field, given an object instance and field name
+    // Unbox "value" before passing if it is an Il2CppObject but the field is a primitive or struct!
     // Returns false if it fails
     bool SetFieldValue(Il2CppObject* instance, std::string_view fieldName, void* value);
 
