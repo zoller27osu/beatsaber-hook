@@ -10,6 +10,9 @@
 #include "../libil2cpp/il2cpp-class-internals.h"
 #include "../libil2cpp/il2cpp-object-internals.h"
 #include "../libil2cpp/il2cpp-tabledefs.h"
+#include "../libil2cpp/Il2CppHashMap.h"
+#include "../libil2cpp/HashUtils.h"
+#include "../libil2cpp/StringUtils.h"
 
 #ifdef __cplusplus
 template<class T>
@@ -41,6 +44,30 @@ struct Array : public Il2CppObject
             return bounds->length;
         }
         return max_length;
+    }
+};
+
+struct NamespaceAndNamePairHash
+{
+    size_t operator()(const std::pair<const char*, const char*>& pair) const
+    {
+        return il2cpp::utils::HashUtils::Combine(il2cpp::utils::StringUtils::Hash(pair.first), il2cpp::utils::StringUtils::Hash(pair.second));
+    }
+};
+
+struct NamespaceAndNamePairEquals
+{
+    bool operator()(const std::pair<const char*, const char*>& p1, const std::pair<const char*, const char*>& p2) const
+    {
+        return !strcmp(p1.first, p2.first) && !strcmp(p1.second, p2.second);
+    }
+};
+
+struct Il2CppNameToTypeDefinitionIndexHashTable : public Il2CppHashMap<std::pair<const char*, const char*>, TypeDefinitionIndex, NamespaceAndNamePairHash, NamespaceAndNamePairEquals>
+{
+    typedef Il2CppHashMap<std::pair<const char*, const char*>, TypeDefinitionIndex, NamespaceAndNamePairHash, NamespaceAndNamePairEquals> Base;
+    Il2CppNameToTypeDefinitionIndexHashTable() : Base()
+    {
     }
 };
 

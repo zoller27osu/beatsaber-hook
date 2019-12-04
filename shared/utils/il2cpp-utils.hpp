@@ -491,6 +491,11 @@ namespace il2cpp_utils {
     // Logs information about the given Il2CppClass* as log(DEBUG)
     void LogClass(const Il2CppClass* klass, bool logParents = true);
 
+    // Logs all classes (from every namespace) that start with the given prefix
+    // WARNING: THIS FUNCTION IS VERY SLOW. ONLY USE THIS FUNCTION ONCE AND WITH A FAIRLY SPECIFIC PREFIX!
+    // THIS FUNCTION IS ALSO VERSION VOLATILE, SINCE IT USES A HARDCODED OFFSET!
+    void LogClasses(std::string_view classPrefix);
+
     // Creates a cs string (allocates it) with the given string_view and returns it
     Il2CppString* createcsstr(std::string_view inp);
 

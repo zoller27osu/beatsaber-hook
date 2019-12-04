@@ -5,6 +5,7 @@
 #include <string_view>
 #include "il2cpp-utils.hpp"
 #include "logging.h"
+#include "utils.h"
 
 // Please see comments in il2cpp-utils.hpp
 // TODO: Make this into a static class
@@ -392,6 +393,32 @@ namespace il2cpp_utils {
         log(DEBUG, "parent: %p", parent);
         if (parent && logParents) LogClass(parent);
         log(DEBUG, "==================================================================================");
+    }
+
+    void LogClasses(std::string_view classPrefix) {
+        il2cpp_functions::Init();
+        // Get il2cpp domain
+        auto dom = il2cpp_functions::domain_get();
+        // Get all il2cpp assemblies
+        size_t size;
+        auto assembs = il2cpp_functions::domain_get_assemblies(dom, &size);
+        for (size_t i = 0; i < size; ++i) {
+            // Get image for each assembly
+            auto img = il2cpp_functions::assembly_get_image(assembs[i]);
+            auto length = img->nameToClassHashTable->size();
+            for (auto itr = img->nameToClassHashTable->begin(); itr != img->nameToClassHashTable->end(); ++itr) {
+                // First is a KeyWrapper(pair(namespaceName, className))
+                // Second is TypeDefinitionIndex
+                if (strncmp(classPrefix.data(), itr->first.key.second, strlen(itr->first.key.second)) == 0) {
+                    // Starts with!
+                    // Convert TypeDefinitionIndex --> class
+                    // Get function: at 0x84fba4 (v1.5.0)
+                    // This is the `MetadataCache::GetTypeInfoFromTypeDefinitionIndex` method which returns an `Il2CppClass*`
+                    static auto getTypeInfo = reinterpret_cast<function_ptr_t<Il2CppClass*, TypeDefinitionIndex>>(getRealOffset((void*)0x84FBA4));
+                    LogClass(getTypeInfo(itr->second));
+                }
+            }
+        }
     }
 
     Il2CppString* createcsstr(std::string_view inp) {
