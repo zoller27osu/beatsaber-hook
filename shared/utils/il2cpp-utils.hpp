@@ -531,7 +531,7 @@ namespace il2cpp_utils {
     // Adds the given TypeDefinitionIndex to the class hash table of a given image
     // Mainly used in LogClasses
     // THIS FUNCTION IS VERSION VOLATILE, SINCE IT USES A HARDCODED OFFSET!
-    TypeDefinitionIndex AddTypeToNametoClassHashTable(const Il2CppImage* img, TypeDefinitionIndex index);
+    void AddTypeToNametoClassHashTable(const Il2CppImage* img, TypeDefinitionIndex index);
 
     // Adds the given nested types of the namespaze, parentName, and klass to the hastable
     // Mainly used in AddTypeToNametoClassHashTable

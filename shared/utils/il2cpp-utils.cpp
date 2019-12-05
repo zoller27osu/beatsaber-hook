@@ -475,14 +475,14 @@ namespace il2cpp_utils {
         log(DEBUG, "LogClasses(\"%s\") is complete.", classPrefix.data());
     }
 
-    TypeDefinitionIndex AddTypeToNametoClassHashTable(const Il2CppImage* img, TypeDefinitionIndex index) {
+    void AddTypeToNametoClassHashTable(const Il2CppImage* img, TypeDefinitionIndex index) {
         static auto getTypeDefFromIndex = reinterpret_cast<function_ptr_t<const Il2CppTypeDefinition*, TypeDefinitionIndex>>(getRealOffset(MetadataCache_GetTypeFromIndex));
         const Il2CppTypeDefinition* typeDefinition = getTypeDefFromIndex(index);
         // don't add nested types
         if (typeDefinition->declaringTypeIndex != kTypeIndexInvalid)
             return;
 
-        if (img != il2cpp_defaults.corlib)
+        if (img != il2cpp_functions::get_corlib())
             AddNestedTypesToNametoClassHashTable(img, typeDefinition);
 
         static auto getStringFromIndex = reinterpret_cast<function_ptr_t<const char*, TypeDefinitionIndex>>(getRealOffset(MetadataCache_GetStringFromIndex));
