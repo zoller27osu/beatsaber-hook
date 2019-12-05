@@ -367,8 +367,8 @@ namespace il2cpp_utils {
     template<class TOut, class... TArgs>
     TOut* GetFieldValue(TArgs... params) {
         static_assert(sizeof...(TArgs) == 2);
-        static_assert(std::is_base_of<Il2CppObject, T>::value, "The return type of this function must inherit Il2CppObject! See GetFieldValueUnsafe for an alternative.");
-        return down_cast<TOut*>(GetFieldValue(params...));
+        static_assert(std::is_base_of<Il2CppObject, TOut>::value, "The return type of this function must inherit Il2CppObject! See GetFieldValueUnsafe for an alternative.");
+        return reinterpret_cast<TOut*>(GetFieldValue(params...));
     }
 
     template<typename TOut>
