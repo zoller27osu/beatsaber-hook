@@ -458,10 +458,9 @@ namespace il2cpp_utils {
         }
         for ( const auto &pair : matches ) {
             LogClass(pair.second, false);
-            usleep(1000L);
+            usleep(1000);  // 1/100th of the sleep at the end of il2cpp-functions::Init
         }
         log(DEBUG, "LogClasses(\"%s\") is complete.", classPrefix.data());
-        usleep(100000L);
     }
 
     Il2CppString* createcsstr(std::string_view inp) {
