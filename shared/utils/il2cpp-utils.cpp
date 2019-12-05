@@ -7,6 +7,9 @@
 #include "logging.h"
 #include "utils.h"
 
+#include "alphanum.hpp"
+#include <map>
+
 // Please see comments in il2cpp-utils.hpp
 // TODO: Make this into a static class
 namespace il2cpp_utils {
@@ -418,6 +421,7 @@ namespace il2cpp_utils {
     }
 
     void LogClasses(std::string_view classPrefix) {
+        std::map<std::string, Il2CppClass*, doj::alphanum_less<std::string>> matches;
         il2cpp_functions::Init();
         // Get il2cpp domain
         auto dom = il2cpp_functions::domain_get();
@@ -448,11 +452,17 @@ namespace il2cpp_utils {
                     // Get function: at 0x84fba4 (v1.5.0)
                     // This is the `MetadataCache::GetTypeInfoFromTypeDefinitionIndex` method which returns an `Il2CppClass*`
                     static auto getTypeInfo = reinterpret_cast<function_ptr_t<Il2CppClass*, TypeDefinitionIndex>>(getRealOffset((void*)0x84FBA4));
-                    LogClass(getTypeInfo(itr->second), false);
+                    auto klazz = getTypeInfo(itr->second);
+                    matches[ClassStandardName(klazz)] = klazz;
                 }
             }
         }
+        for ( const auto &pair : matches ) {
+            LogClass(pair.second, false);
+            usleep(1000L);
+        }
         log(DEBUG, "LogClasses(\"%s\") is complete.", classPrefix.data());
+        usleep(100000L);
     }
 
     Il2CppString* createcsstr(std::string_view inp) {
