@@ -10,9 +10,9 @@
 #include "../libil2cpp/il2cpp-class-internals.h"
 #include "../libil2cpp/il2cpp-object-internals.h"
 #include "../libil2cpp/il2cpp-tabledefs.h"
-#include "../libil2cpp/Il2CppHashMap.h"
-#include "../libil2cpp/HashUtils.h"
-#include "../libil2cpp/StringUtils.h"
+#include "../libil2cpp/utils/Il2CppHashMap.h"
+#include "../libil2cpp/utils/HashUtils.h"
+#include "../libil2cpp/utils/StringUtils.h"
 
 #ifdef __cplusplus
 template<class T>
