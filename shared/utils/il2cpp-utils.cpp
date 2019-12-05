@@ -337,11 +337,44 @@ namespace il2cpp_utils {
         log(DEBUG, "%s%s %s; // 0x%lx, flags: 0x%.4X", flagStr, typeStr, name, offset, flags);
     }
 
+    std::string ClassStandardName(Il2CppClass* klass) {
+        std::stringstream ss;
+        const char* namespaze = il2cpp_functions::class_get_namespace(klass);
+        auto declaring = il2cpp_functions::class_get_declaring_type(klass);
+        bool hasNamespace = (namespaze && namespaze[0] != '\0');
+        if (!hasNamespace && declaring) {
+            ss << ClassStandardName(declaring) << "/";
+        } else {
+            ss << namespaze << "::";
+        }
+        ss << il2cpp_functions::class_get_name(klass);
+
+        il2cpp_functions::class_is_generic(klass);
+        auto genClass = klass->generic_class;
+        if (genClass) {
+            auto genContext = &genClass->context;
+            auto genInst = genContext->class_inst;
+            if (genInst) {
+                ss << "<";
+                for (int i = 0; i < genInst->type_argc; i++) {
+                    auto typ = genInst->type_argv[i];
+                    if (i > 0) ss << ", ";
+                    ss << TypeGetSimpleName(typ);
+                }
+                ss << ">";
+            } else {
+                log(WARNING, "context->class_inst missing for klass->generic_class!");
+            }
+        }
+        return ss.str();
+    }
+
     void LogClass(const Il2CppClass* klass, bool logParents) {
         il2cpp_functions::Init();
 
         auto unconst = const_cast<Il2CppClass*>(klass);
-        log(DEBUG, "======================CLASS INFO FOR CLASS: %s::%s======================", il2cpp_functions::class_get_namespace(unconst), il2cpp_functions::class_get_name(unconst));
+        log(DEBUG, "======================CLASS INFO FOR CLASS: %s======================", ClassStandardName(unconst).c_str());
+        // log(DEBUG, "Fully qualifed type name: %s", il2cpp_functions::type_get_assembly_qualified_name(il2cpp_functions::class_get_type(unconst)));
         log(DEBUG, "Assembly Name: %s", il2cpp_functions::class_get_assemblyname(klass));
         log(DEBUG, "Rank: %i", il2cpp_functions::class_get_rank(klass));
         log(DEBUG, "Type Token: %i", il2cpp_functions::class_get_type_token(unconst));
@@ -363,23 +396,12 @@ namespace il2cpp_utils {
                 log(DEBUG, "Method: %i Does not exist!", i);
             }
         }
-        auto genClass = klass->generic_class;
-        if (genClass) {
-            auto genContext = &genClass->context;
-            auto genInst = genContext->class_inst;
-            if (genInst) {
-                for (int i = 0; i < genInst->type_argc; i++) {
-                    auto typ = genInst->type_argv[i];
-                    log(DEBUG, " generic type %i: %s", i + 1, TypeGetSimpleName(typ));
-                }
-            }
-        }
         auto declaring = il2cpp_functions::class_get_declaring_type(unconst);
         log(DEBUG, "declaring type: %p", declaring);
-        if (declaring) LogClass(declaring);
+        if (declaring && logParents) LogClass(declaring);
         auto element = il2cpp_functions::class_get_element_class(unconst);
         log(DEBUG, "element class: %p (self = %p)", element, klass);
-        if (element && element != klass) LogClass(element);
+        if (element && element != klass && logParents) LogClass(element);
 
         log(DEBUG, "=========FIELDS=========");
         myIter = nullptr;
@@ -402,23 +424,35 @@ namespace il2cpp_utils {
         // Get all il2cpp assemblies
         size_t size;
         auto assembs = il2cpp_functions::domain_get_assemblies(dom, &size);
+        log(INFO, "%s:%i", __FILE__, __LINE__);
         for (size_t i = 0; i < size; ++i) {
             // Get image for each assembly
+            if (assembs[i] == nullptr) {
+                log(DEBUG, "Assembly %i was null! Skipping.", i);
+                continue;
+            }
+            log(DEBUG, "Scanning assembly \"%s\"", assembs[i]->aname.name);
             auto img = il2cpp_functions::assembly_get_image(assembs[i]);
+            if (img->nameToClassHashTable == nullptr) {
+                // TODO: enumerate the table instead
+                log(DEBUG, "Assembly's nameToClassHashTable is empty. Skipping.");
+                continue;
+            }
             auto length = img->nameToClassHashTable->size();
             for (auto itr = img->nameToClassHashTable->begin(); itr != img->nameToClassHashTable->end(); ++itr) {
                 // First is a KeyWrapper(pair(namespaceName, className))
                 // Second is TypeDefinitionIndex
-                if (strncmp(classPrefix.data(), itr->first.key.second, strlen(itr->first.key.second)) == 0) {
+                if (strncmp(classPrefix.data(), itr->first.key.second, classPrefix.length()) == 0) {
                     // Starts with!
                     // Convert TypeDefinitionIndex --> class
                     // Get function: at 0x84fba4 (v1.5.0)
                     // This is the `MetadataCache::GetTypeInfoFromTypeDefinitionIndex` method which returns an `Il2CppClass*`
                     static auto getTypeInfo = reinterpret_cast<function_ptr_t<Il2CppClass*, TypeDefinitionIndex>>(getRealOffset((void*)0x84FBA4));
-                    LogClass(getTypeInfo(itr->second));
+                    LogClass(getTypeInfo(itr->second), false);
                 }
             }
         }
+        log(DEBUG, "LogClasses(\"%s\") is complete.", classPrefix.data());
     }
 
     Il2CppString* createcsstr(std::string_view inp) {
