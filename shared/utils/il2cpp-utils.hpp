@@ -358,9 +358,9 @@ namespace il2cpp_utils {
 
     // Wrapper around the non-template GetFieldValue's that casts the result for you
     template<class TOut, class... TArgs>
-    TOut* GetFieldValue(TArgs... params) {
+    TOut GetFieldValue(TArgs... params) {
         static_assert(sizeof...(TArgs) == 2);
-        return reinterpret_cast<TOut*>(GetFieldValue(params...));
+        return *reinterpret_cast<TOut*>(il2cpp_functions::object_unbox(GetFieldValue(params...)));
     }
 
     template<typename TOut>
