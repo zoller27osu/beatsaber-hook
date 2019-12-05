@@ -437,9 +437,23 @@ namespace il2cpp_utils {
             log(DEBUG, "Scanning assembly \"%s\"", assembs[i]->aname.name);
             auto img = il2cpp_functions::assembly_get_image(assembs[i]);
             if (img->nameToClassHashTable == nullptr) {
-                // TODO: enumerate the table instead
-                log(DEBUG, "Assembly's nameToClassHashTable is empty. Skipping.");
-                continue;
+                log(DEBUG, "Assembly's nameToClassHashTable is empty. Populating it instead.");
+
+                img->nameToClassHashTable = new Il2CppNameToTypeDefinitionIndexHashTable();
+                for (uint32_t index = 0; index < img->typeCount; index++)
+                {
+                    TypeDefinitionIndex typeIndex = img->typeStart + index;
+                    AddTypeToNametoClassHashTable(img, typeIndex);
+                }
+
+                for (uint32_t index = 0; index < img->exportedTypeCount; index++)
+                {
+                    static auto getExportedTypeIndex = reinterpret_cast<function_ptr_t<TypeDefinitionIndex, TypeDefinitionIndex>>(getRealOffset(MetadataCache_GetExportedTypeFromIndex));
+                    auto typeIndex = getExportedTypeIndex(img->exportedTypeStart + index);
+                    // TypeDefinitionIndex typeIndex = MetadataCache::GetExportedTypeFromIndex(img->exportedTypeStart + index);
+                    if (typeIndex != kTypeIndexInvalid)
+                        AddTypeToNametoClassHashTable(img, typeIndex);
+                }
             }
             auto length = img->nameToClassHashTable->size();
             for (auto itr = img->nameToClassHashTable->begin(); itr != img->nameToClassHashTable->end(); ++itr) {
@@ -448,9 +462,7 @@ namespace il2cpp_utils {
                 if (strncmp(classPrefix.data(), itr->first.key.second, classPrefix.length()) == 0) {
                     // Starts with!
                     // Convert TypeDefinitionIndex --> class
-                    // Get function: at 0x84fba4 (v1.5.0)
-                    // This is the `MetadataCache::GetTypeInfoFromTypeDefinitionIndex` method which returns an `Il2CppClass*`
-                    static auto getTypeInfo = reinterpret_cast<function_ptr_t<Il2CppClass*, TypeDefinitionIndex>>(getRealOffset((void*)0x84FBA4));
+                    static auto getTypeInfo = reinterpret_cast<function_ptr_t<Il2CppClass*, TypeDefinitionIndex>>(getRealOffset(MetadataCache_GetTypeInfoFromTypeDefinitionIndex));
                     auto klazz = getTypeInfo(itr->second);
                     matches[ClassStandardName(klazz)] = klazz;
                 }
@@ -461,6 +473,44 @@ namespace il2cpp_utils {
             usleep(1000);  // 1/100th of the sleep at the end of il2cpp-functions::Init
         }
         log(DEBUG, "LogClasses(\"%s\") is complete.", classPrefix.data());
+    }
+
+    TypeDefinitionIndex AddTypeToNametoClassHashTable(const Il2CppImage* img, TypeDefinitionIndex index) {
+        static auto getTypeDefFromIndex = reinterpret_cast<function_ptr_t<const Il2CppTypeDefinition*, TypeDefinitionIndex>>(getRealOffset(MetadataCache_GetTypeFromIndex));
+        const Il2CppTypeDefinition* typeDefinition = getTypeDefFromIndex(index);
+        // don't add nested types
+        if (typeDefinition->declaringTypeIndex != kTypeIndexInvalid)
+            return;
+
+        if (img != il2cpp_defaults.corlib)
+            AddNestedTypesToNametoClassHashTable(img, typeDefinition);
+
+        static auto getStringFromIndex = reinterpret_cast<function_ptr_t<const char*, TypeDefinitionIndex>>(getRealOffset(MetadataCache_GetStringFromIndex));
+        img->nameToClassHashTable->insert(std::make_pair(std::make_pair(getStringFromIndex(typeDefinition->namespaceIndex), getStringFromIndex(typeDefinition->nameIndex)), index));
+    }
+
+    void AddNestedTypesToNametoClassHashTable(const Il2CppImage* img, const Il2CppTypeDefinition* typeDefinition) {
+        static auto getNestedTypeFromIndex = reinterpret_cast<function_ptr_t<Il2CppClass*, NestedTypeIndex>>(getRealOffset(MetadataCache_GetNestedTypeFromIndex));
+        static auto getStringFromIndex = reinterpret_cast<function_ptr_t<const char*, TypeDefinitionIndex>>(getRealOffset(MetadataCache_GetStringFromIndex));
+        for (int i = 0; i < typeDefinition->nested_type_count; ++i)
+        {
+            Il2CppClass *klass = getNestedTypeFromIndex(typeDefinition->nestedTypesStart + i);
+            AddNestedTypesToNametoClassHashTable(img->nameToClassHashTable, getStringFromIndex(typeDefinition->namespaceIndex), getStringFromIndex(typeDefinition->nameIndex), klass);
+        }
+    }
+
+    void AddNestedTypesToNametoClassHashTable(Il2CppNameToTypeDefinitionIndexHashTable* hashTable, const char *namespaze, const std::string& parentName, Il2CppClass *klass) {
+        std::string name = parentName + "/" + klass->name;
+        char *pName = (char*)calloc(name.size() + 1, sizeof(char));
+        strcpy(pName, name.c_str());
+
+        static auto getIndexForType = reinterpret_cast<function_ptr_t<TypeDefinitionIndex, Il2CppClass*>>(getRealOffset(MetadataCache_GetIndexForTypeDefinition));
+
+        hashTable->insert(std::make_pair(std::make_pair(namespaze, (const char*)pName), getIndexForType(klass)));
+
+        void *iter = NULL;
+        while (Il2CppClass *nestedClass = il2cpp_functions::class_get_nested_types(klass, &iter))
+            AddNestedTypesToNametoClassHashTable(hashTable, namespaze, name, nestedClass);
     }
 
     Il2CppString* createcsstr(std::string_view inp) {
