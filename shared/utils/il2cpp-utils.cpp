@@ -428,7 +428,6 @@ namespace il2cpp_utils {
         // Get all il2cpp assemblies
         size_t size;
         auto assembs = il2cpp_functions::domain_get_assemblies(dom, &size);
-        log(INFO, "%s:%i", __FILE__, __LINE__);
         for (size_t i = 0; i < size; ++i) {
             // Get image for each assembly
             if (assembs[i] == nullptr) {
