@@ -499,9 +499,9 @@ namespace il2cpp_utils {
     // Logs information about the given Il2CppClass* as log(DEBUG)
     void LogClass(const Il2CppClass* klass, bool logParents = true);
 
-    // Get function at 0x884ec4 (v1.5.0)
+    // Get function at 0x84fff0 (v1.5.0)
     // This is the `MetadataCache::GetExportedTypeFromIndex` method which returns a `TypeDefinitionIndex`
-    #define MetadataCache_GetExportedTypeFromIndex (void*)0x884EC4
+    #define MetadataCache_GetExportedTypeFromIndex (void*)0x84FFF0
     
     // Get function: at 0x84fba4 (v1.5.0)
     // This is the `MetadataCache::GetTypeInfoFromTypeDefinitionIndex` method which returns an `Il2CppClass*`
