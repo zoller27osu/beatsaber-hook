@@ -356,11 +356,19 @@ namespace il2cpp_utils {
     // Created by darknight1050, modified by Sc2ad
     Il2CppObject* GetFieldValue(Il2CppObject* instance, std::string_view fieldName);
 
-    // Wrapper around the non-template GetFieldValue's that casts the result for you
+    // An unsafe wrapper around the GetFieldValues that auto unboxes the resultant object
     template<class TOut, class... TArgs>
-    TOut GetFieldValue(TArgs... params) {
+    TOut GetFieldValueUnsafe(TArgs... params) {
         static_assert(sizeof...(TArgs) == 2);
         return *reinterpret_cast<TOut*>(il2cpp_functions::object_unbox(GetFieldValue(params...)));
+    }
+
+    // Wrapper around the non-template GetFieldValue's that casts the result for you
+    template<class TOut, class... TArgs>
+    TOut* GetFieldValue(TArgs... params) {
+        static_assert(sizeof...(TArgs) == 2);
+        static_assert(std::is_base_of<Il2CppObject, T>::value, "The return type of this function must inherit Il2CppObject! See GetFieldValueUnsafe for an alternative.");
+        return down_cast<TOut*>(GetFieldValue(params...));
     }
 
     template<typename TOut>
