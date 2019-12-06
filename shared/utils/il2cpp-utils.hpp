@@ -356,13 +356,6 @@ namespace il2cpp_utils {
     // Created by darknight1050, modified by Sc2ad
     Il2CppObject* GetFieldValue(Il2CppObject* instance, std::string_view fieldName);
 
-    // An unsafe wrapper around the GetFieldValues that auto unboxes the resultant object
-    template<class TOut, class... TArgs>
-    TOut GetFieldValueUnsafe(TArgs... params) {
-        static_assert(sizeof...(TArgs) == 2);
-        return *reinterpret_cast<TOut*>(il2cpp_functions::object_unbox(GetFieldValue(params...)));
-    }
-
     // Wrapper around the non-template GetFieldValue's that casts the result for you
     template<class TOut, class... TArgs>
     TOut* GetFieldValue(TArgs... params) {
@@ -423,6 +416,15 @@ namespace il2cpp_utils {
         auto field = FindField(klass, fieldName);
         if (!field) return false;
         return GetFieldValue(out, instance, field);
+    }
+
+    // An unsafe wrapper around the TOut GetFieldValues; il2cpp should unbox when appropriate
+    template<class TOut, class... TArgs>
+    TOut GetFieldValueUnsafe(TArgs... params) {
+        static_assert(sizeof...(TArgs) == 2);
+        TOut out;
+        GetFieldValue(&out, params...);
+        return out;
     }
 
     // Sets the value of a given field, given an object instance and FieldInfo
