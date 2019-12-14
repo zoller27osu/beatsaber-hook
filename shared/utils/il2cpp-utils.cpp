@@ -6,7 +6,6 @@
 #include "il2cpp-utils.hpp"
 #include "logging.h"
 #include "utils.h"
-
 #include "alphanum.hpp"
 #include <map>
 
@@ -72,6 +71,7 @@ namespace il2cpp_utils {
         if (!klass) return nullptr;
         auto methodInfo = il2cpp_functions::class_get_method_from_name(klass, methodName.data(), argsCount);
         if (!methodInfo) {
+            if (klass->parent)
             log(ERROR, "could not find method %s with %i parameters in class %s (namespace '%s')!", methodName.data(),
                 argsCount, il2cpp_functions::class_get_name(klass), il2cpp_functions::class_get_namespace(klass));
             return nullptr;

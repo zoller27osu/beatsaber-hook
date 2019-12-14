@@ -9,7 +9,17 @@
 #include <unistd.h>
 #include <iostream>
 #include <fstream>
-#include "typedefs.h"
+#include "../utils/typedefs.h"
+
+#include "../dumps/UnityEngine_GameObject.hpp"
+#include "../dumps/UnityEngine_RectTransform.hpp"
+#include "../dumps/UnityEngine_Transform.hpp"
+#include "../dumps/TMPro_TextMeshProUGUI.hpp"
+#include "../dumps/UnityEngine_Resources.hpp"
+#include "../dumps/UnityEngine_Object.hpp"
+#include "../dumps/System_Type.hpp"
+#include "../dumps/TMPro_TMP_FontAsset.hpp"
+#include "../dumps/TMPro_TMP_Text.hpp"
 
 namespace CustomUI {
     // Creates a custom TMP_TextMeshProUGUI object and returns it

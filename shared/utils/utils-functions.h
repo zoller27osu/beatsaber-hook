@@ -7,7 +7,7 @@
 #include "typedefs.h"
 #include <string>
 #include <string_view>
-#include "rapidjson-utils.hpp"
+#include "../config/rapidjson-utils.hpp"
 
 #ifndef __cplusplus
 bool = uchar8_t;
@@ -29,8 +29,8 @@ bool parsejsonfile(rapidjson::Document& doc, std::string filename);
 void dump(int before, int after, void* ptr);
 // Reads all of the text of a file at the given filename. If the file does not exist, returns NULL
 char* readfile(const char* filename);
-// Writes all of the text to a file at the given filename. Returns either 0 or WriteError code
-int writefile(const char* filename, const char* text);
+// Writes all of the text to a file at the given filename. Returns true on success, false otherwise
+bool writefile(const char* filename, const char* text);
 // Returns if a file exists and can be written to / read from
 bool fileexists(const char* filename);
 // Returns if a directory exists and can be written to / read from

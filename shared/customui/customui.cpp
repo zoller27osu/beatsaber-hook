@@ -1,30 +1,8 @@
-// To use, simply add customui.cpp to your Android.mk, and #include customui.h
+// To use, simply add customui.cpp to your Android.mk, and #include customui.hpp
 // CUSTOM UI
 
-#include <jni.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#include "utils.h"
-#include <android/log.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <dlfcn.h>
-#include <unistd.h>
-#include <iostream>
-#include <fstream>
+#include "../utils/utils.h"
 #include "customui.hpp"
-
-#include "../dumps/UnityEngine_GameObject.hpp"
-#include "../dumps/UnityEngine_RectTransform.hpp"
-#include "../dumps/UnityEngine_Transform.hpp"
-#include "../dumps/TMPro_TextMeshProUGUI.hpp"
-#include "../dumps/UnityEngine_Resources.hpp"
-#include "../dumps/UnityEngine_Object.hpp"
-#include "../dumps/System_Type.hpp"
-#include "../dumps/TMPro_TMP_FontAsset.hpp"
-#include "../dumps/TMPro_TMP_Text.hpp"
 
 namespace CustomUI {
     Il2CppObject* createtext(Il2CppObject* parent_transform, std::string_view text, Vector2 anchoredPosition, Vector2 sizeDelta) {

@@ -3,16 +3,25 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <dlfcn.h>
 #include <type_traits>
 #include <cassert>
-#include "../libil2cpp/il2cpp-api-types.h"
-#include "../libil2cpp/il2cpp-class-internals.h"
-#include "../libil2cpp/il2cpp-object-internals.h"
-#include "../libil2cpp/il2cpp-tabledefs.h"
-#include "../libil2cpp/utils/Il2CppHashMap.h"
-#include "../libil2cpp/utils/HashUtils.h"
-#include "../libil2cpp/utils/StringUtils.h"
+// For including il2cpp properly
+#ifdef _MSC_VER
+#undef _MSC_VER
+#endif
+#ifndef __GNUC__
+#define __GNUC__
+#endif
+
+#include "il2cpp-config.h"
+#include "il2cpp-api-types.h"
+#include "il2cpp-class-internals.h"
+#include "il2cpp-object-internals.h"
+#include "il2cpp-tabledefs.h"
+#include "utils/Il2CppHashMap.h"
+#include "utils/HashUtils.h"
+#include "utils/StringUtils.h"
+#include <dlfcn.h>
 
 #ifdef __cplusplus
 template<class T>
@@ -122,7 +131,7 @@ typedef struct MulticastDelegate : Delegate
     Array<Delegate*>* delegates;
 } MulticastDelegate;
 
-// BEAT SABER SPECIFIC
+// UNITY SPECIFIC
 
 // UnityEngine.Color
 typedef struct Color {

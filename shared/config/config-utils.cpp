@@ -2,19 +2,13 @@
 #define CONFIG_DEFINED_H
 
 #include <stddef.h>
-#include <jni.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "utils.h"
 #include "config-utils.hpp"
-
-#include <android/log.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <dlfcn.h>
-#include <unistd.h>
 #include <iostream>
 #include <fstream>
 
