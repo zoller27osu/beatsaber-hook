@@ -168,6 +168,12 @@ bool writefile(const char* filename, const char* text) {
     return false;
 }
 
+bool deletefile(const char* filename) {
+    if (fileexists(filename))
+        return remove(filename) == 0;
+    return false;
+}
+
 void* loadfromasset(const char* assetFilePath, const char* assetName) {
     // TODO IMPLEMENT
     // Create C# string

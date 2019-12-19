@@ -31,6 +31,8 @@ void dump(int before, int after, void* ptr);
 char* readfile(const char* filename);
 // Writes all of the text to a file at the given filename. Returns true on success, false otherwise
 bool writefile(const char* filename, const char* text);
+// Deletes a file at the given filename. Returns true on success, false otherwise
+bool deletefile(const char* filename);
 // Returns if a file exists and can be written to / read from
 bool fileexists(const char* filename);
 // Returns if a directory exists and can be written to / read from
