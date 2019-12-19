@@ -157,4 +157,38 @@ namespace CustomUI {
 
         return textMesh;
     }
+    // Only construct one!
+    ModSettings::ModSettings() {
+        log(DEBUG, "Creating new ModSettings object!");
+    }
+    ModSettings* ModSettings::GetInstance() {
+        if (_instance == nullptr) {
+            _instance = new ModSettings();
+        }
+        return _instance;
+    }
+    void ModSettings::AddButtonToMainScreen() {
+        Il2CppObject* transform = nullptr;
+        uint16_t count = 0;
+        while (transform == nullptr && count < 10000) {
+            auto static menuLocation = il2cpp_utils::createcsstr("MainMenuViewController/BottomPanel/Buttons");
+            if (il2cpp_utils::RunMethod(&transform, il2cpp_utils::GetClassFromName("UnityEngine", "GameObject"), "Find", menuLocation)) {
+                il2cpp_utils::RunMethod(&transform, transform, "get_transform");
+            }
+            ++count;
+        }
+        if (transform == nullptr) {
+            log(CRITICAL, "Could not find bottom panel buttons even after 10000 attempts!");
+            exit(1);
+        }
+        Il2CppObject* buttonChild0;
+        int childNumber = 0;
+        il2cpp_utils::RunMethod(&buttonChild0, transform, "GetChild", &childNumber);
+        Il2CppObject* createdButton;
+        il2cpp_utils::RunMethod(&createdButton, il2cpp_utils::GetClassFromName("UnityEngine", "Object"), "Instantiate", buttonChild0, transform);
+        // Create button type here
+        // il2cpp_utils::RunMethod(&createdButton, createdButton, "GetComponent", )
+        // GetInstance()->_createdButton = createdButton;
+
+    }
 }
