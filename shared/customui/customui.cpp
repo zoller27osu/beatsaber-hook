@@ -168,12 +168,37 @@ namespace CustomUI {
         return _instance;
     }
     void ModSettings::AddButtonToMainScreen() {
+        // Create types needed here:
+        // Create button type here
+        auto static componentClass = il2cpp_utils::GetClassFromName("UnityEngine", "Component");
+        auto static objClass = il2cpp_utils::GetClassFromName("UnityEngine", "Object");
+        auto static goClass = il2cpp_utils::GetClassFromName("UnityEngine", "GameObject");
+        auto static buttonClass = il2cpp_utils::GetClassFromName("UnityEngine.UI", "Button");
+        auto static transformClass = il2cpp_utils::GetClassFromName("UnityEngine", "Transform");
+        auto static localizedTextMeshProUGUIClass = il2cpp_utils::GetClassFromName("Polyglot", "LocalizedTextMeshProUGUI");
+        auto static unityEventClass = il2cpp_utils::GetClassFromName("UnityEngine.Events", "UnityEvent");
+        auto static unityActionClass = il2cpp_utils::GetClassFromName("UnityEngine.Events", "UnityAction");
+
+        auto static findMethod = il2cpp_utils::GetMethod(goClass, "Find", 1);
+        auto static getTransform = il2cpp_utils::GetMethod(componentClass, "get_transform", 0);
+        auto static getChild = il2cpp_utils::GetMethod(transformClass, "GetChild", 1);
+        auto static transformSetSiblingIndex = il2cpp_utils::GetMethod(transformClass, "SetSiblingIndex", 1);
+        auto static instantiate = il2cpp_utils::GetMethod(objClass, "Instantiate", 2);
+        auto static nonGenericGetComponent = il2cpp_utils::GetMethod(componentClass, "GetComponent", 1);
+        auto static nonGenericGetComponentInChildren = il2cpp_utils::GetMethod(componentClass, "GetComponentInChildren", 1);
+        auto static buttonGetOnClick = il2cpp_utils::GetMethod(buttonClass, "get_onClick", 0);
+        auto static unityEventAddListener = il2cpp_utils::GetMethod(unityEventClass, "AddListener", 1);
+
+        auto static buttonType = il2cpp_functions::class_get_type(buttonClass);
+        auto static localizedTextMeshProUGUIType = il2cpp_functions::class_get_type(localizedTextMeshProUGUIClass);
+        auto static unityActionType = il2cpp_functions::class_get_type(unityActionClass);
+
         Il2CppObject* transform = nullptr;
         uint16_t count = 0;
         while (transform == nullptr && count < 10000) {
             auto static menuLocation = il2cpp_utils::createcsstr("MainMenuViewController/BottomPanel/Buttons");
-            if (il2cpp_utils::RunMethod(&transform, il2cpp_utils::GetClassFromName("UnityEngine", "GameObject"), "Find", menuLocation)) {
-                il2cpp_utils::RunMethod(&transform, transform, "get_transform");
+            if (il2cpp_utils::RunMethod(&transform, findMethod, menuLocation)) {
+                il2cpp_utils::RunMethod(&transform, transform, getTransform);
             }
             ++count;
         }
@@ -181,14 +206,32 @@ namespace CustomUI {
             log(CRITICAL, "Could not find bottom panel buttons even after 10000 attempts!");
             exit(1);
         }
+
+        // createdButton = UnityEngine.Object.Instantiate(transform.GetChild(0), transform).GetComponent(typeof(UnityEngine.UI.Button));
         Il2CppObject* buttonChild0;
         int childNumber = 0;
-        il2cpp_utils::RunMethod(&buttonChild0, transform, "GetChild", &childNumber);
+        il2cpp_utils::RunMethod(&buttonChild0, transform, getChild, &childNumber);
         Il2CppObject* createdButton;
-        il2cpp_utils::RunMethod(&createdButton, il2cpp_utils::GetClassFromName("UnityEngine", "Object"), "Instantiate", buttonChild0, transform);
-        // Create button type here
-        // il2cpp_utils::RunMethod(&createdButton, createdButton, "GetComponent", )
-        // GetInstance()->_createdButton = createdButton;
+        il2cpp_utils::RunMethod(&createdButton, objClass, instantiate, buttonChild0, transform);
+        il2cpp_utils::RunMethod(&createdButton, createdButton, nonGenericGetComponent, buttonType);
+        // createdButton.get_transform().GetChild(0).GetChild(1).GetComponentInChildren(typeof(Polyglot.LocalizedTextMeshProUGUI)).set_Key("Mod Settings");
+        Il2CppObject* buttonTransform;
+        il2cpp_utils::RunMethod(&buttonTransform, createdButton, getTransform);
+        Il2CppObject* temp;
+        il2cpp_utils::RunMethod(&temp, buttonTransform, getChild, &childNumber);
+        childNumber = 1;
+        il2cpp_utils::RunMethod(&temp, temp, getChild, &childNumber);
+        il2cpp_utils::RunMethod(&temp, temp, nonGenericGetComponentInChildren, localizedTextMeshProUGUIType);
+        il2cpp_utils::RunMethod(&temp, temp, "set_Key", il2cpp_utils::createcsstr("Mod Settings"));
+        // createdButton.get_onClick().AddListener(PresentSettings);
+        il2cpp_utils::RunMethod(&temp, createdButton, buttonGetOnClick);
+        auto action = il2cpp_utils::MakeAction(createdButton, (void*)PresentSettings, unityActionType);
+        il2cpp_utils::RunMethod(temp, unityEventAddListener, action);
+        // createdButton.get_transform().SetSiblingIndex(0);
+        childNumber = 0;
+        il2cpp_utils::RunMethod(buttonTransform, transformSetSiblingIndex, &childNumber);
+    }
+    void PresentSettings() {
 
     }
 }
