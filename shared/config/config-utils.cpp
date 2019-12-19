@@ -22,7 +22,7 @@ using namespace rapidjson;
 
 bool parsejsonfile(ConfigDocument& doc, std::string filename) {
     if (!fileexists(filename.c_str())) {
-        return {};
+        return false;
     }
     // FILE* fp = fopen(filename.c_str(), "r");
 
@@ -31,10 +31,7 @@ bool parsejsonfile(ConfigDocument& doc, std::string filename) {
 
     IStreamWrapper wrapper {is};
     
-    if (doc.ParseStream(wrapper).HasParseError()) {
-        return false;
-    }
-    return true;
+    return !doc.ParseStream(wrapper).HasParseError();
 }
 
 // Loads the config for the given MOD_ID, if it doesn't exist, will leave it as an empty object.
