@@ -4,14 +4,27 @@
 // Location of libil2cpp.so
 #define IL2CPP_SO_PATH "/data/app/com.beatgames.beatsaber-1/lib/arm64/libil2cpp.so"
 
+#if __has_include(<string_view>)
+#include <string_view>
+#elif __has_include(<experimental/string_view>)
+#include <experimental/string_view>
+namespace std {
+    using experimental::string_view;
+    using experimental::basic_string_view;
+    using experimental::u16string_view;
+}
+#else
+#error No string_view implementation available!
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <dlfcn.h>
 #include "typedefs.h"
 #include "../config/config-utils.hpp"
 #include "il2cpp-utils.hpp"
 #include "utils-functions.h"
 #include "../inline-hook/And64InlineHook.hpp"
-#include <dlfcn.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +32,14 @@ extern "C" {
 
 long long getRealOffset(void* offset);
 long long baseAddr(const char* soname);
+// Only wildcard is ? and ?? - both are handled the same way. They will skip exactly 1 byte (2 hex digits)
+// TODO: allow ?x / x? for when half of the byte is known
+long long FindPattern(long long dwAddress, const char* pattern, long long dwSearchRangeLen = 0x1000000);
+// Same as FindPattern but will continue scanning to make sure your pattern is sufficiently specific.
+// Each candidate will be logged. label should describe what you're looking for, like "Class::Init".
+// Sets "multiple" iff multiple matches are found, and outputs a log warning message.
+// Returns the first match, if any.
+long long FindUniquePattern(bool& multiple, long long dwAddress, const char* pattern, const char* label = 0, long long dwSearchRangeLen = 0x1000000);
 
 #define MAKE_HOOK(name, addr, retval, ...) \
 void* addr_ ## name = (void*) addr; \

@@ -14,7 +14,7 @@
 #include "../../rapidjson/include/rapidjson/istreamwrapper.h"
 #include "../../rapidjson/include/rapidjson/ostreamwrapper.h"
 #include <string>
-#include <string_view>
+#include "../utils/utils.h"
 #include <cassert>
 
 namespace json {
