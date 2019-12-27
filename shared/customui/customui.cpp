@@ -23,6 +23,7 @@ namespace CustomUI {
         
         if (!il2cpp_utils::RunMethod(gameObj, UnityEngine_GameObject::SetActive_bool, &value)) {
             // EXCEPTION
+            log(DEBUG, "Failed to setActive to false");
             return nullptr;
         }
 
@@ -30,6 +31,7 @@ namespace CustomUI {
         Il2CppObject* type_tmprougui;
         if (!il2cpp_utils::RunMethod(&type_tmprougui, nullptr, System_Type::GetType_string, il2cpp_utils::createcsstr("TMPro.TextMeshProUGUI"))) {
             // EXCEPTION
+            log(DEBUG, "Failed to get type TMPro.TextMeshProUGUI");
             return nullptr;
         }
 
@@ -37,6 +39,7 @@ namespace CustomUI {
         Il2CppObject* textMesh;
         if (!il2cpp_utils::RunMethod(&textMesh, gameObj, UnityEngine_GameObject::AddComponent_Type, type_tmprougui)) {
             // EXCEPTION
+            log(DEBUG, "Failed to Add Component via type");
             return nullptr;
         }
 
@@ -44,6 +47,7 @@ namespace CustomUI {
         Il2CppObject* type_fontasset;
         if (!il2cpp_utils::RunMethod(&type_fontasset, nullptr, System_Type::GetType_string, il2cpp_utils::createcsstr("TMPro.TMP_FontAsset"))) {
             // EXCEPTION
+            log(DEBUG, "Failed to Get Type of TMPro.TMP_FontAsset");
             return nullptr;
         }
 
@@ -51,6 +55,7 @@ namespace CustomUI {
         Array<Il2CppObject*>* allObjects;
         if (!il2cpp_utils::RunMethod(&allObjects, nullptr, UnityEngine_Resources::FindObjectsOfTypeAll_Type, type_fontasset)) {
             // EXCEPTION
+            log(DEBUG, "Failed to Find Font Assets");
             return nullptr;
         }
 
@@ -61,6 +66,7 @@ namespace CustomUI {
             Il2CppString* assetName;
             if (!il2cpp_utils::RunMethod(&assetName, allObjects->values[i], UnityEngine_Object::get_name)) {
                 // EXCEPTION
+                log(DEBUG, "Failed to run get_name of assetName");
                 return nullptr;
             }
             if (strcmp(to_utf8(csstrtostr(assetName)).c_str(), "Teko-Medium SDF No Glow") == 0) {
@@ -78,6 +84,7 @@ namespace CustomUI {
         Il2CppObject* font;
         if (!il2cpp_utils::RunMethod(&font, nullptr, UnityEngine_Object::Instantiate_Object, allObjects->values[match])) {
             // EXCEPTION
+            log(DEBUG, "Failed to Instantiate font");
             return nullptr;
         }
 
@@ -85,6 +92,7 @@ namespace CustomUI {
         void* args7[] = {font};
         if (!il2cpp_utils::RunMethod(textMesh, TMPro_TMP_Text::set_font, font)) {
             // EXCEPTION
+            log(DEBUG, "Failed to set font");
             return nullptr;
         }
 
@@ -92,6 +100,7 @@ namespace CustomUI {
         Il2CppObject* rectTransform;
         if (!il2cpp_utils::RunMethod(textMesh, TMPro_TMP_Text::get_rectTransform)) {
             // EXCEPTION
+            log(DEBUG, "Failed to get RectTransform");
             return nullptr;
         }
 
@@ -99,12 +108,14 @@ namespace CustomUI {
         bool placeholder = false;
         if (!il2cpp_utils::RunMethod(rectTransform, UnityEngine_Transform::SetParent_Transform_bool, parent_transform, &placeholder)) {
             // EXCEPTION
+            log(DEBUG, "Failed to Set Parent");
             return nullptr;
         }
 
         // Set text
         if (!il2cpp_utils::RunMethod(textMesh, TMPro_TMP_Text::set_text, il2cpp_utils::createcsstr(text))) {
             // EXCEPTION
+            log(DEBUG, "Failed to set text");
             return nullptr;
         }
 
@@ -112,6 +123,7 @@ namespace CustomUI {
         float val = 4;
         if (!il2cpp_utils::RunMethod(textMesh, TMPro_TMP_Text::set_fontSize, &val)) {
             // EXCEPTION
+            log(DEBUG, "Failed to set fontSize");
             return nullptr;
         }
 
@@ -119,6 +131,7 @@ namespace CustomUI {
         Color c = {1.0, 1.0, 1.0, 1.0};
         if (!il2cpp_utils::RunMethod(textMesh, TMPro_TMP_Text::set_color, &c)) {
             // EXCEPTION
+            log(DEBUG, "Failed to set color");
             return nullptr;
         }
 
@@ -126,6 +139,7 @@ namespace CustomUI {
         Vector2 anch_min = {0.5, 0.5};
         if (!il2cpp_utils::RunMethod(rectTransform, UnityEngine_RectTransform::set_anchorMin, &anch_min)) {
             // EXCEPTION
+            log(DEBUG, "Failed to set rectTransform.anchorMin");
             return nullptr;
         }
 
@@ -133,18 +147,21 @@ namespace CustomUI {
         Vector2 anch_max = {0.5, 0.5};
         if (!il2cpp_utils::RunMethod(rectTransform, UnityEngine_RectTransform::set_anchorMax, &anch_max)) {
             // EXCEPTION
+            log(DEBUG, "Failed to set rectTransform.anchorMax");
             return nullptr;
         }
 
         // Set rectTransform.sizeDelta
         if (!il2cpp_utils::RunMethod(rectTransform, UnityEngine_RectTransform::set_sizeDelta, &sizeDelta)) {
             // EXCEPTION
+            log(DEBUG, "Failed to set rectTransform.sizeDelta");
             return nullptr;
         }
 
         // Set rectTransform.anchoredPosition
         if (!il2cpp_utils::RunMethod(rectTransform, UnityEngine_RectTransform::set_anchoredPosition, &anchoredPosition)) {
             // EXCEPTION
+            log(DEBUG, "Failed to set rectTransform.anchoredPosition");
             return nullptr;
         }
 
@@ -152,6 +169,7 @@ namespace CustomUI {
         bool place = true;
         if (!il2cpp_utils::RunMethod(gameObj, UnityEngine_GameObject::SetActive_bool, &place)) {
             // EXCEPTION
+            log(DEBUG, "Failed to setActive to true");
             return nullptr;
         }
 
