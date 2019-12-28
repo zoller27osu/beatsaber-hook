@@ -83,15 +83,22 @@ long long FindPattern(long long dwAddress, const char* pattern, long long dwSear
 	#define get_bits(x) (in_range((x & (~0x20)), 'A', 'F') ? ((x & (~0x20)) - 'A' + 0xA): (in_range(x, '0', '9') ? x - '0': 0))
 	#define get_byte(x) (get_bits(x[0]) << 4 | get_bits(x[1]))
 
-	long long match = 0;  // current match candidate
+    // To avoid a lot of bad match candidates, pre-process wildcards at the front of the pattern
+    long long skippedStartBytes = 0;
+    while(pattern[0] == '\?') {
+        // see comments below for insight on these numbers
+        pattern += (pattern[1] == '\?') ? 3 : 2;
+        skippedStartBytes++;
+    }
+    long long match = 0;  // current match candidate
 	const char* pat = pattern;  // current spot in the pattern
 
-    // TODO: align pCur to word boundary first, then iterate by 4?
-	for (long long pCur = dwAddress; pCur < dwAddress + dwSearchRangeLen; pCur++) {
-		if (!pat[0]) return match;  // end of pattern means match is complete!
+    // TODO: align dwAddress to word boundary first, then iterate by 4?
+	for (long long pCur = dwAddress + skippedStartBytes; pCur < dwAddress + dwSearchRangeLen; pCur++) {
+		if (!pat[0]) break;  // end of pattern means match is complete!
 		if (pat[0] == '\?' || *(char *)pCur == get_byte(pat)) {  // does this pCur match this pat?
 			if (!match) match = pCur;  // start match
-			if (!pat[2]) return match;  // no more chars in pattern means match is complete!
+			if (!pat[2]) break;  // no more chars in pattern means match is complete!
 
 			if (pat[0] != '\?' || pat[1] == '\?') {
 				pat += 3;  // advance past "xy " or "?? "
@@ -104,13 +111,13 @@ long long FindPattern(long long dwAddress, const char* pattern, long long dwSear
 			match = 0;
 		}
 	}
-	return 0;
+	return match ? match - skippedStartBytes : 0;
 }
 
 long long FindUniquePattern(bool& multiple, long long dwAddress, const char* pattern, const char* label, long long dwSearchRangeLen) {
     long long firstMatchAddr = 0, newMatchAddr, start = dwAddress, dwEnd = dwAddress + dwSearchRangeLen;
     int matches = 0;
-    while (start < dwEnd && (newMatchAddr = FindPattern(start, pattern, dwEnd - start))) {
+    while (start > 0 && start < dwEnd && (newMatchAddr = FindPattern(start, pattern, dwEnd - start))) {
         if (!firstMatchAddr) firstMatchAddr = newMatchAddr;
         matches++;
         if (label) log(DEBUG, "Sigscan found possible \"%s\": offset 0x%llX, pointer 0x%llX", label, newMatchAddr - dwAddress, newMatchAddr);
