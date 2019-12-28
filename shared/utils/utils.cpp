@@ -78,7 +78,7 @@ long long getRealOffset(void* offset) // calculate dump.cs address + lib.so base
     return location + (long long)offset;
 }
 
-long long FindPattern(long long dwAddress, const char* pattern, long long dwSearchRangeLen) {
+long long findPattern(long long dwAddress, const char* pattern, long long dwSearchRangeLen) {
     #define in_range(x, a, b) (x >= a && x <= b)
     #define get_bits(x) (in_range((x & (~0x20)), 'A', 'F') ? ((x & (~0x20)) - 'A' + 0xA): (in_range(x, '0', '9') ? x - '0': 0))
     #define get_byte(x) (get_bits(x[0]) << 4 | get_bits(x[1]))
@@ -114,10 +114,10 @@ long long FindPattern(long long dwAddress, const char* pattern, long long dwSear
     return match ? match - skippedStartBytes : 0;
 }
 
-long long FindUniquePattern(bool& multiple, long long dwAddress, const char* pattern, const char* label, long long dwSearchRangeLen) {
+long long findUniquePattern(bool& multiple, long long dwAddress, const char* pattern, const char* label, long long dwSearchRangeLen) {
     long long firstMatchAddr = 0, newMatchAddr, start = dwAddress, dwEnd = dwAddress + dwSearchRangeLen;
     int matches = 0;
-    while (start > 0 && start < dwEnd && (newMatchAddr = FindPattern(start, pattern, dwEnd - start))) {
+    while (start > 0 && start < dwEnd && (newMatchAddr = findPattern(start, pattern, dwEnd - start))) {
         if (!firstMatchAddr) firstMatchAddr = newMatchAddr;
         matches++;
         if (label) log(DEBUG, "Sigscan found possible \"%s\": offset 0x%llX, pointer 0x%llX", label, newMatchAddr - dwAddress, newMatchAddr);
@@ -132,11 +132,7 @@ long long FindUniquePattern(bool& multiple, long long dwAddress, const char* pat
     return firstMatchAddr;
 }
 
-// BEAT SABER SPECIFIC
-
-// il2cpp_string_new, used to find string construction offset: 0x2DD144
-// il2cpp_string_new immediate call offset: 0x30A1C8
-// Creation of string method(char* chars, size_t length): 0x30A1E8
+// C# SPECIFIC
 
 void setcsstr(Il2CppString* in, u16string_view str) {
     in->length = str.length();
@@ -180,7 +176,7 @@ void dump(int before, int after, void* ptr) {
     }
 }
 
-// BEAT SABER SETTINGS
+// SETTINGS
 
 bool fileexists(const char* filename) {
     return access(filename, W_OK | R_OK) != -1;
@@ -254,4 +250,3 @@ string getconfigpath() {
     filename = filename.append(".json");
     return filename;
 }
-

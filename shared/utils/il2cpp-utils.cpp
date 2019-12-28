@@ -67,7 +67,7 @@ namespace il2cpp_utils {
         return nullptr;
     }
 
-    const MethodInfo* GetMethod(Il2CppClass* klass, std::string_view methodName, int argsCount) {
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, int argsCount) {
         il2cpp_functions::Init();
         
         if (!klass) return nullptr;
@@ -80,14 +80,14 @@ namespace il2cpp_utils {
         return methodInfo;
     }
 
-    const MethodInfo* GetMethod(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount) {
-        return GetMethod(GetClassFromName(nameSpace.data(), className.data()), methodName, argsCount);
+    const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount) {
+        return FindMethod(GetClassFromName(nameSpace.data(), className.data()), methodName, argsCount);
     }
 
-    const MethodInfo* GetMethod(Il2CppObject* instance, std::string_view methodName, int argsCount) {
+    const MethodInfo* FindMethod(Il2CppObject* instance, std::string_view methodName, int argsCount) {
         il2cpp_functions::Init();
 
-        return GetMethod(il2cpp_functions::object_get_class(instance), methodName, argsCount);
+        return FindMethod(il2cpp_functions::object_get_class(instance), methodName, argsCount);
     }
 
     FieldInfo* FindField(Il2CppClass* klass, std::string_view fieldName) {

@@ -237,13 +237,13 @@ namespace il2cpp_utils {
     // Returns the MethodInfo for the method on the given class with the given name and number of arguments
     // TODO: HASH MAP KNOWN FUNCTIONS
     // Created by zoller27osu
-    const MethodInfo* GetMethod(Il2CppClass* klass, std::string_view methodName, int argsCount);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, int argsCount);
 
     // Returns the MethodInfo for the method on class found via namespace and name with the given name and number of arguments
-    const MethodInfo* GetMethod(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount);
+    const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount);
 
     // Returns the MethodInfo for the method on the given instance
-    const MethodInfo* GetMethod(Il2CppObject* instance, std::string_view methodName, int argsCount);
+    const MethodInfo* FindMethod(Il2CppObject* instance, std::string_view methodName, int argsCount);
 
     template<class TOut, class... TArgs>
     // Runs a MethodInfo with the specified parameters and instance, with return type TOut
@@ -293,7 +293,7 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: RunMethod: Null klass parameter!");
             return false;
         }
-        auto method = GetMethod(klass, methodName, sizeof...(TArgs));
+        auto method = FindMethod(klass, methodName, sizeof...(TArgs));
         if (!method) return false;
         return RunMethod(out, nullptr, method, params...);
     }
@@ -313,7 +313,7 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: RunMethod: Could not get the object's class!");
             return false;
         }
-        auto method = GetMethod(klass, methodName, sizeof...(TArgs));
+        auto method = FindMethod(klass, methodName, sizeof...(TArgs));
         if (!method) return false;
         return RunMethod(out, instance, method, params...);
     }

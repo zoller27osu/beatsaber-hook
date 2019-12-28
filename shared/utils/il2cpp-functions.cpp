@@ -29,22 +29,28 @@ void il2cpp_functions::Init() {
     long long base = getRealOffset(0), hookAddr;
     log(DEBUG, "base: %llX", base);
     bool multiplesFound = false, allSigScanSuccess = true;
-    if ((hookAddr = FindUniquePattern(multiplesFound, base, "f3 0f 1e f8 fd 7b 01 a9 fd 43 00 91 f3 03 00 aa 68 9a 44 39 48 01 10 37",
+    if ((hookAddr = findUniquePattern(multiplesFound, base, "f3 0f 1e f8 fd 7b 01 a9 fd 43 00 91 f3 03 00 aa 68 9a 44 39 48 01 10 37",
             "Class::Init"))) {
         *(void**)(&il2cpp_functions::Class_Init) = (void*)hookAddr;
-    } else { allSigScanSuccess = false; }
+    } else {
+        allSigScanSuccess = false;
+    }
 
     long long metadataCacheStart = 0;
-    if ((hookAddr = FindUniquePattern(multiplesFound, base, "ff 83 01 d1 f6 57 03 a9 f4 4f 04 a9 fd 7b 05 a9 fd 43 01 91 f4 03 01 aa "
+    if ((hookAddr = findUniquePattern(multiplesFound, base, "ff 83 01 d1 f6 57 03 a9 f4 4f 04 a9 fd 7b 05 a9 fd 43 01 91 f4 03 01 aa "
             "f3 03 00 aa ", "MetadataCache::Register"))) {
         metadataCacheStart = hookAddr;
         *(void**)(&il2cpp_functions::MetadataCache_Register) = (void*)hookAddr;
-    } else { allSigScanSuccess = false; }
+    } else {
+        allSigScanSuccess = false;
+    }
 
-    if ((hookAddr = FindUniquePattern(multiplesFound, base, "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 0a 34 40 f9 08 a1 80 b9 28 01 08 8b "
+    if ((hookAddr = findUniquePattern(multiplesFound, base, "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 0a 34 40 f9 08 a1 80 b9 28 01 08 8b "
             "48 01 08 cb 29 85 8b 52 08 fd 42 d3 e9 51 b8 72 00 7d 09 1b c0 03 5f d6", "MetadataCache::GetIndexForTypeDefinition"))) {
         *(void**)(&il2cpp_functions::MetadataCache_GetIndexForTypeDefinition) = (void*)hookAddr;
-    } else { allSigScanSuccess = false; }
+    } else {
+        allSigScanSuccess = false;
+    }
 
     if (hookAddr > 0 && metadataCacheStart > 0 && (hookAddr - metadataCacheStart) == (0x8504BC - 0x84DE9C)) {
         log(DEBUG, "Success! Loading remaining MetadataCache addresses from known inter-class offsets!");
@@ -63,15 +69,19 @@ void il2cpp_functions::Init() {
         allSigScanSuccess = false;
     }
 
-    if ((hookAddr = FindUniquePattern(multiplesFound, base, "f4 4f be a9 fd 7b 01 a9 fd 43 00 91 f3 03 08 aa", "Type::GetName"))) {
+    if ((hookAddr = findUniquePattern(multiplesFound, base, "f4 4f be a9 fd 7b 01 a9 fd 43 00 91 f3 03 08 aa", "Type::GetName"))) {
         // cont ? ? ? ? ? ? ? f9 e9 03 01 2a
         *(void**)(&il2cpp_functions::Type_GetName) = (void*)hookAddr;
-    } else { allSigScanSuccess = false; }
+    } else {
+        allSigScanSuccess = false;
+    }
 
-    if ((hookAddr = FindUniquePattern(multiplesFound, base, "f7 0f 1c f8 f6 57 01 a9 f4 4f 02 a9 fd 7b 03 a9 fd c3 00 91 "
+    if ((hookAddr = findUniquePattern(multiplesFound, base, "f7 0f 1c f8 f6 57 01 a9 f4 4f 02 a9 fd 7b 03 a9 fd c3 00 91 "
             "f3 03 00 aa ? ? ? ? ? ? ? f9 ? ? ? ? 60 02 40 b9", "GenericClass::GetClass"))) {
         *(void**)(&il2cpp_functions::GenericClass_GetClass) = (void*)hookAddr;
-    } else { allSigScanSuccess = false; }
+    } else {
+        allSigScanSuccess = false;
+    }
 
     if (!allSigScanSuccess || multiplesFound) {
         if (!allSigScanSuccess) log(ERROR, "One or more sigscans failed! Aborting!");

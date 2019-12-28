@@ -33,13 +33,12 @@ extern "C" {
 long long getRealOffset(void* offset);
 long long baseAddr(const char* soname);
 // Only wildcard is ? and ?? - both are handled the same way. They will skip exactly 1 byte (2 hex digits)
-// TODO: allow ?x / x? for when half of the byte is known
-long long FindPattern(long long dwAddress, const char* pattern, long long dwSearchRangeLen = 0x1000000);
-// Same as FindPattern but will continue scanning to make sure your pattern is sufficiently specific.
+long long findPattern(long long dwAddress, const char* pattern, long long dwSearchRangeLen = 0x1000000);
+// Same as findPattern but will continue scanning to make sure your pattern is sufficiently specific.
 // Each candidate will be logged. label should describe what you're looking for, like "Class::Init".
 // Sets "multiple" iff multiple matches are found, and outputs a log warning message.
 // Returns the first match, if any.
-long long FindUniquePattern(bool& multiple, long long dwAddress, const char* pattern, const char* label = 0, long long dwSearchRangeLen = 0x1000000);
+long long findUniquePattern(bool& multiple, long long dwAddress, const char* pattern, const char* label = 0, long long dwSearchRangeLen = 0x1000000);
 
 #define MAKE_HOOK(name, addr, retval, ...) \
 void* addr_ ## name = (void*) addr; \
