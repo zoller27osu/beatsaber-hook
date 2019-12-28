@@ -11,6 +11,8 @@
 #include <fstream>
 #include "../utils/typedefs.h"
 
+#include "customui.hpp"
+
 #include "../dumps/UnityEngine_GameObject.hpp"
 #include "../dumps/UnityEngine_RectTransform.hpp"
 #include "../dumps/UnityEngine_Transform.hpp"
@@ -21,27 +23,19 @@
 #include "../dumps/TMPro_TMP_FontAsset.hpp"
 #include "../dumps/TMPro_TMP_Text.hpp"
 
-namespace CustomUI {
-    // Creates a custom TMP_TextMeshProUGUI object and returns it
-    Il2CppObject* createtext(Il2CppObject* parent_transform, std::string_view text, Vector2 anchoredPosition, Vector2 sizeDelta);
-    // Mod Settings Container Class
-    class ModSettings {
+namespace CustomUI { 
+    class TextUI {
         private:
-            ModSettings();
-            Il2CppObject* _gottenMainMenuButton;
-            Il2CppObject* _createdButton;
-            Il2CppObject* _flowCoordinator;
-            static ModSettings* _instance;
+            std::string  name             = "CustomUIText";
         public:
-            static ModSettings* GetInstance();
-            static void AddButtonToMainScreen();
-            static void SetupViewControllerTransform(Il2CppObject* viewController);
+            Il2CppObject *textMesh        = nullptr;
+            Il2CppObject *gameObj         = nullptr;
+            Color        color            = {1.0, 1.0, 1.0, 1.0};
+            std::string  text             = "Default";
+            float        fontSize         = 40.0f;
+            Il2CppObject *parentTransform = nullptr;
+            bool create();
     };
-    class CustomFlowCoordinator {
-        public:
-            void PresentFlowCoordinator(Il2CppObject* flowCoordinator, function_ptr_t<void> callback);
-    };
-    static Il2CppObject* CreateFlowCoordinator(function_ptr_t<void, bool, int> didActivate);
-}
+} // namespace CustomUI
 
 #endif /* CUSTOMUI_DEFINED */
