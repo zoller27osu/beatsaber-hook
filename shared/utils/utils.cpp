@@ -78,6 +78,60 @@ long long getRealOffset(void* offset) // calculate dump.cs address + lib.so base
     return location + (long long)offset;
 }
 
+long long FindPattern(long long dwAddress, const char* pattern, long long dwSearchRangeLen) {
+    #define in_range(x, a, b) (x >= a && x <= b)
+    #define get_bits(x) (in_range((x & (~0x20)), 'A', 'F') ? ((x & (~0x20)) - 'A' + 0xA): (in_range(x, '0', '9') ? x - '0': 0))
+    #define get_byte(x) (get_bits(x[0]) << 4 | get_bits(x[1]))
+
+    // To avoid a lot of bad match candidates, pre-process wildcards at the front of the pattern
+    long long skippedStartBytes = 0;
+    while(pattern[0] == '\?') {
+        // see comments below for insight on these numbers
+        pattern += (pattern[1] == '\?') ? 3 : 2;
+        skippedStartBytes++;
+    }
+    long long match = 0;  // current match candidate
+    const char* pat = pattern;  // current spot in the pattern
+
+    // TODO: align dwAddress to word boundary first, then iterate by 4?
+    for (long long pCur = dwAddress + skippedStartBytes; pCur < dwAddress + dwSearchRangeLen; pCur++) {
+        if (!pat[0]) break;  // end of pattern means match is complete!
+        if (pat[0] == '\?' || *(char *)pCur == get_byte(pat)) {  // does this pCur match this pat?
+            if (!match) match = pCur;  // start match
+            if (!pat[2]) break;  // no more chars in pattern means match is complete!
+
+            if (pat[0] != '\?' || pat[1] == '\?') {
+                pat += 3;  // advance past "xy " or "?? "
+            } else {
+                pat += 2;  // advance past "? "
+            }
+        } else {
+            if (match) pCur = match;  // reset search position to beginning of the failed match; for loop will begin new search at match + 1
+            pat = pattern;
+            match = 0;
+        }
+    }
+    return match ? match - skippedStartBytes : 0;
+}
+
+long long FindUniquePattern(bool& multiple, long long dwAddress, const char* pattern, const char* label, long long dwSearchRangeLen) {
+    long long firstMatchAddr = 0, newMatchAddr, start = dwAddress, dwEnd = dwAddress + dwSearchRangeLen;
+    int matches = 0;
+    while (start > 0 && start < dwEnd && (newMatchAddr = FindPattern(start, pattern, dwEnd - start))) {
+        if (!firstMatchAddr) firstMatchAddr = newMatchAddr;
+        matches++;
+        if (label) log(DEBUG, "Sigscan found possible \"%s\": offset 0x%llX, pointer 0x%llX", label, newMatchAddr - dwAddress, newMatchAddr);
+        start = newMatchAddr + 1;
+        log(DEBUG, "start = %llX, end = %llX", start, dwEnd);
+        usleep(1000);
+    }
+    if (matches > 1) {
+        multiple = true;
+        log(WARNING, "Multiple sig scan matches for \"%s\"!", label);
+    }
+    return firstMatchAddr;
+}
+
 // BEAT SABER SPECIFIC
 
 // il2cpp_string_new, used to find string construction offset: 0x2DD144

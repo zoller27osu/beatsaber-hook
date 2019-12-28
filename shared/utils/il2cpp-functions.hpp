@@ -215,6 +215,31 @@ class il2cpp_functions {
 	inline static const Il2CppType* (*class_get_type_const)(const Il2CppClass * klass);
 	inline static const char* (*class_get_name_const)(const Il2CppClass * klass);
 
+	// SELECT NON-API LIBIL2CPP FUNCTIONS:
+	inline static bool (*Class_Init)(Il2CppClass* klass);
+
+	inline static void (*MetadataCache_Register)(const Il2CppCodeRegistration* const codeRegistration,
+		const Il2CppMetadataRegistration* const metadataRegistration, const Il2CppCodeGenOptions* const codeGenOptions);
+	inline static const char* (*MetadataCache_GetStringFromIndex)(StringIndex index);
+	inline static Il2CppClass* (*MetadataCache_GetTypeInfoFromTypeIndex)(TypeIndex index);
+    inline static Il2CppClass* (*MetadataCache_GetTypeInfoFromTypeDefinitionIndex)(TypeDefinitionIndex index);
+    inline static const Il2CppTypeDefinition* (*MetadataCache_GetTypeDefinitionFromIndex)(TypeDefinitionIndex index);
+    inline static TypeDefinitionIndex (*MetadataCache_GetExportedTypeFromIndex)(TypeDefinitionIndex index);
+    inline static const Il2CppGenericContainer* (*MetadataCache_GetGenericContainerFromIndex)(GenericContainerIndex index);
+    inline static const Il2CppGenericParameter* (*MetadataCache_GetGenericParameterFromIndex)(GenericParameterIndex index);
+    inline static Il2CppClass* (*MetadataCache_GetNestedTypeFromIndex)(NestedTypeIndex index);
+    inline static const Il2CppRGCTXDefinition* (*MetadataCache_GetRGCTXDefinitionFromIndex)(RGCTXIndex index);
+	inline static const TypeDefinitionIndex (*MetadataCache_GetIndexForTypeDefinition)(const Il2CppClass* typeDefinition);
+
+	// NOTE: because this returns a C++ std type, it will return gibberish unless you match the STL of libil2cpp.so,
+    //    which was gnustl! The easiest way to allow that is to downgrade to ndk17 and use APP_STL := gnustl_static.
+    // TODO: instead of changing STL, steal gnustl's string definition?
+	inline static std::string (*Type_GetName)(const Il2CppType *type, Il2CppTypeNameFormat format);
+
+	inline static Il2CppClass* (*GenericClass_GetClass)(Il2CppGenericClass* gclass);
+
+	static const Il2CppMetadataRegistration* s_Il2CppMetadataRegistration;
+
 	// Whether all of the il2cpp functions have been initialized or not
     inline static bool initialized = false;
     // Initializes all of the IL2CPP functions via dlopen and dlsym for use.

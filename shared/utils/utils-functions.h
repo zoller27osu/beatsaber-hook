@@ -6,7 +6,6 @@
 #include <dlfcn.h>
 #include "typedefs.h"
 #include <string>
-#include <string_view>
 #include "../config/rapidjson-utils.hpp"
 
 #ifndef __cplusplus

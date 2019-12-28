@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <sstream>
 #include "typedefs.h"
@@ -421,7 +420,6 @@ namespace il2cpp_utils {
     // An unsafe wrapper around the TOut GetFieldValues; il2cpp should unbox when appropriate
     template<class TOut, class... TArgs>
     TOut GetFieldValueUnsafe(TArgs... params) {
-        static_assert(sizeof...(TArgs) == 2);
         TOut out;
         GetFieldValue(&out, params...);
         return out;
@@ -494,55 +492,35 @@ namespace il2cpp_utils {
     void LogMethod(const MethodInfo* method);
 
     // Created by zoller27osu
+    // Calls LogMethod on all methods in the given class
+    void LogMethods(const Il2CppClass* klass);
+
+    // Created by zoller27osu
     // Logs information about the given FieldInfo* as log(DEBUG)
     void LogField(FieldInfo* field);
+
+    // Created by zoller27osu
+    // Calls LogField on all fields in the given class
+    void LogFields(Il2CppClass* klass);
 
     // Some parts provided by zoller27osu
     // Logs information about the given Il2CppClass* as log(DEBUG)
     void LogClass(const Il2CppClass* klass, bool logParents = true);
 
-    // Get function at 0x84fff0 (v1.5.0)
-    // This is the `MetadataCache::GetExportedTypeFromIndex` method which returns a `TypeDefinitionIndex`
-    #define MetadataCache_GetExportedTypeFromIndex (void*)0x84FFF0
-    
-    // Get function: at 0x84fba4 (v1.5.0)
-    // This is the `MetadataCache::GetTypeInfoFromTypeDefinitionIndex` method which returns an `Il2CppClass*`
-    #define MetadataCache_GetTypeInfoFromTypeDefinitionIndex (void*)0x84FBA4
-
-    // Get function: at 0x84ffbc (v1.5.0)
-    // This is the `MetaDataCache::GetTypeFromIndex` method which returns an `const Il2CppTypeDefinition*`
-    #define MetadataCache_GetTypeFromIndex (void*)0x84FFBC
-
-    // Get function: 0x84e5e8 at (v1.5.0)
-    // This is the `MetadataCache::GetStringFromIndex` method which returns a `const char*`
-    #define MetadataCache_GetStringFromIndex (void*)0x84E5E8
-
-    // Get function: 0x8500bc at (v1.5.0)
-    // This is the `MetadataCache::GetNestedTypeFromIndex` method which returns an `Il2CppClass*`
-    #define MetadataCache_GetNestedTypeFromIndex (void*)0x8500BC
-
-    // Get function: 0x8504bc at (v1.5.0)
-    // This is the `MetadataCache::GetIndexForTypeDefinition` method which returns a `TypeDefinitionIndex`
-    #define MetadataCache_GetIndexForTypeDefinition (void*)0x8504BC
-
     // Logs all classes (from every namespace) that start with the given prefix
     // WARNING: THIS FUNCTION IS VERY SLOW. ONLY USE THIS FUNCTION ONCE AND WITH A FAIRLY SPECIFIC PREFIX!
-    // THIS FUNCTION IS ALSO VERSION VOLATILE, SINCE IT USES A HARDCODED OFFSET!
     void LogClasses(std::string_view classPrefix);
 
     // Adds the given TypeDefinitionIndex to the class hash table of a given image
     // Mainly used in LogClasses
-    // THIS FUNCTION IS VERSION VOLATILE, SINCE IT USES A HARDCODED OFFSET!
     void AddTypeToNametoClassHashTable(const Il2CppImage* img, TypeDefinitionIndex index);
 
     // Adds the given nested types of the namespaze, parentName, and klass to the hastable
     // Mainly used in AddTypeToNametoClassHashTable
-    // THIS FUNCTION IS VERSION VOLATILE, SINCE IT USES A HARDCODED OFFSET!
     void AddNestedTypesToNametoClassHashTable(Il2CppNameToTypeDefinitionIndexHashTable* hashTable, const char *namespaze, const std::string& parentName, Il2CppClass *klass);
 
     // Adds the given nested types of typeDefinition to the class hash table of a given image
     // Mainly used in AddTypeToNametoClassHashTable
-    // THIS FUNCTION IS VERSION VOLATILE, SINCE IT USES A HARDCODED OFFSET!
     void AddNestedTypesToNametoClassHashTable(const Il2CppImage* img, const Il2CppTypeDefinition* typeDefinition);
 
     // Creates a cs string (allocates it) with the given string_view and returns it
