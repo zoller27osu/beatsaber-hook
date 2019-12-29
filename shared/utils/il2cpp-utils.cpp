@@ -14,6 +14,10 @@
 // Please see comments in il2cpp-utils.hpp
 // TODO: Make this into a static class
 namespace il2cpp_utils {
+    // It doesn't matter what types these are, they just need to be used correctly within the methods
+    static std::unordered_map<std::pair<std::string, std::string>, Il2CppClass*> namesToClassesCache;
+    static std::unordered_map<std::pair<Il2CppClass*, std::pair<std::string, int>>, const MethodInfo*> classesNamesToMethodsCache;
+    static std::unordered_map<std::pair<Il2CppClass*, std::string>, FieldInfo*> classesNamesToFieldsCache;
     // Maximum length of characters of an exception message - 1
     #define EXCEPTION_MESSAGE_SIZE 4096
 
@@ -43,6 +47,12 @@ namespace il2cpp_utils {
     Il2CppClass* GetClassFromName(const char* name_space, const char* type_name) {
         il2cpp_functions::Init();
 
+        // Check cache
+        auto key = std::pair<std::string, std::string>(name_space, type_name);
+        auto itr = namesToClassesCache.find(key);
+        if (itr != namesToClassesCache.end()) {
+            return itr->second;
+        }
         auto dom = il2cpp_functions::domain_get();
         if (!dom) {
             log(ERROR, "GetClassFromName: Could not get domain!");
@@ -60,6 +70,7 @@ namespace il2cpp_utils {
             }
             auto klass = il2cpp_functions::class_from_name(img, name_space, type_name);
             if (klass) {
+                namesToClassesCache.insert({key, klass});
                 return klass;
             }
         }
@@ -71,12 +82,20 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         
         if (!klass) return nullptr;
+        // Check Cache
+        auto innerPair = std::pair<std::string, int>(methodName.data(), argsCount);
+        auto key = std::pair<Il2CppClass*, std::pair<std::string, int>>(klass, innerPair);
+        auto itr = classesNamesToMethodsCache.find(key);
+        if (itr != classesNamesToMethodsCache.end()) {
+            return itr->second;
+        }
         auto methodInfo = il2cpp_functions::class_get_method_from_name(klass, methodName.data(), argsCount);
         if (!methodInfo) {
             log(ERROR, "could not find method %s with %i parameters in class %s (namespace '%s')!", methodName.data(),
                 argsCount, il2cpp_functions::class_get_name(klass), il2cpp_functions::class_get_namespace(klass));
             LogMethods(klass);
         }
+        classesNamesToMethodsCache.insert({key, methodInfo});
         return methodInfo;
     }
 
@@ -94,12 +113,19 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
 
         if (!klass) return nullptr;
+        // Check Cache
+        auto key = std::pair<Il2CppClass*, std::string>(klass, fieldName.data());
+        auto itr = classesNamesToFieldsCache.find(key);
+        if (itr != classesNamesToFieldsCache.end()) {
+            return itr->second;
+        }
         auto field = il2cpp_functions::class_get_field_from_name(klass, fieldName.data());
         if (!field) {
             log(ERROR, "could not find field %s in class %s (namespace '%s')!", fieldName.data(),
                 il2cpp_functions::class_get_name(klass), il2cpp_functions::class_get_namespace(klass));
             LogFields(klass);
         }
+        classesNamesToFieldsCache.insert({key, field});
         return field;
     }
 
