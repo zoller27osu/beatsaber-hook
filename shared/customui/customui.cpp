@@ -25,7 +25,7 @@ namespace CustomUI
 
         // gameObj.AddComponent<TextMeshProUGUI>();
         log(DEBUG, "TextObject::create: Getting type of TMPro.TextMeshProUGUI");
-        Il2CppObject *type_tmpugui = il2cpp_functions::type_get_object(il2cpp_functions::class_get_type(GetClassFromName("TMPro", "TextMeshProUGUI")));
+        Il2CppObject *type_tmpugui = GetType(GetClassFromName("TMPro", "TextMeshProUGUI")));
         
         log(DEBUG, "TextObject::create: Adding component TMPro.TextMeshProUGUI");
         if (!RunMethod(&textMesh, gameObj, "AddComponent", type_tmpugui))
@@ -35,7 +35,7 @@ namespace CustomUI
         }
         // textMesh.font = GameObject.Instantiate(Resources.FindObjectsOfTypeAll<TMP_FontAsset>().First(t => t.name == "Teko-Medium SDF No Glow"));
         log(DEBUG, "TextObject::create: Getting type of TMPro.TMP_FontAsset");
-        Il2CppObject *type_fontasset = il2cpp_functions::type_get_object(il2cpp_functions::class_get_type(GetClassFromName("TMPro", "TMP_FontAsset")));
+        Il2CppObject *type_fontasset = GetType(GetClassFromName("TMPro", "TMP_FontAsset")));
         log(DEBUG, "TextObject::create: Gotten the type!");
         Array<Il2CppObject *> *allObjects;
 

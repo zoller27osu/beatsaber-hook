@@ -264,7 +264,7 @@ namespace il2cpp_utils {
             return nullptr;
         }
  
-        auto klassType = il2cpp_functions::type_get_object(il2cpp_functions::class_get_type_const(klass));
+        auto klassType = GetType(klass));
         if (!klassType) {
             log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get class type object!");
             return nullptr;
@@ -279,8 +279,7 @@ namespace il2cpp_utils {
  
         int i = 0;
         for (auto arg : args) {
-            auto t = il2cpp_functions::class_get_type_const(arg);
-            auto o = il2cpp_functions::type_get_object(t);
+            auto o = GetType(arg);
             if (!o) {
                 log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get type for %s", il2cpp_functions::class_get_name_const(arg));
                 return nullptr;
@@ -304,6 +303,16 @@ namespace il2cpp_utils {
         return ret;
     }
 
+    Il2CppObject* GetType(Il2CppClass* klass) {
+        il2cpp_functions::Init();
+        return il2cpp_functions::type_get_object(il2cpp_functions::class_get_type(klass));
+    }
+
+    Il2CppObject* GetType(const Il2CppClass* klass) {
+        il2cpp_functions::Init();
+        return il2cpp_functions::type_get_object(il2cpp_functions::class_get_type_const(klass));
+    }
+
     // Gets the type enum of a given type
     // TODO Remove this method! Replace with default typesystem
     int GetTypeEnum(const char* name_space, const char* type_name) {
@@ -313,9 +322,6 @@ namespace il2cpp_utils {
     }
 
     static std::unordered_map<int, const char*> typeMap;
-
-    // TODO: add it to the .hpp instead?
-    std::string ClassStandardName(Il2CppClass* klass, bool generics = true);
 
     const char* TypeGetSimpleName(const Il2CppType* type) {
         il2cpp_functions::Init();
