@@ -2,38 +2,38 @@
 #define CUSTOMUI_DEFINED
 
 #include <string.h>
-#include <string_view>
-#include <stdio.h>
-#include <stdlib.h>
-#include <dlfcn.h>
-#include <unistd.h>
-#include <iostream>
-#include <fstream>
 #include "../utils/typedefs.h"
 
-#include "customui.hpp"
-
-#include "../dumps/UnityEngine_GameObject.hpp"
-#include "../dumps/UnityEngine_RectTransform.hpp"
-#include "../dumps/UnityEngine_Transform.hpp"
-#include "../dumps/TMPro_TextMeshProUGUI.hpp"
-#include "../dumps/UnityEngine_Resources.hpp"
-#include "../dumps/UnityEngine_Object.hpp"
-#include "../dumps/System_Type.hpp"
-#include "../dumps/TMPro_TMP_FontAsset.hpp"
-#include "../dumps/TMPro_TMP_Text.hpp"
-
 namespace CustomUI { 
-    class TextUI {
+    class TextObject {
         private:
-            std::string  name             = "CustomUIText";
+            // This counter increments every time a CustomUIText object is created by the same mod.
+            static int counter;
+            // This is the name prefix of the CustomUIText object. It has the counter appended to it.
+            std::string name = "CustomUIText";
         public:
-            Il2CppObject *textMesh        = nullptr;
-            Il2CppObject *gameObj         = nullptr;
-            Color        color            = {1.0, 1.0, 1.0, 1.0};
-            std::string  text             = "Default";
-            float        fontSize         = 40.0f;
+            // The TextMeshProUGUI Il2CppObject* of the created object.
+            Il2CppObject *textMesh = nullptr;
+            // The GameObject Il2CppObject* of the created object.
+            Il2CppObject *gameObj = nullptr;
+            // The desired Color of the text object.
+            Color color = {1.0, 1.0, 1.0, 1.0};
+            // The desired text of the text object.
+            std::string text = "Default";
+            // The desired font size of the text object.
+            float fontSize = 40.0f;
+            // The desired parent transform of the text object.
             Il2CppObject *parentTransform = nullptr;
+            // The desired anchorMin position of the text object.
+            Vector2 anchorMin = {0.0, 1.0};
+            // The desired anchorMax position of the text object.
+            Vector2 anchorMax = {0.0, 1.0};
+            // The desired sizeDelta position of the text object.
+            Vector2 sizeDelta = {0.0, 1.0};
+            // The desired anchoredPosition of the text object.
+            Vector2 anchoredPosition = {0.0, 0.0};
+            // Creates the text object in game.
+            // Returns true on success, false otherwise.
             bool create();
     };
 } // namespace CustomUI
