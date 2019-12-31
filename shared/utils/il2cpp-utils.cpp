@@ -264,7 +264,7 @@ namespace il2cpp_utils {
             return nullptr;
         }
  
-        auto klassType = GetType(klass));
+        auto klassType = GetType(klass);
         if (!klassType) {
             log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get class type object!");
             return nullptr;

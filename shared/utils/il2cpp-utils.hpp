@@ -488,7 +488,7 @@ namespace il2cpp_utils {
     Il2CppObject* GetType(Il2CppClass* klass);
 
     // Gets a type Il2CppObject* from a const Il2CppClass*
-    Il2CppObject* GetType(const Il2CppClass* klass)
+    Il2CppObject* GetType(const Il2CppClass* klass);
 
     // Gets the standard class name of an Il2CppClass*
     std::string ClassStandardName(Il2CppClass* klass, bool generics = true);
