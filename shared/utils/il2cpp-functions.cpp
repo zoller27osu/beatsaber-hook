@@ -26,7 +26,11 @@ void il2cpp_functions::Init() {
         return;
     }
 
-    long long base = getRealOffset(0), hookAddr;
+    // This is broken on v1.6.1.
+    // Seems to fail on:
+    // MetadataCache_Register
+    // The inner MetadataCache functions
+    /*long long base = getRealOffset(0), hookAddr;
     log(DEBUG, "base: %llX", base);
     bool multiplesFound = false, allSigScanSuccess = true;
     if ((hookAddr = findUniquePattern(multiplesFound, base, "f3 0f 1e f8 fd 7b 01 a9 fd 43 00 91 f3 03 00 aa 68 9a 44 39 48 01 10 37",
@@ -88,6 +92,7 @@ void il2cpp_functions::Init() {
         if (multiplesFound) log(ERROR, "One or more sigscans found multiple matches! Aborting!");
         abort();
     }
+    */
 
     *(void**)(&init) = dlsym(imagehandle, "il2cpp_init");
     log(INFO, "Loaded: il2cpp_init, error: %s", dlerror());
