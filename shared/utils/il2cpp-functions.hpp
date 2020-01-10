@@ -5,6 +5,35 @@
 #include <stdlib.h>
 #include "typedefs.h"
 
+struct _Rep {
+	size_t _M_length;
+	size_t _M_capacity;
+	int _M_refcount;
+};
+
+// TODO: if we are also GCC 4.9, just typedef this to std::string instead?
+struct gnu_string {
+	char* _M_p;
+	// TODO: why are these needed to prevent a crash on _Type_GetName_ call? They don't contain string data!
+	char padding[9];
+
+	char* _M_data() {
+		return _M_p;
+	}
+
+	_Rep* _M_rep() {
+		return &((reinterpret_cast<_Rep *>(_M_data()))[-1]);
+	}
+
+	char* c_str() {
+		return _M_p;
+	}
+
+	int length() {
+		return _M_rep()->_M_length;
+	}
+};
+
 // A class which contains all available il2cpp functions
 // Created by zoller27osu
 class il2cpp_functions {
@@ -231,10 +260,8 @@ class il2cpp_functions {
     inline static const Il2CppRGCTXDefinition* (*MetadataCache_GetRGCTXDefinitionFromIndex)(RGCTXIndex index);
 	inline static const TypeDefinitionIndex (*MetadataCache_GetIndexForTypeDefinition)(const Il2CppClass* typeDefinition);
 
-	// NOTE: because this returns a C++ std type, it will return gibberish unless you match the STL of libil2cpp.so,
-    //    which was gnustl! The easiest way to allow that is to downgrade to ndk17 and use APP_STL := gnustl_static.
-    // TODO: instead of changing STL, steal gnustl's string definition?
-	inline static std::string (*Type_GetName)(const Il2CppType *type, Il2CppTypeNameFormat format);
+	inline static gnu_string (*_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
+	static const char* Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format);
 
 	inline static Il2CppClass* (*GenericClass_GetClass)(Il2CppGenericClass* gclass);
 
