@@ -535,8 +535,8 @@ namespace il2cpp_utils {
         log(DEBUG, "0x%llX", 0x7f755dcff0 - getRealOffset(0));
         if (typ) {
             log(DEBUG, "Type name: %s", il2cpp_functions::type_get_name(typ));
-            log(DEBUG, "Type reflection name: %s", il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_REFLECTION).c_str());
-            log(DEBUG, "Type full name: %s", il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_FULL_NAME).c_str());
+            log(DEBUG, "Type reflection name: %s", il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_REFLECTION));
+            log(DEBUG, "Type full name: %s", il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_FULL_NAME));
             log(DEBUG, "Fully qualifed type name: %s", il2cpp_functions::type_get_assembly_qualified_name(typ));
         }
         log(DEBUG, "Rank: %i", il2cpp_functions::class_get_rank(klass));
@@ -591,7 +591,7 @@ namespace il2cpp_utils {
                         childClass = il2cpp_functions::MetadataCache_GetTypeInfoFromTypeIndex(def->data.typeIndex);
                         log(INFO, "---- %s (from typeIndex)", ClassStandardName(childClass).c_str());
                         if (def->type == IL2CPP_RGCTX_DATA_TYPE) {
-                            if (rgctxData.type) log(INFO, "---- %s (rgctxData.type)", il2cpp_functions::Type_GetName(rgctxData.type, IL2CPP_TYPE_NAME_FORMAT_REFLECTION).c_str());
+                            if (rgctxData.type) log(INFO, "---- %s (rgctxData.type)", il2cpp_functions::Type_GetName(rgctxData.type, IL2CPP_TYPE_NAME_FORMAT_REFLECTION));
                         } else {
                             log(INFO, "rgctxData.klass: %p (self = %p)", rgctxData.klass, klass);
                             log(INFO, "childClass %p, rgctxData.klass == childClass: %i,", childClass, rgctxData.klass == childClass);
