@@ -72,6 +72,26 @@ A64HookFunction((void*)(addr_ ## name),(void*) hook_ ## name, (void**)&name); \
 log(INFO, "Installing 64 bit direct hook!"); \
 A64HookFunction((void*)addr, (void*) hook_ ## name, (void**)&name); \
 
+// Uninstalls currently just creates a hook at the hooked address
+// and sets the hook to call the original function
+// No original trampoline is created when uninstalling a hook, hence the nullptr
+
+#define UNINSTALL_HOOK(name) \
+log(INFO, "Uninstalling 64 bit hook!"); \
+A64HookFunction((void*)getRealOffset(addr_ ## name),(void*)&name, (void**)nullptr); \
+
+#define UNINSTALL_HOOK_OFFSETLESS(name, methodInfo) \
+log(INFO, "Uninstalling 64 bit offsetless hook!"); \
+A64HookFunction((void*)methodInfo->methodPointer,(void*)&name, (void**)nullptr); \
+
+#define UNINSTALL_HOOK_NAT(name) \
+log(INFO, "Uninstalling 64 bit native hook!"); \
+A64HookFunction((void*)(addr_ ## name),(void*)&name, (void**)nullptr); \
+
+#define UNINSTALL_HOOK_DIRECT(name, addr) \
+log(INFO, "Uninstalling 64 bit direct hook!"); \
+A64HookFunction((void*)addr, (void*)&name, (void**)nullptr); \
+
 #else
 
 #define INSTALL_HOOK(name) \
