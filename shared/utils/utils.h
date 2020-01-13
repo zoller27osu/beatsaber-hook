@@ -57,19 +57,19 @@ retval hook_ ## name(__VA_ARGS__)
 #ifdef __aarch64__
 
 #define INSTALL_HOOK(name) \
-log(INFO, "Installing 64 bit hook!"); \
+log(INFO, "Installing 64 bit hook: %s", #name); \
 A64HookFunction((void*)getRealOffset(addr_ ## name),(void*) hook_ ## name, (void**)&name); \
 
 #define INSTALL_HOOK_OFFSETLESS(name, methodInfo) \
-log(INFO, "Installing 64 bit offsetless hook!"); \
+log(INFO, "Installing 64 bit offsetless hook: %s", #name); \
 A64HookFunction((void*)methodInfo->methodPointer,(void*) hook_ ## name, (void**)&name); \
 
 #define INSTALL_HOOK_NAT(name) \
-log(INFO, "Installing 64 bit native hook!"); \
+log(INFO, "Installing 64 bit native hook: %s", #name); \
 A64HookFunction((void*)(addr_ ## name),(void*) hook_ ## name, (void**)&name); \
 
 #define INSTALL_HOOK_DIRECT(name, addr) \
-log(INFO, "Installing 64 bit direct hook!"); \
+log(INFO, "Installing 64 bit direct hook: %s", #name); \
 A64HookFunction((void*)addr, (void*) hook_ ## name, (void**)&name); \
 
 // Uninstalls currently just creates a hook at the hooked address
@@ -77,19 +77,19 @@ A64HookFunction((void*)addr, (void*) hook_ ## name, (void**)&name); \
 // No original trampoline is created when uninstalling a hook, hence the nullptr
 
 #define UNINSTALL_HOOK(name) \
-log(INFO, "Uninstalling 64 bit hook!"); \
+log(INFO, "Uninstalling 64 bit hook: %s", #name); \
 A64HookFunction((void*)getRealOffset(addr_ ## name),(void*)&name, (void**)nullptr); \
 
 #define UNINSTALL_HOOK_OFFSETLESS(name, methodInfo) \
-log(INFO, "Uninstalling 64 bit offsetless hook!"); \
+log(INFO, "Uninstalling 64 bit offsetless hook: %s", #name); \
 A64HookFunction((void*)methodInfo->methodPointer,(void*)&name, (void**)nullptr); \
 
 #define UNINSTALL_HOOK_NAT(name) \
-log(INFO, "Uninstalling 64 bit native hook!"); \
+log(INFO, "Uninstalling 64 bit native hook: %s", #name); \
 A64HookFunction((void*)(addr_ ## name),(void*)&name, (void**)nullptr); \
 
 #define UNINSTALL_HOOK_DIRECT(name, addr) \
-log(INFO, "Uninstalling 64 bit direct hook!"); \
+log(INFO, "Uninstalling 64 bit direct hook: %s", #name); \
 A64HookFunction((void*)addr, (void*)&name, (void**)nullptr); \
 
 #else
