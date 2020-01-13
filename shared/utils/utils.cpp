@@ -95,10 +95,10 @@ long long findPattern(long long dwAddress, const char* pattern, long long dwSear
 
     // TODO: align dwAddress to word boundary first, then iterate by 4?
     for (long long pCur = dwAddress + skippedStartBytes; pCur < dwAddress + dwSearchRangeLen; pCur++) {
-        if (!pat[0]) break;  // end of pattern means match is complete!
+        if (!pat[0]) return match;  // end of pattern means match is complete!
         if (pat[0] == '\?' || *(char *)pCur == get_byte(pat)) {  // does this pCur match this pat?
-            if (!match) match = pCur;  // start match
-            if (!pat[2]) break;  // no more chars in pattern means match is complete!
+            if (!match) match = pCur - skippedStartBytes;  // start match
+            if (!pat[2]) return match;  // no more chars in pattern means match is complete!
 
             if (pat[0] != '\?' || pat[1] == '\?') {
                 pat += 3;  // advance past "xy " or "?? "
@@ -106,12 +106,13 @@ long long findPattern(long long dwAddress, const char* pattern, long long dwSear
                 pat += 2;  // advance past "? "
             }
         } else {
-            if (match) pCur = match;  // reset search position to beginning of the failed match; for loop will begin new search at match + 1
+            // reset search position to beginning of the failed match; for loop will begin new search at match + 1
+            if (match) pCur = match + skippedStartBytes;
             pat = pattern;
             match = 0;
         }
     }
-    return match ? match - skippedStartBytes : 0;
+    return 0;
 }
 
 long long findUniquePattern(bool& multiple, long long dwAddress, const char* pattern, const char* label, long long dwSearchRangeLen) {
