@@ -94,7 +94,7 @@ long long findPattern(long long dwAddress, const char* pattern, long long dwSear
     const char* pat = pattern;  // current spot in the pattern
 
     // TODO: align dwAddress to word boundary first, then iterate by 4?
-    for (long long pCur = dwAddress + skippedStartBytes; pCur < dwAddress + dwSearchRangeLen; pCur++) {
+    for (long long pCur = dwAddress + skippedStartBytes;; pCur++) {
         if (!pat[0]) break;  // end of pattern means match is complete!
         if (pat[0] == '\?' || *(char *)pCur == get_byte(pat)) {  // does this pCur match this pat?
             if (!match) match = pCur;  // start match
@@ -110,6 +110,7 @@ long long findPattern(long long dwAddress, const char* pattern, long long dwSear
             pat = pattern;
             match = 0;
         }
+        if (pCur >= dwAddress + dwSearchRangeLen) return 0;  // this match and any after it would exceed the search range
     }
     return match ? match - skippedStartBytes : 0;
 }
