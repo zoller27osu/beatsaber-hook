@@ -17,21 +17,57 @@ namespace std {
 #error No string_view implementation available!
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <dlfcn.h>
 #include "typedefs.h"
-#include "../config/config-utils.hpp"
-#include "il2cpp-utils.hpp"
 #include "utils-functions.h"
 #include "../inline-hook/And64InlineHook.hpp"
+#include "il2cpp-utils.hpp"
+#include "../config/config-utils.hpp"
 
 #ifdef __cplusplus
+// Returns the value of the bits in x at index high through low inclusive, where the LSB is index 0 and the MSB's index >= high.
+template<class T>
+T bits(T x, unsigned char high, unsigned char low) {
+    typedef typename std::make_unsigned<T>::type unsignedT;
+    T noLeft = x << (sizeof(T) * CHAR_BIT - 1 - high);
+    T trimmed = *reinterpret_cast<unsignedT*>(&noLeft) >> (sizeof(T) * CHAR_BIT - 1 - high + low);
+    return trimmed;
+}
+
+// Transforms the given integer (with M denoting the number of significant bits) into a properly signed number of type To.
+template<class To, class From>
+To SignExtend(From bits, char M) {
+    constexpr char N = sizeof(To) * CHAR_BIT;
+    assert(N >= M);
+    auto prep = ((To)bits) << (N - M);
+    return (prep >> (N - M));
+}
+
+// Wrapper for easier use (no need to cast the pointer to void*)
+template<class T>
+void analyzeBytes(T* ptr) {
+    analyzeBytes((const void*)ptr);
+}
+
 extern "C" {
 #endif /* __cplusplus */
 
+// Restores an existing stringstream to a newly created state.
+void resetSS(std::stringstream& ss);
+// Prints the given number of "tabs" as spaces to the given output stream.
+void tabs(std::ostream& os, int tabs, int spacesPerTab = 2);
+// Logs the given stringstream and clears it.
+void print(std::stringstream& ss, LOG_VERBOSE_TYPE lvl = INFO);
+
+// Attempts to print what is stored at the given pointer.
+// For a given pointer, it will scan 4 void*'s worth of bytes at the location pointed to.
+// For each void* of bytes, it will print the raw bytes and interpretations of the bytes as ints and char*s.
+// When the bytes look like a valid pointer, it will attempt to follow that pointer, increasing the indentation.
+//   It will not follow pointers that it has already analyzed as a result of the current call.
+void analyzeBytes(const void* ptr);
+
 long long getRealOffset(void* offset);
 long long baseAddr(const char* soname);
+
 // Only wildcard is ? and ?? - both are handled the same way. They will skip exactly 1 byte (2 hex digits)
 long long findPattern(long long dwAddress, const char* pattern, long long dwSearchRangeLen = 0x1000000);
 // Same as findPattern but will continue scanning to make sure your pattern is sufficiently specific.

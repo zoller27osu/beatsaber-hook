@@ -1,16 +1,6 @@
-#include <dlfcn.h>
-
 #include "il2cpp-functions.hpp"
 #include "logging.h"
-#include "utils.h"  // for IL2CPP_SO_PATH
-
-const Il2CppMetadataRegistration* il2cpp_functions::s_Il2CppMetadataRegistration = nullptr;
-MAKE_HOOK_OFFSETLESS(MetadataCache_Register_Hook, void, const Il2CppCodeRegistration* const codeRegistration,
-        const Il2CppMetadataRegistration* const metadataRegistration, const Il2CppCodeGenOptions* const codeGenOptions) {
-    log(DEBUG, "MetadataCache::Register hook!");
-    il2cpp_functions::s_Il2CppMetadataRegistration = metadataRegistration;
-    return MetadataCache_Register_Hook(codeRegistration, metadataRegistration, codeGenOptions);
-}
+#include "utils.h"
 
 const char* il2cpp_functions::Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format) {
     if (!il2cpp_functions::_Type_GetName_) return nullptr;
@@ -490,7 +480,33 @@ void il2cpp_functions::Init() {
     *(void**)(&il2cpp_functions::class_get_name_const) = dlsym(imagehandle, "il2cpp_class_get_name");
     log(INFO, "Loaded: il2cpp_class_get_name CONST VERSION!");
 
-    INSTALL_HOOK_DIRECT(MetadataCache_Register_Hook, il2cpp_functions::MetadataCache_Register);
+    auto inst = reinterpret_cast<int_least32_t*>(il2cpp_functions::MetadataCache_Register);
+    auto& adrp = inst[8];
+    auto& str = inst[11];
+    auto adrpPC = (long long)&adrp;
+    log(DEBUG, "instrs[08]: %llX, %llX, %i", adrpPC, adrp, adrp);
+    log(DEBUG, "instrs[11]: %llX, %llX, %i",  ((long long)&str) - getRealOffset(0),  str,  str);
+    char ilh = 30, ill = 29, ihh = 23, ihl = 5, zeros = 12;
+    auto immlo = bits(adrp, ilh, ill);
+    auto immhi = bits(adrp, ihh, ihl);
+    log(DEBUG, "immhi: %X (%i), immlo: %X (%i)", immhi, immhi, immlo, immlo);
+    auto imm33 = ((immhi << (ilh - ill + 1)) + immlo) << zeros;
+    char imm33NumBits = (ihh - ihl + 1 + ilh - ill + 1 + zeros);
+    log(DEBUG, "imm initial: %X (%i); immNumBits: %i", imm33, imm33, imm33NumBits);
+    auto imm = SignExtend<int_least64_t>(imm33, imm33NumBits);
+    auto jmpOff = imm + ((adrpPC >> zeros) << zeros);
+    log(DEBUG, "imm: %llX; pcDown: %llX, jmpOff: %llX (offset %llX)", imm, adrpPC >> zeros, jmpOff, jmpOff - getRealOffset(0));
+
+    char scale = bits(str, 31, 30);
+    auto imm12 = bits(str, 21, 10);
+    log(DEBUG, "scale: %i; imm12: %llX", scale, imm12);
+    auto offset = ((int_least64_t) imm12) << scale;
+    auto jmp = jmpOff + offset;
+    log(DEBUG, "offset: %llX, jmp: %llX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
+
+    // Had offset 0x2250828 in 1.5
+    il2cpp_functions::s_Il2CppMetadataRegistration = (const Il2CppMetadataRegistration**)jmp;
+    log(DEBUG, "jmp current contents = %p", *il2cpp_functions::s_Il2CppMetadataRegistration);
 
     dlclose(imagehandle);
     initialized = true;

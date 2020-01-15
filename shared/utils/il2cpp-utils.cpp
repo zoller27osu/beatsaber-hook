@@ -1,14 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <dlfcn.h>
-#include <string>
-#include "il2cpp-utils.hpp"
-#include "logging.h"
 #include "utils.h"
 
 #include "alphanum.hpp"
 #include <map>
-#include <unordered_map>
 #include <unordered_set>
 
 // Please see comments in il2cpp-utils.hpp
@@ -410,8 +403,8 @@ namespace il2cpp_utils {
         auto genContext = &genClass->context;
         auto genInst = genContext->class_inst;
         if (!genInst) {
-            log(WARNING, "Missing class_inst! Trying method_inst?");
             genInst = genContext->method_inst;
+            if (genInst) log(WARNING, "Missing class_inst! Trying method_inst?");
         }
         if (genInst) {
             os << "<";
@@ -456,14 +449,7 @@ namespace il2cpp_utils {
         if (genClass->typeDefinitionIndex != kTypeDefinitionIndexInvalid) {
             return ClassStandardName(il2cpp_functions::GenericClass_GetClass(genClass));
         }
-
-        std::stringstream ss;
-        ss << "?";
-        if (genClass->cached_class) {
-            ss << "(" << ClassStandardName(genClass->cached_class, false) << "?)";
-        }
-        GenericsToStringHelper(genClass, ss);
-        return ss.str();
+        return "?";
     }
 
     void LogMethods(const Il2CppClass* klass) {
@@ -531,12 +517,11 @@ namespace il2cpp_utils {
         log(DEBUG, "Assembly Name: %s", il2cpp_functions::class_get_assemblyname(klass));
 
         auto typ = il2cpp_functions::class_get_type(unconst);
-        log(DEBUG, "0x%llX", ((long long)il2cpp_functions::type_get_name) - getRealOffset(0));
-        log(DEBUG, "0x%llX", 0x7f755dcff0 - getRealOffset(0));
         if (typ) {
             log(DEBUG, "Type name: %s", il2cpp_functions::type_get_name(typ));
-            log(DEBUG, "Type reflection name: %s", il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_REFLECTION));
-            log(DEBUG, "Type full name: %s", il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_FULL_NAME));
+            auto ch = il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_REFLECTION);
+            log(DEBUG, "Type reflection name: %s", ch);
+            // log(DEBUG, "Type full name: %s", il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_FULL_NAME));
             log(DEBUG, "Fully qualifed type name: %s", il2cpp_functions::type_get_assembly_qualified_name(typ));
         }
         log(DEBUG, "Rank: %i", il2cpp_functions::class_get_rank(klass));
@@ -628,7 +613,7 @@ namespace il2cpp_utils {
 
     static std::unordered_map<Il2CppClass*, std::map<std::string, Il2CppGenericClass*, doj::alphanum_less<std::string>>> classToGenericClassMap;
     void BuildGenericsMap() {
-        auto metadataReg = il2cpp_functions::s_Il2CppMetadataRegistration;
+        auto metadataReg = *il2cpp_functions::s_Il2CppMetadataRegistration;
         log(DEBUG, "metadataReg: %p, offset = %llX", metadataReg, ((long long)metadataReg) - getRealOffset(nullptr));
         if (!metadataReg) {
             log(WARNING, "metadataReg not found!");
