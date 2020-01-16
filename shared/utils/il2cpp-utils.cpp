@@ -595,10 +595,10 @@ namespace il2cpp_utils {
 
         auto declaring = il2cpp_functions::class_get_declaring_type(unconst);
         log(DEBUG, "declaring type: %p", declaring);
-        if (declaring && logParents) LogClass(declaring);
+        if (declaring && logParents) LogClass(declaring, logParents);
         auto element = il2cpp_functions::class_get_element_class(unconst);
         log(DEBUG, "element class: %p (self = %p)", element, klass);
-        if (element && element != klass && logParents) LogClass(element);
+        if (element && element != klass && logParents) LogClass(element, logParents);
 
         log(DEBUG, "%i =========FIELDS=========", indent);
         LogFields(unconst);
@@ -606,7 +606,7 @@ namespace il2cpp_utils {
 
         auto parent = il2cpp_functions::class_get_parent(unconst);
         log(DEBUG, "parent: %p (%s)", parent, parent ? ClassStandardName(parent).c_str() : "");
-        if (parent && logParents) LogClass(parent);
+        if (parent && logParents) LogClass(parent, logParents);
         log(DEBUG, "%i, ==================================================================================", indent);
         indent--;
     }
@@ -639,7 +639,7 @@ namespace il2cpp_utils {
         log(DEBUG, "uncached_class_count: %i (%f proportion of total)", uncached_class_count, uncached_class_count * 1.0 / metadataReg->genericClassesCount);
     }
 
-    void LogClasses(std::string_view classPrefix) {
+    void LogClasses(std::string_view classPrefix, bool logParents) {
         il2cpp_functions::Init();
         BuildGenericsMap();
         // Begin prefix matching
@@ -688,7 +688,7 @@ namespace il2cpp_utils {
         }
         log(DEBUG, "LogClasses:");
         for ( const auto &pair : matches ) {
-            LogClass(pair.second, false);
+            LogClass(pair.second, logParents);
             indent = -1;
 
             for ( const auto &genPair : classToGenericClassMap[pair.second] ) {

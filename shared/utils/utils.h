@@ -44,7 +44,7 @@ To SignExtend(From bits, char M) {
 
 // Wrapper for easier use (no need to cast the pointer to void*)
 template<class T>
-void analyzeBytes(T* ptr) {
+void analyzeBytes(const T* ptr) {
     analyzeBytes((const void*)ptr);
 }
 
@@ -52,9 +52,9 @@ extern "C" {
 #endif /* __cplusplus */
 
 // Interprets the result of an ADRP instruction
-int_least64_t ADRP_Get_Result(int_least32_t* adrpPC);
+int64_t ADRP_Get_Result(const int32_t* adrpPC);
 // Extracts the offset from an STR (immediate) instruction
-int_least64_t STR_Imm_Extract_Offset(int_least32_t* strPC);
+int64_t STR_Imm_Extract_Offset(const int32_t* strPC);
 
 // Restores an existing stringstream to a newly created state.
 void resetSS(std::stringstream& ss);
@@ -70,7 +70,7 @@ void print(std::stringstream& ss, LOG_VERBOSE_TYPE lvl = INFO);
 //   It will not follow pointers that it has already analyzed as a result of the current call.
 void analyzeBytes(const void* ptr);
 
-long long getRealOffset(void* offset);
+long long getRealOffset(const void* offset);
 long long baseAddr(const char* soname);
 
 // Only wildcard is ? and ?? - both are handled the same way. They will skip exactly 1 byte (2 hex digits)
