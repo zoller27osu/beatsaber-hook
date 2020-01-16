@@ -13,34 +13,93 @@
 
 using namespace std;
 
-int64_t ADRP_Get_Result(const int32_t* adrpPC) {
-    auto adrp = *adrpPC;
-    log(DEBUG, "adrp: ptr = %llX, instruction = %llX (%i)", adrpPC, adrp, adrp);
-    const char ilh = 30, ill = 29, ihh = 23, ihl = 5, zeros = 12;
-    auto immlo = bits(adrp, ilh, ill);
-    auto immhi = bits(adrp, ihh, ihl);
-    log(DEBUG, "immhi: %X (%i), immlo: %X (%i)", immhi, immhi, immlo, immlo);
-    auto imm33 = ((immhi << (ilh - ill + 1)) + immlo) << zeros;
-    char imm33NumBits = ihh - ihl + 1 + ilh - ill + 1 + zeros;
-    log(DEBUG, "imm initial: %X (%i); immNumBits: %i", imm33, imm33, imm33NumBits);
-    auto imm = SignExtend<int64_t>(imm33, imm33NumBits);
-    auto jmpOff = imm + ((((int64_t)adrpPC) >> zeros) << zeros);
-    log(DEBUG, "imm: %llX; jmpOff: %llX (offset %llX)", imm, jmpOff, jmpOff - getRealOffset(0));
-    return jmpOff;
-}
-
-int64_t STR_Imm_Extract_Offset(const int32_t* strPC) {
-    auto str = *strPC;
-    log(DEBUG, "str: ptr = %llX, instruction = %llX (%i)", strPC, str, str);
-    char unSigned = bits(str, 24, 24);
-    char scale = bits(str, 31, 30);
-    if (unSigned) {
-        auto imm12 = bits(str, 21, 10);
-        log(DEBUG, "scale: %i; imm12: %llX", scale, imm12);
-        return SignExtend<int64_t>(imm12, 12) << scale;
+Instruction::Instruction(const int32_t* inst) {
+    Instruction::addr = inst;
+    auto code = *inst;
+    Instruction::Rd = -2;
+    Instruction::parseLevel = -1;
+    Instruction::parsed = false;
+    // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64#top
+    char topOp0 = bits(code, 28, 25);
+    log(DEBUG, "instruction: ptr = %llX, bytes = %llX (%i), topOp0: %i", inst, code, code, topOp0);
+    if (topOp0 <= 3) {
+        kind[++parseLevel] = "Invalid";
+        parseLevel += 2;
+    } else if (topOp0 % 8 == 0b0101) {
+        // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-register
+        kind[++parseLevel] = "Data Processing -- Register";
+    } else if (topOp0 % 8 == 0b0111) {
+        // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-scalar-floating-point-and-advanced-simd
+        kind[++parseLevel] = "Data Processing -- Scalar Floating-Point and Advanced SIMD";
+    } else if (topOp0 == 0b1000 || topOp0 == 0b1001) {
+        // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate
+        kind[++parseLevel] = "Data Processing -- Immediate";
+        char op0 = bits(code, 25, 24);
+        char op1 = bits(code, 23, 22);
+        if (op0 == 0b00) {
+            // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#pcreladdr
+            kind[++parseLevel] = "PC-rel. addressing";
+            Instruction::numSourceRegisters = 0;
+            char op = bits(code, 31, 31);
+            const char ilh = 30, ill = 29, ihh = 23, ihl = 5;
+            auto immlo = bits(code, ilh, ill);
+            auto immhi = bits(code, ihh, ihl);
+            log(DEBUG, "immhi: %X (%i), immlo: %X (%i)", immhi, immhi, immlo, immlo);
+            auto immI = (immhi << (ilh - ill + 1)) + immlo;
+            char immINumBits = ihh - ihl + 1 + ilh - ill + 1;
+            Instruction::Rd = bits(code, 4, 0);
+            auto pc = (int64_t)inst;
+            if (op == 0b1) {
+                kind[++parseLevel] = "ADRP";
+                char zeros = 12;
+                immI <<= zeros;
+                immINumBits += zeros;
+                pc = (pc >> zeros) << zeros;
+            } else {
+                kind[++parseLevel] = "ADR";
+            }
+            log(DEBUG, "imm initial: %X (%i); immNumBits: %i", immI, immI, immINumBits);
+            Instruction::imm = SignExtend<int64_t>(immI, immINumBits);
+            Instruction::result = imm + pc;
+            log(DEBUG, "imm: %llX; result: %llX (offset %llX)", imm, result, result - getRealOffset(0));
+        }
+    } else if (topOp0 == 0b1010 || topOp0 == 0b1011) {
+        // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions
+        kind[++parseLevel] = "Branches, Exception Generating and System instructions";
+    } else if (topOp0 % 8 == 0b0100 || topOp0 % 8 == 0b0110) {
+        // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores
+        kind[++parseLevel] = "Loads and Stores";
+        char op0 = bits(code, 31, 28);
+        char op1 = bits(code, 26, 26);
+        char op2 = bits(code, 24, 23);
+        auto op3 = bits(code, 21, 16);
+        if (op0 % 4 == 0b11) {
+            if (op2 >= 0b10) {
+                // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores#ldst_pos
+                kind[++parseLevel] = "Load/store register (unsigned immediate)";
+                Instruction::numSourceRegisters = 1;
+                char size = bits(code, 31, 30);
+                char V = op1;
+                char opc = bits(code, 23, 22);
+                auto imm12 = bits(code, 21, 10);
+                Instruction::Rd = bits(code, 9, 5);
+                Instruction::Rs[0] = bits(code, 4, 0);
+                if (size >= 0b10) {
+                    if (V == 0b0 && opc == 0b00) {
+                        kind[++parseLevel] = "STR (immediate) — 64-bit";
+                        log(DEBUG, "size: %i; imm12: %llX", size, imm12);
+                        Instruction::imm = SignExtend<int64_t>(imm12, 12) << size;
+                    }
+                }
+            }
+        }
     } else {
-        auto imm9 = bits(str, 20, 12);
-        return SignExtend<int64_t>(imm9, 9);
+        kind[++parseLevel] = "ERROR: Top-level categorization failed!";
+    }
+    if (parseLevel != sizeof(kind) / sizeof(kind[0]) - 1) {
+        log(ERROR, "Could not complete parsing of %X - need more handling for kind '%s'!", code, kind[parseLevel]);
+    } else {
+        Instruction::parsed = true;
     }
 }
 

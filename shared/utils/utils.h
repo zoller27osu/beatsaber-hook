@@ -24,6 +24,23 @@ namespace std {
 #include "../config/config-utils.hpp"
 
 #ifdef __cplusplus
+class Instruction {
+public:
+    const int32_t* addr;  // the pointer to the instruction
+    char Rd = -1;  // the destination register's number
+    int numSourceRegisters = -1;
+    union {
+        char Rs[2] = { (char)-1, (char)-1 };  // the source register(s)' number(s)
+        int64_t result;  // the result, if no source registers
+    };
+    int64_t imm = 0;  // the immediate, if applicable
+    bool parsed;
+    Instruction(const int32_t* inst);
+private:
+    const char* kind[3];  // strings describing the kind of instruction, from least to most specific
+    char parseLevel;  // The lowest level we were able to parse at - index of most specific in kind[]
+};
+
 // Returns the value of the bits in x at index high through low inclusive, where the LSB is index 0 and the MSB's index >= high.
 template<class T>
 T bits(T x, unsigned char high, unsigned char low) {
@@ -50,11 +67,6 @@ void analyzeBytes(const T* ptr) {
 
 extern "C" {
 #endif /* __cplusplus */
-
-// Interprets the result of an ADRP instruction
-int64_t ADRP_Get_Result(const int32_t* adrpPC);
-// Extracts the offset from an STR (immediate) instruction
-int64_t STR_Imm_Extract_Offset(const int32_t* strPC);
 
 // Restores an existing stringstream to a newly created state.
 void resetSS(std::stringstream& ss);
