@@ -51,6 +51,11 @@ void analyzeBytes(T* ptr) {
 extern "C" {
 #endif /* __cplusplus */
 
+// Interprets the result of an ADRP instruction
+int_least64_t ADRP_Get_Result(int_least32_t* adrpPC);
+// Extracts the offset from an STR (immediate) instruction
+int_least64_t STR_Imm_Extract_Offset(int_least32_t* strPC);
+
 // Restores an existing stringstream to a newly created state.
 void resetSS(std::stringstream& ss);
 // Prints the given number of "tabs" as spaces to the given output stream.

@@ -13,6 +13,37 @@
 
 using namespace std;
 
+int_least64_t ADRP_Get_Result(int_least32_t* adrpPC) {
+    auto adrp = *adrpPC;
+    log(DEBUG, "adrp: ptr = %llX, instruction = %llX (%i)", adrpPC, adrp, adrp);
+    char ilh = 30, ill = 29, ihh = 23, ihl = 5, zeros = 12;
+    auto immlo = bits(adrp, ilh, ill);
+    auto immhi = bits(adrp, ihh, ihl);
+    log(DEBUG, "immhi: %X (%i), immlo: %X (%i)", immhi, immhi, immlo, immlo);
+    auto imm33 = ((immhi << (ilh - ill + 1)) + immlo) << zeros;
+    char imm33NumBits = (ihh - ihl + 1 + ilh - ill + 1 + zeros);
+    log(DEBUG, "imm initial: %X (%i); immNumBits: %i", imm33, imm33, imm33NumBits);
+    auto imm = SignExtend<int_least64_t>(imm33, imm33NumBits);
+    auto jmpOff = imm + ((((int_least64_t)adrpPC) >> zeros) << zeros);
+    log(DEBUG, "imm: %llX; jmpOff: %llX (offset %llX)", imm, jmpOff, jmpOff - getRealOffset(0));
+    return jmpOff;
+}
+
+int_least64_t STR_Imm_Extract_Offset(int_least32_t* strPC) {
+    auto str = *strPC;
+    log(DEBUG, "str: ptr = %llX, instruction = %llX (%i)", strPC, str, str);
+    char unSigned = bits(str, 24, 24);
+    char scale = bits(str, 31, 30);
+    if (unSigned) {
+        auto imm12 = bits(str, 21, 10);
+        log(DEBUG, "scale: %i; imm12: %llX", scale, imm12);
+        return SignExtend<int_least64_t>(imm12, 12) << scale;
+    } else {
+        auto imm9 = bits(str, 20, 12);
+        return SignExtend<int_least64_t>(imm9, 9);
+    }
+}
+
 void resetSS(std::stringstream& ss) {
     ss.str("");
     ss.clear();  // Clear state flags.

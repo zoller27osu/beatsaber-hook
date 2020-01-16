@@ -480,33 +480,14 @@ void il2cpp_functions::Init() {
     *(void**)(&il2cpp_functions::class_get_name_const) = dlsym(imagehandle, "il2cpp_class_get_name");
     log(INFO, "Loaded: il2cpp_class_get_name CONST VERSION!");
 
+    // Extract location of s_Il2CppMetadataRegistration from instructions in MetadataCache::Register
     auto inst = reinterpret_cast<int_least32_t*>(il2cpp_functions::MetadataCache_Register);
-    auto& adrp = inst[8];
-    auto& str = inst[11];
-    auto adrpPC = (long long)&adrp;
-    log(DEBUG, "instrs[08]: %llX, %llX, %i", adrpPC, adrp, adrp);
-    log(DEBUG, "instrs[11]: %llX, %llX, %i",  ((long long)&str) - getRealOffset(0),  str,  str);
-    char ilh = 30, ill = 29, ihh = 23, ihl = 5, zeros = 12;
-    auto immlo = bits(adrp, ilh, ill);
-    auto immhi = bits(adrp, ihh, ihl);
-    log(DEBUG, "immhi: %X (%i), immlo: %X (%i)", immhi, immhi, immlo, immlo);
-    auto imm33 = ((immhi << (ilh - ill + 1)) + immlo) << zeros;
-    char imm33NumBits = (ihh - ihl + 1 + ilh - ill + 1 + zeros);
-    log(DEBUG, "imm initial: %X (%i); immNumBits: %i", imm33, imm33, imm33NumBits);
-    auto imm = SignExtend<int_least64_t>(imm33, imm33NumBits);
-    auto jmpOff = imm + ((adrpPC >> zeros) << zeros);
-    log(DEBUG, "imm: %llX; pcDown: %llX, jmpOff: %llX (offset %llX)", imm, adrpPC >> zeros, jmpOff, jmpOff - getRealOffset(0));
+    auto jmpOff = ADRP_Get_Result(inst + 8);
+    auto offset = STR_Imm_Extract_Offset(inst + 11);
 
-    char scale = bits(str, 31, 30);
-    auto imm12 = bits(str, 21, 10);
-    log(DEBUG, "scale: %i; imm12: %llX", scale, imm12);
-    auto offset = ((int_least64_t) imm12) << scale;
-    auto jmp = jmpOff + offset;
+    auto jmp = jmpOff + offset;  // jmp, AKA s_Il2CppMetadataRegistration, had offset 0x2250828 in 1.5
     log(DEBUG, "offset: %llX, jmp: %llX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
-
-    // Had offset 0x2250828 in 1.5
     il2cpp_functions::s_Il2CppMetadataRegistration = (const Il2CppMetadataRegistration**)jmp;
-    log(DEBUG, "jmp current contents = %p", *il2cpp_functions::s_Il2CppMetadataRegistration);
 
     dlclose(imagehandle);
     initialized = true;
