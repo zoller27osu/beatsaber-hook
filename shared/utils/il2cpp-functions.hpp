@@ -265,7 +265,7 @@ class il2cpp_functions {
 
 	inline static Il2CppClass* (*GenericClass_GetClass)(Il2CppGenericClass* gclass);
 
-	static const Il2CppMetadataRegistration* s_Il2CppMetadataRegistration;
+	inline static const Il2CppMetadataRegistration** s_Il2CppMetadataRegistration;
 
 	// Whether all of the il2cpp functions have been initialized or not
     inline static bool initialized = false;

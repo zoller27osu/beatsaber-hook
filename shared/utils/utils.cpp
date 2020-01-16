@@ -6,15 +6,119 @@
 
 #include "utils.h"
 #include <android/log.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <dlfcn.h>
 #include <unistd.h>
 #include <iostream>
 #include <fstream>
+#include <unordered_set>
 
 using namespace std;
+
+int_least64_t ADRP_Get_Result(int_least32_t* adrpPC) {
+    auto adrp = *adrpPC;
+    log(DEBUG, "adrp: ptr = %llX, instruction = %llX (%i)", adrpPC, adrp, adrp);
+    char ilh = 30, ill = 29, ihh = 23, ihl = 5, zeros = 12;
+    auto immlo = bits(adrp, ilh, ill);
+    auto immhi = bits(adrp, ihh, ihl);
+    log(DEBUG, "immhi: %X (%i), immlo: %X (%i)", immhi, immhi, immlo, immlo);
+    auto imm33 = ((immhi << (ilh - ill + 1)) + immlo) << zeros;
+    char imm33NumBits = (ihh - ihl + 1 + ilh - ill + 1 + zeros);
+    log(DEBUG, "imm initial: %X (%i); immNumBits: %i", imm33, imm33, imm33NumBits);
+    auto imm = SignExtend<int_least64_t>(imm33, imm33NumBits);
+    auto jmpOff = imm + ((((int_least64_t)adrpPC) >> zeros) << zeros);
+    log(DEBUG, "imm: %llX; jmpOff: %llX (offset %llX)", imm, jmpOff, jmpOff - getRealOffset(0));
+    return jmpOff;
+}
+
+int_least64_t STR_Imm_Extract_Offset(int_least32_t* strPC) {
+    auto str = *strPC;
+    log(DEBUG, "str: ptr = %llX, instruction = %llX (%i)", strPC, str, str);
+    char unSigned = bits(str, 24, 24);
+    char scale = bits(str, 31, 30);
+    if (unSigned) {
+        auto imm12 = bits(str, 21, 10);
+        log(DEBUG, "scale: %i; imm12: %llX", scale, imm12);
+        return SignExtend<int_least64_t>(imm12, 12) << scale;
+    } else {
+        auto imm9 = bits(str, 20, 12);
+        return SignExtend<int_least64_t>(imm9, 9);
+    }
+}
+
+void resetSS(std::stringstream& ss) {
+    ss.str("");
+    ss.clear();  // Clear state flags.
+}
+
+void tabs(std::ostream& os, int tabs, int spacesPerTab) {
+    for (int i = 0; i < tabs * spacesPerTab; i++) {
+        os << " ";
+    }
+}
+
+void print(std::stringstream& ss, LOG_VERBOSE_TYPE lvl) {
+    ss << std::endl;
+    log(lvl, "%s", ss.str().c_str());
+    resetSS(ss);
+}
+
+static std::unordered_set<const void*> analyzed;
+void analyzeBytes(std::stringstream& ss, const void* ptr, int indent) {
+    if (!ptr || ((const unsigned long long)ptr) > 0x7fffffffffll) return;
+
+    tabs(ss, indent);
+    if (analyzed.count(ptr)) {
+        ss << "! loop at 0x" << std::hex << ptr << "!";
+        print(ss);
+        return;
+    }
+    analyzed.insert(ptr);
+
+    auto asUInts = reinterpret_cast<const unsigned long long*>(ptr);
+    auto asInts = reinterpret_cast<const long long*>(ptr);
+    auto asChars = reinterpret_cast<const char*>(ptr);
+    if (asUInts[0] >= 0x1000000000000ll && isprint(asChars[0])) {
+        ss << "chars: \"" << asChars << "\"";
+        ss << " (first 8 bytes in hex = 0x" << std::hex << std::setw(16) << asUInts[0] << ")";
+        print(ss);
+        return;
+    }
+    for (int i = 0; i < 4; i++) {
+        if (i != 0) tabs(ss, indent);
+
+        ss << "pos " << std::dec << i << ": 0x" << std::hex << std::setw(16) << asUInts[i];
+        if (asUInts[i] >= 0x8000000000ll) {
+            // todo: read no more than 8 chars or move asInts to last aligned point in string
+            ss << " (as chars = \"" << reinterpret_cast<const char*>(asUInts + i) << "\")";
+            ss << " (as int = " << std::dec << asInts[i] << ")";  // signed int
+        } else if (asUInts[i] <= 0x7f00000000ll) {
+            ss << " (as int = " << std::dec << asUInts[i] << ")";
+        }
+        else {
+            Dl_info inf;
+            if (dladdr((void*)asUInts[i], &inf)) {
+                ss << " (dli_fname: " << inf.dli_fname << ", dli_fbase: " << std::hex << std::setw(16) << (long long)inf.dli_fbase;
+                ss << ", offset = 0x" << std::hex << std::setw(8) << (asUInts[i] - (unsigned long long)inf.dli_fbase);
+                if (inf.dli_sname) {
+                    ss << ", dli_sname: " << inf.dli_sname << ", dli_saddr: " << std::hex << std::setw(16) << (long long)inf.dli_saddr;
+                }
+                ss << ")";
+            }
+        }
+        print(ss);
+        if (asUInts[i] > 0x7f00000000ll) {
+            analyzeBytes(ss, (void*)asUInts[i], indent + 1);
+        }
+    }
+}
+
+void analyzeBytes(const void* ptr) {
+    analyzed.clear();
+    std::stringstream ss;
+    ss << std::setfill('0');
+    ss << "ptr: " << std::hex << std::setw(16) << (unsigned long long) ptr;
+    print(ss);
+    analyzeBytes(ss, ptr, 0);
+}
 
 long long baseAddr(const char *soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
 {
