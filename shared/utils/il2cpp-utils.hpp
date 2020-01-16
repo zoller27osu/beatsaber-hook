@@ -514,11 +514,11 @@ namespace il2cpp_utils {
 
     // Some parts provided by zoller27osu
     // Logs information about the given Il2CppClass* as log(DEBUG)
-    void LogClass(const Il2CppClass* klass, bool logParents = true);
+    void LogClass(const Il2CppClass* klass, bool logParents = false);
 
     // Logs all classes (from every namespace) that start with the given prefix
     // WARNING: THIS FUNCTION IS VERY SLOW. ONLY USE THIS FUNCTION ONCE AND WITH A FAIRLY SPECIFIC PREFIX!
-    void LogClasses(std::string_view classPrefix);
+    void LogClasses(std::string_view classPrefix, bool logParents = false);
 
     // Adds the given TypeDefinitionIndex to the class hash table of a given image
     // Mainly used in LogClasses

@@ -13,7 +13,7 @@
 
 using namespace std;
 
-int64_t ADRP_Get_Result(int32_t* adrpPC) {
+int64_t ADRP_Get_Result(const int32_t* adrpPC) {
     auto adrp = *adrpPC;
     log(DEBUG, "adrp: ptr = %llX, instruction = %llX (%i)", adrpPC, adrp, adrp);
     const char ilh = 30, ill = 29, ihh = 23, ihl = 5, zeros = 12;
@@ -29,7 +29,7 @@ int64_t ADRP_Get_Result(int32_t* adrpPC) {
     return jmpOff;
 }
 
-int64_t STR_Imm_Extract_Offset(int32_t* strPC) {
+int64_t STR_Imm_Extract_Offset(const int32_t* strPC) {
     auto str = *strPC;
     log(DEBUG, "str: ptr = %llX, instruction = %llX (%i)", strPC, str, str);
     char unSigned = bits(str, 24, 24);
@@ -172,7 +172,7 @@ long long baseAddr(const char *soname)  // credits to https://github.com/ikoz/An
 
 long long location; // save lib.so base address so we do not have to recalculate every time causing lag.
 
-long long getRealOffset(void* offset) // calculate dump.cs address + lib.so base address.
+long long getRealOffset(const void* offset) // calculate dump.cs address + lib.so base address.
 {
     if (location == 0)
     {
