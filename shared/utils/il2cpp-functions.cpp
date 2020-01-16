@@ -482,8 +482,8 @@ void il2cpp_functions::Init() {
 
     // Extract location of s_Il2CppMetadataRegistration from instructions in MetadataCache::Register
     auto inst = reinterpret_cast<int32_t*>(il2cpp_functions::MetadataCache_Register);
-    auto jmpOff = ADRP_Get_Result(inst + 8);
-    auto offset = STR_Imm_Extract_Offset(inst + 11);
+    auto jmpOff = ADRP_Get_Result(&inst[8]);
+    auto offset = STR_Imm_Extract_Offset(&inst[11]);
 
     auto jmp = jmpOff + offset;  // jmp, AKA s_Il2CppMetadataRegistration, had offset 0x2250828 in 1.5
     log(DEBUG, "offset: %llX, jmp: %llX (offset %llX)", offset, jmp, jmp - getRealOffset(0));

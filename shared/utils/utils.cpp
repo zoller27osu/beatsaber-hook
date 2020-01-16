@@ -16,12 +16,12 @@ using namespace std;
 int64_t ADRP_Get_Result(int32_t* adrpPC) {
     auto adrp = *adrpPC;
     log(DEBUG, "adrp: ptr = %llX, instruction = %llX (%i)", adrpPC, adrp, adrp);
-    char ilh = 30, ill = 29, ihh = 23, ihl = 5, zeros = 12;
+    const char ilh = 30, ill = 29, ihh = 23, ihl = 5, zeros = 12;
     auto immlo = bits(adrp, ilh, ill);
     auto immhi = bits(adrp, ihh, ihl);
     log(DEBUG, "immhi: %X (%i), immlo: %X (%i)", immhi, immhi, immlo, immlo);
     auto imm33 = ((immhi << (ilh - ill + 1)) + immlo) << zeros;
-    char imm33NumBits = (ihh - ihl + 1 + ilh - ill + 1 + zeros);
+    char imm33NumBits = ihh - ihl + 1 + ilh - ill + 1 + zeros;
     log(DEBUG, "imm initial: %X (%i); immNumBits: %i", imm33, imm33, imm33NumBits);
     auto imm = SignExtend<int64_t>(imm33, imm33NumBits);
     auto jmpOff = imm + ((((int64_t)adrpPC) >> zeros) << zeros);
