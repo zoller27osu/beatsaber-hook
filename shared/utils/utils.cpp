@@ -13,6 +13,10 @@
 
 using namespace std;
 
+// e.g. to see if 'a' matches 10?1, where you care about the value of all bits except ?'s,
+// do MATCH(a, 1101, 1001) 
+#define MATCH(a, relevantBits, requiredValue): bits & relevantBits == requiredValue
+
 Instruction::Instruction(const int32_t* inst) {
     Instruction::addr = inst;
     auto code = *inst;
@@ -20,23 +24,27 @@ Instruction::Instruction(const int32_t* inst) {
     Instruction::parseLevel = -1;
     Instruction::parsed = false;
     // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64#top
-    char topOp0 = bits(code, 28, 25);
-    log(DEBUG, "instruction: ptr = %llX, bytes = %llX (%i), topOp0: %i", inst, code, code, topOp0);
-    if (topOp0 <= 3) {
+    char top0 = bits(code, 28, 25);  // op0 for top-level only
+    log(DEBUG, "instruction: ptr = %llX, bytes = %llX, top-level op0: %i", inst, code, top0);
+    // Bit patterns like 1x0x where x is any bit and all other bits must match are implemented by:
+    // 1. (a & [1's where pattern has non-x]) == [pattern with x's as 0]
+    // 2. (a | [1's where pattern has x])     == [pattern with x's as 1]
+    //   2. is the shorter option when x's are mostly on the right, otherwise 1.
+    if (top0 <= 3) {
         kind[++parseLevel] = "Invalid";
         parseLevel += 2;
-    } else if (topOp0 % 8 == 0b0101) {
+    } else if ((top0 & 0b111) == 0b101) {  // x101
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-register
         kind[++parseLevel] = "Data Processing -- Register";
-    } else if (topOp0 % 8 == 0b0111) {
+    } else if ((top0 & 0b111) == 0b111) {  // x111
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-scalar-floating-point-and-advanced-simd
         kind[++parseLevel] = "Data Processing -- Scalar Floating-Point and Advanced SIMD";
-    } else if (topOp0 == 0b1000 || topOp0 == 0b1001) {
+    } else if ((top0 | 0b1) == 0b1001) {  // 100x
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate
         kind[++parseLevel] = "Data Processing -- Immediate";
         char op0 = bits(code, 25, 24);
         char op1 = bits(code, 23, 22);
-        if (op0 == 0b00) {
+        if (op0 == 0) {  // 00
             // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#pcreladdr
             kind[++parseLevel] = "PC-rel. addressing";
             Instruction::numSourceRegisters = 0;
@@ -63,18 +71,18 @@ Instruction::Instruction(const int32_t* inst) {
             Instruction::result = imm + pc;
             log(DEBUG, "imm: %llX; result: %llX (offset %llX)", imm, result, result - getRealOffset(0));
         }
-    } else if (topOp0 == 0b1010 || topOp0 == 0b1011) {
+    } else if ((top0 | 0b1) == 0b1011) {  // 101x
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions
         kind[++parseLevel] = "Branches, Exception Generating and System instructions";
-    } else if (topOp0 % 8 == 0b0100 || topOp0 % 8 == 0b0110) {
+    } else if ((top0 & 0b101) == 0b100) {  // x1x0
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores
         kind[++parseLevel] = "Loads and Stores";
         char op0 = bits(code, 31, 28);
         char op1 = bits(code, 26, 26);
         char op2 = bits(code, 24, 23);
         auto op3 = bits(code, 21, 16);
-        if (op0 % 4 == 0b11) {
-            if (op2 >= 0b10) {
+        if ((op0 & 0b11) == 0b11) {  // xx11
+            if ((op2 | 0b1) == 0b11) {  // 1x
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores#ldst_pos
                 kind[++parseLevel] = "Load/store register (unsigned immediate)";
                 Instruction::numSourceRegisters = 1;
@@ -85,7 +93,7 @@ Instruction::Instruction(const int32_t* inst) {
                 Instruction::Rd = bits(code, 9, 5);
                 Instruction::Rs[0] = bits(code, 4, 0);
                 if (size >= 0b10) {
-                    if (V == 0b0 && opc == 0b00) {
+                    if ((V == 0b0) && (opc == 0b00)) {
                         kind[++parseLevel] = "STR (immediate) — 64-bit";
                         log(DEBUG, "size: %i; imm12: %llX", size, imm12);
                         Instruction::imm = SignExtend<int64_t>(imm12, 12) << size;
