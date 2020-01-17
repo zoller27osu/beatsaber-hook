@@ -27,18 +27,20 @@ namespace std {
 class Instruction {
 public:
     const int32_t* addr;  // the pointer to the instruction
+    // Rd and Rs are capitalized in accordance with typical Register notation
     char Rd = -1;  // the destination register's number
-    int numSourceRegisters = -1;
+    int numSourceRegisters = -1;  // the number of source registers this instruction has
     union {
-        char Rs[2] = { (char)-1, (char)-1 };  // the source register(s)' number(s)
-        int64_t result;  // the result, if no source registers
+        char Rs[2] = { (char)-1, (char)-1 };  // the number(s) of the source register(s), e.g. {9, 12} for X9 & X12
+        int64_t result;  // iff numSourceRegisters is 0, the value that will be stored to Rd by this instruction
     };
     int64_t imm = 0;  // the immediate, if applicable
-    bool parsed;
+    bool parsed;  // whether the instruction was fully and successfully parsed
+
     Instruction(const int32_t* inst);
 private:
     const char* kind[3];  // strings describing the kind of instruction, from least to most specific
-    char parseLevel;  // The lowest level we were able to parse at - index of most specific in kind[]
+    char parseLevel;  // The lowest level we were able to parse at, 1-3 (subtract 1 for index of most specific string in 'kind')
 };
 
 // Returns the value of the bits in x at index high through low inclusive, where the LSB is index 0 and the MSB's index >= high.
