@@ -13,10 +13,6 @@
 
 using namespace std;
 
-// e.g. to see if 'a' matches 10?1, where you care about the value of all bits except ?'s,
-// do MATCH(a, 1101, 1001) 
-#define MATCH(a, relevantBits, requiredValue): bits & relevantBits == requiredValue
-
 Instruction::Instruction(const int32_t* inst) {
     Instruction::addr = inst;
     auto code = *inst;
