@@ -482,12 +482,19 @@ void il2cpp_functions::Init() {
 
     // Extract location of s_Il2CppMetadataRegistration from instructions in MetadataCache::Register
     auto inst = reinterpret_cast<const int32_t*>(il2cpp_functions::MetadataCache_Register);
+    // for (int i = 0; i < 16; i++) {
+    //     log(INFO, "Instruction %i: %s", i, Instruction(&inst[i]).toString().c_str());
+    // }
+    log(INFO, "add: %s", Instruction(&inst[4]).toString().c_str());
+    log(INFO, "mov: %s", Instruction(&inst[5]).toString().c_str());
     auto jmpOff = Instruction(&inst[8]).result;
     auto offset = Instruction(&inst[11]).imm;
 
     auto jmp = jmpOff + offset;  // jmp (AKA s_Il2CppMetadataRegistration) had offset 0x2250828 in 1.5
     log(DEBUG, "offset: %llX, jmp: %llX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
     il2cpp_functions::s_Il2CppMetadataRegistration = (const Il2CppMetadataRegistration**)jmp;
+
+    log(INFO, "eor: %s", Instruction((const int32_t*)getRealOffset((void*)0xA5F00C)).toString().c_str());
 
     dlclose(imagehandle);
     initialized = true;

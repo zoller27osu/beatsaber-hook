@@ -13,50 +13,137 @@
 
 using namespace std;
 
+static const int_fast8_t RZR = 31;
+static const int_fast8_t SP = 31;
+std::ostream& operator<<(std::ostream& os, const Register& regName) {
+    auto reg = regName.num;
+    if (reg == SP) {
+        os << "SP";
+    } else if (reg == 30) {
+        os << "R30 (return)";
+    } else if (reg == 29) {
+        os << "R29 (frame ptr)";
+    } else {
+        os << "R" << std::dec << +reg;
+        if (reg < 0 || reg >= 32) os << " (invalid register!)";
+    }
+    return os;
+}
+
+std::string Register::toString() {
+    std::stringstream ss;
+    ss << *this;
+    return ss.str();
+}
+
+std::ostream& operator<<(std::ostream& os, const Instruction& inst) {
+    if (inst.parseLevel <= 0) return os << "Unparsable";
+    os << '"' << inst.kind[inst.parseLevel - 1] << '"';
+    if (inst.valid) {
+        if (inst.imm) os << ", imm: " << std::hex << inst.imm;
+        if (inst.Rd >= 0) os << ", destination register: " << Register(inst.Rd);
+        if (inst.numSourceRegisters == 0) {
+            os << ", result: " << std::hex << inst.result;
+        } else if (inst.numSourceRegisters > 0) {
+            os << ", source registers: ";
+            for (int j = 0; j < inst.numSourceRegisters; j++) {
+                if (j != 0) os << ", ";
+                os << Register(inst.Rs[j]);
+            }
+        }
+    }
+    return os;
+}
+
+std::string Instruction::toString() {
+    std::stringstream ss;
+    ss << *this;
+    return ss.str();
+}
+
+static const char* unalloc = "UNALLOCATED";
 Instruction::Instruction(const int32_t* inst) {
     addr = inst;
-    Rd = -2;
     parseLevel = 0;
     parsed = false;
     auto code = *inst;
     // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64#top
-    char top0 = bits(code, 28, 25);  // op0 for top-level only
-    log(DEBUG, "instruction: ptr = %llX, bytes = %llX, top-level op0: %i", inst, code, top0);
+    uint_fast8_t top0 = bits(code, 28, 25);  // op0 for top-level only
+    log(DEBUG, "inst: ptr = %llX (offset %llX), bytes = %llX, top-level op0: %i",
+        inst, (long long)inst - getRealOffset(0), code, top0);
     // Bit patterns like 1x0x where x is any bit and all other bits must match are implemented by:
     // 1. (a & [1's where pattern has non-x]) == [pattern with x's as 0]
     // 2. (a | [1's where pattern has x])     == [pattern with x's as 1]
-    //   2. is the shorter option when x's are mostly on the right, otherwise 1.
+    //   2. is usually the shorter option when x's are mostly on the right, otherwise 1.
     if (top0 <= 3) {
         for (int i = 0; i < sizeof(kind) / sizeof(kind[0]); i++) {
             kind[parseLevel++] = "Invalid instruction";
+            valid = false;
         }
     } else if ((top0 & 0b111) == 0b101) {  // x101
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-register
         kind[parseLevel++] = "Data Processing -- Register";
+        bool op0 = bits(code, 30, 30);
+        bool op1 = bits(code, 28, 28);
+        uint_fast8_t op2 = bits(code, 24, 21);
+        uint_fast8_t op3 = bits(code, 15, 10);
+        if (op1 == 0) {
+            if ((op2 & 0b1000) == 0) {  // 0xxx
+                // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-register#log_shift
+                kind[parseLevel++] = "Logical (shifted register)";
+                numSourceRegisters = 2;
+                Rd = bits(code, 4, 0);
+                auto Rn = Rs[0] = bits(code, 9, 5);
+                imm = bits(code, 15, 10);
+                auto Rm = Rs[1] = bits(code, 20, 16);
+                bool N = bits(code, 21, 21);
+                shiftType = static_cast<ShiftType>(bits(code, 23, 22));
+                uint_fast8_t opc = bits(code, 30, 29);
+                bool sf = bits(code, 31, 31);
+                if (opc == 1) {
+                    if (N == 0) {
+                        if ((shiftType == LSL) && (imm == 0) && Rn == RZR) {
+                            kind[parseLevel++] = "MOV (register)";  // preferred alias
+                            numSourceRegisters = 1;
+                            Rs[0] = Rm;
+                            Rs[1] = -1;
+                        } else {
+                            if (sf == 0) {
+                                kind[parseLevel++] = "ORR (shifted register) — 32-bit";
+                            } else {
+                                kind[parseLevel++] = "ORR (shifted register) — 64-bit";
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
     } else if ((top0 & 0b111) == 0b111) {  // x111
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-scalar-floating-point-and-advanced-simd
         kind[parseLevel++] = "Data Processing -- Scalar Floating-Point and Advanced SIMD";
     } else if ((top0 | 0b1) == 0b1001) {  // 100x
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate
         kind[parseLevel++] = "Data Processing -- Immediate";
-        char op0 = bits(code, 25, 24);
-        char op1 = bits(code, 23, 22);
-        if (op0 == 0) {  // 00
+        Rd = bits(code, 4, 0);
+        bool sf = bits(code, 31, 31);
+        uint_fast8_t op0 = bits(code, 25, 24);
+        uint_fast8_t op1 = bits(code, 23, 22);
+        if (op0 == 0) {
             // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#pcreladdr
             kind[parseLevel++] = "PC-rel. addressing";
             numSourceRegisters = 0;
-            Rd = bits(code, 4, 0);
-            char op = bits(code, 31, 31);
-            const char ilh = 30, ill = 29, ihh = 23, ihl = 5;
-            auto immlo = bits(code, ilh, ill);
+            bool op = sf;
+            const uint_fast8_t ilh = 30, ill = 29, ihh = 23, ihl = 5;
+            uint_fast8_t immlo = bits(code, ilh, ill);
             auto immhi = bits(code, ihh, ihl);
             log(DEBUG, "immhi: %X (%i), immlo: %X (%i)", immhi, immhi, immlo, immlo);
             auto immI = (immhi << (ilh - ill + 1)) + immlo;
-            char immINumBits = ihh - ihl + 1 + ilh - ill + 1;
+            uint_fast8_t immINumBits = ihh - ihl + 1 + ilh - ill + 1;
             auto pc = (int64_t)inst;
             if (op == 0b1) {
                 kind[parseLevel++] = "ADRP";
-                char zeros = 12;
+                const uint_fast8_t zeros = 12;
                 immI <<= zeros;
                 immINumBits += zeros;
                 pc = (pc >> zeros) << zeros;  // zero out the last 12 bits
@@ -67,6 +154,62 @@ Instruction::Instruction(const int32_t* inst) {
             imm = SignExtend<int64_t>(immI, immINumBits);
             result = imm + pc;
             log(DEBUG, "imm: %llX; result: %llX (offset %llX)", imm, result, result - getRealOffset(0));
+        } else if (op0 == 0b1) {
+            numSourceRegisters = 1;
+            Rs[0] = bits(code, 9, 5);
+            bool op = bits(code, 30, 30);
+            bool S = bits(code, 29, 29);
+            if ((op1 | 0b1) == 0b11) {  // 1x
+                // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#addsub_immtags
+                kind[parseLevel++] = "Add/subtract (immediate, with tags)";
+                if ((sf == 0) || ((sf == 1) && (S == 1))) {
+                    kind[parseLevel++] = unalloc;
+                }
+            } else {
+                // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#addsub_imm
+                kind[parseLevel++] = "Add/subtract (immediate)";
+                auto shift = op1;
+                uint_fast16_t imm12 = bits(code, 21, 10);
+                if ((op == 0) && (S == 0)) {
+                    if ((shift == 0) && (imm12 == 0) && ((Rd == SP) || (Rs[0] == SP))) {
+                        kind[parseLevel++] = "MOV (to/from SP)";  // preferred alias
+                    } else {
+                        if (sf == 0) {
+                            kind[parseLevel++] = "ADD (immediate) — 32-bit";
+                        } else {
+                            kind[parseLevel++] = "ADD (immediate) — 64-bit";
+                        }
+                    }
+                    if (shift == 0b1) {
+                        imm = (imm12 << 12);
+                    } else { // 00
+                        imm = imm12;
+                    }
+                }
+            }
+        } else if (op0 == 0b10) {
+            uint_fast8_t opc = bits(code, 30, 29);
+            if ((op1 & 0b10) == 0) {  // 0x
+                // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#log_imm
+                kind[parseLevel++] = "Logical (immediate)";
+                bool N = bits(code, 22, 22);
+                uint_fast8_t immr = bits(code, 21, 16);
+                uint_fast8_t imms = bits(code, 15, 10);
+                numSourceRegisters = 1;
+                Rs[0] = bits(code, 9, 5);
+                if ((sf == 0) && (N == 1)) {
+                    kind[parseLevel++] = unalloc;
+                } else if (opc == 0b10) {
+                    if (sf == 0) {
+                        kind[parseLevel++] = "EOR (immediate) — 32-bit";
+                    } else {
+                        kind[parseLevel++] = "EOR (immediate) — 64-bit";
+                    }
+                }
+                log(DEBUG, "N: %i, imms: %llX, immr: %llX", N, imms, immr);
+                // TODO: set imm to remove this
+                valid = false;
+            }
         }
     } else if ((top0 | 0b1) == 0b1011) {  // 101x
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions
@@ -74,10 +217,10 @@ Instruction::Instruction(const int32_t* inst) {
     } else if ((top0 & 0b101) == 0b100) {  // x1x0
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores
         kind[parseLevel++] = "Loads and Stores";
-        char op0 = bits(code, 31, 28);
-        char op1 = bits(code, 26, 26);
-        char op2 = bits(code, 24, 23);
-        auto op3 = bits(code, 21, 16);
+        uint_fast8_t op0 = bits(code, 31, 28);
+        bool op1 = bits(code, 26, 26);
+        uint_fast8_t op2 = bits(code, 24, 23);
+        uint_fast8_t op3 = bits(code, 21, 16);
         if ((op0 & 0b11) == 0b11) {  // xx11
             if ((op2 | 0b1) == 0b11) {  // 1x
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores#ldst_pos
@@ -85,12 +228,12 @@ Instruction::Instruction(const int32_t* inst) {
                 numSourceRegisters = 1;
                 Rs[0] = bits(code, 4, 0);
                 Rd = bits(code, 9, 5);
-                char size = bits(code, 31, 30);
-                char V = op1;
-                char opc = bits(code, 23, 22);
-                auto imm12 = bits(code, 21, 10);
+                uint_fast8_t size = bits(code, 31, 30);
+                auto V = op1;
+                uint_fast8_t opc = bits(code, 23, 22);
+                uint_fast16_t imm12 = bits(code, 21, 10);
                 if (size >= 0b10) {
-                    if ((V == 0b0) && (opc == 0b00)) {
+                    if ((V == 0) && (opc == 0b00)) {
                         kind[parseLevel++] = "STR (immediate) — 64-bit";
                         log(DEBUG, "size: %i; imm12: %llX", size, imm12);
                         imm = SignExtend<int64_t>(imm12, 12) << size;
@@ -100,11 +243,15 @@ Instruction::Instruction(const int32_t* inst) {
         }
     } else {
         kind[parseLevel++] = "ERROR: Our top-level bit patterns have a gap!";
+        valid = false;
     }
     if (parseLevel != sizeof(kind) / sizeof(kind[0])) {
         log(ERROR, "Could not complete parsing of %X - need more handling for kind '%s'!", code, kind[parseLevel - 1]);
     } else {
         parsed = true;
+        if (kind[parseLevel - 1] == unalloc) {
+            valid = false;
+        }
     }
 }
 
