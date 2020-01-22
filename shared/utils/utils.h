@@ -57,22 +57,62 @@ private:
     char parseLevel;  // The lowest level we were able to parse at, 1-3 (subtract 1 for index of most specific string in 'kind')
 };
 
-// Returns the value of the bits in x at index high through low inclusive, where the LSB is index 0 and the MSB's index >= high.
+// Truncates the given integer to its least significant N bits.
 template<class T>
-T bits(T x, unsigned char high, unsigned char low) {
-    typedef typename std::make_unsigned<T>::type unsignedT;
-    T noLeft = x << (sizeof(T) * CHAR_BIT - 1 - high);
-    T trimmed = *reinterpret_cast<unsignedT*>(&noLeft) >> (sizeof(T) * CHAR_BIT - 1 - high + low);
-    return trimmed;
+T trunc(T bits, uint8_t N) {
+    return bits & ((1ull << N) - 1ull);
 }
 
-// Transforms the given integer (with M denoting the number of significant bits) into a properly signed number of type To.
+// Transforms the given integer (with M denoting the true number of significant bits) into a properly signed number of type To.
 template<class To, class From>
-To SignExtend(From bits, char M) {
-    constexpr char N = sizeof(To) * CHAR_BIT;
+To SignExtend(From bits, uint8_t M) {
+    constexpr uint8_t N = sizeof(To) * CHAR_BIT;
     assert(N >= M);
-    auto prep = ((To)bits) << (N - M);
+    To prep = ((To)bits) << (N - M);
     return (prep >> (N - M));
+}
+
+// N is the true number of significant bits in x.
+// Returns the index of the most significant ON bit in x.
+template<class T>
+int HighestSetBit(T x, uint8_t N) {
+    for (int i = N - 1; i >= 0; i--) {
+        if (x & (1 << i)) return i;
+    }
+    return -1;
+}
+
+// For all shifts (LSL, LSR, ASR, ROR): N is the true number of significant bits in x.
+// Left shift
+template<class T>
+T LSL(T x, uint8_t N, unsigned shift) {
+    return trunc(x << shift, N);
+}
+
+// Right shift, taking x as unsigned.
+template<class T>
+T LSR(T x, uint8_t N, unsigned shift) {
+    return trunc(x >> shift, N - shift);
+}
+
+// Right shift, taking x as signed.
+template<class T>
+T ASR(T x, uint8_t N, unsigned shift) {
+    typedef typename std::make_signed<T>::type signedT;
+    return trunc(SignExtend<signedT>(x, N) >> shift, N);
+}
+
+// Right shift, but bits that "fall off" move to the front instead
+template<class T>
+T ROR(T x, uint8_t N, unsigned shift) {
+    shift %= N;
+    return LSR(x, N, shift) | LSL(x, N, N - shift);
+}
+
+// Returns the value of the bits in x at index high through low inclusive, where the LSB is index 0 and the MSB's index >= high.
+template<class T>
+T bits(T x, uint8_t high, uint8_t low) {
+    return trunc(x >> low, high - low + 1);
 }
 
 // Wrapper for easier use (no need to cast the pointer to void*)

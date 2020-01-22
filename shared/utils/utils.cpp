@@ -13,6 +13,29 @@
 
 using namespace std;
 
+// https://developer.arm.com/docs/ddi0596/a/a64-shared-pseudocode-functions/aarch64-instrs-pseudocode#impl-aarch64.DecodeBitMasks
+// Explanation at https://dinfuehr.github.io/blog/encoding-of-immediate-values-on-aarch64/
+uint64_t DecodeBitMasks(unsigned N, unsigned imms, unsigned immr, unsigned regSize) {
+    auto len = HighestSetBit((N << 6) | trunc(~imms, 6), 7);
+    if (len < 1) return -1;
+
+    unsigned size = 1 << len;
+    unsigned levels = size - 1;  // a real bitmask of the rightmost "size" bits
+    unsigned R = immr & levels;
+    unsigned S = imms & levels;
+    // For logical immediates an all-ones value of S is reserved since it would generate a useless all-ones result
+    if (S == levels) return -1;
+
+    uint64_t pattern = (1ULL << (S + 1)) - 1;
+    pattern = ROR(pattern, size, R);
+    // Replicate the pattern to fill regSize
+    while (size < regSize) {
+        pattern |= (pattern << size);
+        size *= 2;
+    }
+    return pattern;
+}
+
 static const int_fast8_t RZR = 31;
 static const int_fast8_t SP = 31;
 std::ostream& operator<<(std::ostream& os, const Register& regName) {
@@ -37,6 +60,7 @@ std::string Register::toString() {
 }
 
 std::ostream& operator<<(std::ostream& os, const Instruction& inst) {
+    os << std::showbase;
     if (inst.parseLevel <= 0) return os << "Unparsable";
     os << '"' << inst.kind[inst.parseLevel - 1] << '"';
     if (inst.valid) {
@@ -52,7 +76,7 @@ std::ostream& operator<<(std::ostream& os, const Instruction& inst) {
             }
         }
     }
-    return os;
+    return os << std::noshowbase;
 }
 
 std::string Instruction::toString() {
@@ -69,7 +93,7 @@ Instruction::Instruction(const int32_t* inst) {
     auto code = *inst;
     // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64#top
     uint_fast8_t top0 = bits(code, 28, 25);  // op0 for top-level only
-    log(DEBUG, "inst: ptr = %llX (offset %llX), bytes = %llX, top-level op0: %i",
+    log(DEBUG, "inst: ptr = 0x%llX (offset 0x%llX), bytes = 0x%llX, top-level op0: %i",
         inst, (long long)inst - getRealOffset(0), code, top0);
     // Bit patterns like 1x0x where x is any bit and all other bits must match are implemented by:
     // 1. (a & [1's where pattern has non-x]) == [pattern with x's as 0]
@@ -137,7 +161,7 @@ Instruction::Instruction(const int32_t* inst) {
             const uint_fast8_t ilh = 30, ill = 29, ihh = 23, ihl = 5;
             uint_fast8_t immlo = bits(code, ilh, ill);
             auto immhi = bits(code, ihh, ihl);
-            log(DEBUG, "immhi: %X (%i), immlo: %X (%i)", immhi, immhi, immlo, immlo);
+            log(DEBUG, "immhi: 0x%X (%i), immlo: 0x%X (%i)", immhi, immhi, immlo, immlo);
             auto immI = (immhi << (ilh - ill + 1)) + immlo;
             uint_fast8_t immINumBits = ihh - ihl + 1 + ilh - ill + 1;
             auto pc = (int64_t)inst;
@@ -150,10 +174,10 @@ Instruction::Instruction(const int32_t* inst) {
             } else {
                 kind[parseLevel++] = "ADR";
             }
-            log(DEBUG, "imm initial: %X (%i); immNumBits: %i", immI, immI, immINumBits);
+            log(DEBUG, "imm initial: 0x%X (%i); immNumBits: %i", immI, immI, immINumBits);
             imm = SignExtend<int64_t>(immI, immINumBits);
             result = imm + pc;
-            log(DEBUG, "imm: %llX; result: %llX (offset %llX)", imm, result, result - getRealOffset(0));
+            log(DEBUG, "imm: 0x%llX; result: 0x%llX (offset 0x%llX)", imm, result, result - getRealOffset(0));
         } else if (op0 == 0b1) {
             numSourceRegisters = 1;
             Rs[0] = bits(code, 9, 5);
@@ -206,9 +230,9 @@ Instruction::Instruction(const int32_t* inst) {
                         kind[parseLevel++] = "EOR (immediate) — 64-bit";
                     }
                 }
-                log(DEBUG, "N: %i, imms: %llX, immr: %llX", N, imms, immr);
-                // TODO: set imm to remove this
-                valid = false;
+                imm = DecodeBitMasks(N, imms, immr, sf ? 64 : 32);
+                log(DEBUG, "N: %i, immr: 0x%llX, imms: 0x%llX, decoded imm: 0x%llX", N, immr, imms, imm);
+                if (imm == -1) valid = false;
             }
         }
     } else if ((top0 | 0b1) == 0b1011) {  // 101x
@@ -235,7 +259,7 @@ Instruction::Instruction(const int32_t* inst) {
                 if (size >= 0b10) {
                     if ((V == 0) && (opc == 0b00)) {
                         kind[parseLevel++] = "STR (immediate) — 64-bit";
-                        log(DEBUG, "size: %i; imm12: %llX", size, imm12);
+                        log(DEBUG, "size: %i; imm12: 0x%llX", size, imm12);
                         imm = SignExtend<int64_t>(imm12, 12) << size;
                     }
                 }
@@ -246,7 +270,7 @@ Instruction::Instruction(const int32_t* inst) {
         valid = false;
     }
     if (parseLevel != sizeof(kind) / sizeof(kind[0])) {
-        log(ERROR, "Could not complete parsing of %X - need more handling for kind '%s'!", code, kind[parseLevel - 1]);
+        log(ERROR, "Could not complete parsing of 0x%X - need more handling for kind '%s'!", code, kind[parseLevel - 1]);
     } else {
         parsed = true;
         if (kind[parseLevel - 1] == unalloc) {
@@ -438,7 +462,7 @@ long long findUniquePattern(bool& multiple, long long dwAddress, const char* pat
         matches++;
         if (label) log(DEBUG, "Sigscan found possible \"%s\": offset 0x%llX, pointer 0x%llX", label, newMatchAddr - dwAddress, newMatchAddr);
         start = newMatchAddr + 1;
-        log(DEBUG, "start = %llX, end = %llX", start, dwEnd);
+        log(DEBUG, "start = 0x%llX, end = 0x%llX", start, dwEnd);
         usleep(1000);
     }
     if (matches > 1) {
