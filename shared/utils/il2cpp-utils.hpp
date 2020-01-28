@@ -379,7 +379,7 @@ namespace il2cpp_utils {
         } else { // Fallback to perform a static field set
             il2cpp_functions::field_static_get_value(field, (void*)out);
         }
-		return true;
+        return true;
     }
 
     template<typename TOut>
