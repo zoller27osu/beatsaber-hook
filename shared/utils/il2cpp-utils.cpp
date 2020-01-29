@@ -4,6 +4,44 @@
 #include <map>
 #include <unordered_set>
 
+namespace std
+{
+    template<class T> void hash_combine(size_t& seed, T v) {
+        seed ^= std::hash<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
+
+    // Let a "sequence" type be any type that supports .size() and iteration and whose elements are hashable and support !=.
+    // Determines whether two sequences are equal
+    template<class T> bool operator==(T& lhs, T& rhs)
+    {
+        if (lhs.size() != rhs.size()) return false;
+        auto l = lhs.begin();
+        auto r = rhs.begin();
+        while (l != lhs.end()) {
+            if (*l != *r) return false;
+            l++;
+            r++;
+        }
+        return true;
+    }
+
+    // Calculates a hash for a sequence
+    template<class T> std::size_t hash_seq(T const& seq) noexcept {
+        std::size_t seed = seq.size();
+        for(auto i: seq) {
+            hash_combine(seed, i);
+        }
+        return seed;
+    }
+
+    // Specializes std::hash for std::initializer_list
+    template<class T> struct hash<std::initializer_list<T>> {
+        std::size_t operator()(std::initializer_list<T> const& seq) const noexcept {
+            return hash_seq(seq);
+        }
+    };
+}
+
 // Please see comments in il2cpp-utils.hpp
 // TODO: Make this into a static class
 namespace il2cpp_utils {
@@ -28,6 +66,9 @@ namespace il2cpp_utils {
     // It doesn't matter what types these are, they just need to be used correctly within the methods
     static std::unordered_map<std::pair<std::string, std::string>, Il2CppClass*, hash_pair> namesToClassesCache;
     static std::unordered_map<std::pair<Il2CppClass*, std::pair<std::string, int>>, const MethodInfo*, hash_pair_3> classesNamesToMethodsCache;
+
+    typedef std::pair<std::string, std::initializer_list<const Il2CppType*>> classesNamesTypesInnerPairType;
+    static std::unordered_map<std::pair<Il2CppClass*, classesNamesTypesInnerPairType>, const MethodInfo*, hash_pair_3> classesNamesTypesToMethodsCache;
     static std::unordered_map<std::pair<Il2CppClass*, std::string>, FieldInfo*, hash_pair> classesNamesToFieldsCache;
     // Maximum length of characters of an exception message - 1
     #define EXCEPTION_MESSAGE_SIZE 4096
@@ -42,7 +83,7 @@ namespace il2cpp_utils {
         return msg;
     }
 
-    bool ParameterMatch(const MethodInfo* method, Il2CppType** type_arr, int count) {
+    bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, int count) {
         il2cpp_functions::Init();
         if (method->parameters_count != count) {
             return false;
@@ -53,6 +94,44 @@ namespace il2cpp_utils {
             }
         }
         return true;
+    }
+
+    // Gets the type enum of a given type
+    // TODO Remove this method! Replace with default typesystem
+    int GetTypeEnum(const char* name_space, const char* type_name) {
+        auto klass = GetClassFromName(name_space, type_name);
+        auto typ = il2cpp_functions::class_get_type(klass);
+        return il2cpp_functions::type_get_type(typ);
+    }
+
+    static std::unordered_map<int, const char*> typeMap;
+
+    const char* TypeGetSimpleName(const Il2CppType* type) {
+        il2cpp_functions::Init();
+
+        if (typeMap.empty()) {
+            typeMap[GetTypeEnum("System", "Boolean")] = "bool";
+            typeMap[GetTypeEnum("System", "Byte")] = "byte";
+            typeMap[GetTypeEnum("System", "SByte")] = "sbyte";
+            typeMap[GetTypeEnum("System", "Char")] = "char";
+            typeMap[GetTypeEnum("System", "Single")] = "float";
+            typeMap[GetTypeEnum("System", "Double")] = "double";
+            typeMap[GetTypeEnum("System", "Int16")] = "short";
+            typeMap[GetTypeEnum("System", "UInt16")] = "ushort";
+            typeMap[GetTypeEnum("System", "Int32")] = "int";
+            typeMap[GetTypeEnum("System", "UInt32")] = "uint";
+            typeMap[GetTypeEnum("System", "Int64")] = "long";
+            typeMap[GetTypeEnum("System", "UInt64")] = "ulong";
+            typeMap[GetTypeEnum("System", "Object")] = "object";
+            typeMap[GetTypeEnum("System", "String")] = "string";
+            typeMap[GetTypeEnum("System", "Void")] = "void";
+        }
+        auto p = typeMap.find(il2cpp_functions::type_get_type(type));
+        if (p != typeMap.end()) {
+            return p->second;
+        } else {
+            return il2cpp_functions::type_get_name(type);
+        }
     }
 
     Il2CppClass* GetClassFromName(const char* name_space, const char* type_name) {
@@ -110,15 +189,53 @@ namespace il2cpp_utils {
         return methodInfo;
     }
 
-    const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount) {
-        return FindMethod(GetClassFromName(nameSpace.data(), className.data()), methodName, argsCount);
-    }
-
-    const MethodInfo* FindMethod(Il2CppObject* instance, std::string_view methodName, int argsCount) {
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::initializer_list<const Il2CppType*> argTypes) {
         il2cpp_functions::Init();
+        
+        if (!klass) return nullptr;
+        // Check Cache
+        auto innerPair = classesNamesTypesInnerPairType(methodName.data(), argTypes);
+        auto key = std::pair<Il2CppClass*, classesNamesTypesInnerPairType>(klass, innerPair);
+        auto itr = classesNamesTypesToMethodsCache.find(key);
+        if (itr != classesNamesTypesToMethodsCache.end()) {
+            return itr->second;
+        }
 
-        return FindMethod(il2cpp_functions::object_get_class(instance), methodName, argsCount);
+        void* myIter = nullptr;
+        const MethodInfo* current;
+        const MethodInfo* methodInfo = nullptr;
+        while ((current = il2cpp_functions::class_get_methods(klass, &myIter))) {
+            if (ParameterMatch(current, argTypes) && strcmp(current->name, methodName.data()) == 0) {
+                methodInfo = current;
+            }
+        }
+
+        if (!methodInfo) {
+            std::stringstream ss("could not find method ");
+            ss << methodName << "(";
+            bool first = true;
+            for (auto t : argTypes) {
+                if (!first) ss << ", ";
+                first = false;
+                ss << TypeGetSimpleName(t);
+            }
+            ss << ") in class " << il2cpp_functions::class_get_name(klass) << " (namespace '" << il2cpp_functions::class_get_namespace(klass) << "')!";
+            log(ERROR, "%s", ss.str().c_str());
+            LogMethods(klass);
+        }
+        classesNamesTypesToMethodsCache.insert({key, methodInfo});
+        return methodInfo;
     }
+
+    // const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, std::string_view methodName, std::initializer_list<Il2CppType*> argTypes) {
+    //     return FindMethod(GetClassFromName(nameSpace.data(), className.data()), methodName, argTypes);
+    // }
+
+    // const MethodInfo* FindMethod(Il2CppObject* instance, std::string_view methodName, std::initializer_list<Il2CppType*> argTypes) {
+    //     il2cpp_functions::Init();
+
+    //     return FindMethod(il2cpp_functions::object_get_class(instance), methodName, argTypes);
+    // }
 
     FieldInfo* FindField(Il2CppClass* klass, std::string_view fieldName) {
         il2cpp_functions::Init();
@@ -304,44 +421,6 @@ namespace il2cpp_utils {
     Il2CppObject* GetType(const Il2CppClass* klass) {
         il2cpp_functions::Init();
         return il2cpp_functions::type_get_object(il2cpp_functions::class_get_type_const(klass));
-    }
-
-    // Gets the type enum of a given type
-    // TODO Remove this method! Replace with default typesystem
-    int GetTypeEnum(const char* name_space, const char* type_name) {
-        auto klass = GetClassFromName(name_space, type_name);
-        auto typ = il2cpp_functions::class_get_type(klass);
-        return il2cpp_functions::type_get_type(typ);
-    }
-
-    static std::unordered_map<int, const char*> typeMap;
-
-    const char* TypeGetSimpleName(const Il2CppType* type) {
-        il2cpp_functions::Init();
-
-        if (typeMap.empty()) {
-            typeMap[GetTypeEnum("System", "Boolean")] = "bool";
-            typeMap[GetTypeEnum("System", "Byte")] = "byte";
-            typeMap[GetTypeEnum("System", "SByte")] = "sbyte";
-            typeMap[GetTypeEnum("System", "Char")] = "char";
-            typeMap[GetTypeEnum("System", "Single")] = "float";
-            typeMap[GetTypeEnum("System", "Double")] = "double";
-            typeMap[GetTypeEnum("System", "Int16")] = "short";
-            typeMap[GetTypeEnum("System", "UInt16")] = "ushort";
-            typeMap[GetTypeEnum("System", "Int32")] = "int";
-            typeMap[GetTypeEnum("System", "UInt32")] = "uint";
-            typeMap[GetTypeEnum("System", "Int64")] = "long";
-            typeMap[GetTypeEnum("System", "UInt64")] = "ulong";
-            typeMap[GetTypeEnum("System", "Object")] = "object";
-            typeMap[GetTypeEnum("System", "String")] = "string";
-            typeMap[GetTypeEnum("System", "Void")] = "void";
-        }
-        auto p = typeMap.find(il2cpp_functions::type_get_type(type));
-        if (p != typeMap.end()) {
-            return p->second;
-        } else {
-            return il2cpp_functions::type_get_name(type);
-        }
     }
 
     void LogMethod(const MethodInfo* method) {
