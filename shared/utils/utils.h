@@ -24,22 +24,95 @@ namespace std {
 #include "../config/config-utils.hpp"
 
 #ifdef __cplusplus
-// Returns the value of the bits in x at index high through low inclusive, where the LSB is index 0 and the MSB's index >= high.
+class Register {
+public:
+    int_fast8_t num;
+    Register(int_fast8_t reg) : num(reg) {};
+    std::string toString();
+    friend std::ostream& operator<<(std::ostream& os, const Register& n);
+};
+
+class Instruction {
+public:
+    const int32_t* addr;  // the pointer to the instruction
+    // Rd and Rs are capitalized in accordance with typical Register notation
+    int_fast8_t Rd = -2;  // the destination register's number, or -1 if none
+    int numSourceRegisters = -1;  // the number of source registers this instruction has
+    union {
+        int_fast8_t Rs[2] = { -1, -1 };  // the number(s) of the source register(s), e.g. {12, 31} for X12 & SP
+        int64_t result;  // iff numSourceRegisters is 0, the value that will be stored to Rd by this instruction
+    };
+    int64_t imm = 0;  // the immediate, if applicable
+    enum ShiftType {
+        LSL, LSR, ASR, ROR, none
+    } shiftType = none;
+    bool parsed;  // whether the instruction was fully and successfully parsed
+    bool valid = true;  // iff parsed, whether the instruction is a valid one
+
+    Instruction(const int32_t* inst);
+    std::string toString();
+    friend std::ostream& operator<<(std::ostream& os, const Instruction& inst);
+private:
+    const char* kind[3];  // strings describing the kind of instruction, from least to most specific
+    char parseLevel;  // The lowest level we were able to parse at, 1-3 (subtract 1 for index of most specific string in 'kind')
+};
+
+// Truncates the given integer to its least significant N bits.
 template<class T>
-T bits(T x, unsigned char high, unsigned char low) {
-    typedef typename std::make_unsigned<T>::type unsignedT;
-    T noLeft = x << (sizeof(T) * CHAR_BIT - 1 - high);
-    T trimmed = *reinterpret_cast<unsignedT*>(&noLeft) >> (sizeof(T) * CHAR_BIT - 1 - high + low);
-    return trimmed;
+T trunc(T bits, uint8_t N) {
+    return bits & ((1ull << N) - 1ull);
 }
 
-// Transforms the given integer (with M denoting the number of significant bits) into a properly signed number of type To.
+// Transforms the given integer (with M denoting the true number of significant bits) into a properly signed number of type To.
 template<class To, class From>
-To SignExtend(From bits, char M) {
-    constexpr char N = sizeof(To) * CHAR_BIT;
+To SignExtend(From bits, uint8_t M) {
+    constexpr uint8_t N = sizeof(To) * CHAR_BIT;
     assert(N >= M);
-    auto prep = ((To)bits) << (N - M);
+    To prep = ((To)bits) << (N - M);
     return (prep >> (N - M));
+}
+
+// N is the true number of significant bits in x.
+// Returns the index of the most significant ON bit in x.
+template<class T>
+int HighestSetBit(T x, uint8_t N) {
+    for (int i = N - 1; i >= 0; i--) {
+        if (x & (1 << i)) return i;
+    }
+    return -1;
+}
+
+// For all shifts (LSL, LSR, ASR, ROR): N is the true number of significant bits in x.
+// Left shift
+template<class T>
+T LSL(T x, uint8_t N, unsigned shift) {
+    return trunc(x << shift, N);
+}
+
+// Right shift, taking x as unsigned.
+template<class T>
+T LSR(T x, uint8_t N, unsigned shift) {
+    return trunc(x >> shift, N - shift);
+}
+
+// Right shift, taking x as signed.
+template<class T>
+T ASR(T x, uint8_t N, unsigned shift) {
+    typedef typename std::make_signed<T>::type signedT;
+    return trunc(SignExtend<signedT>(x, N) >> shift, N);
+}
+
+// Right shift, but bits that "fall off" move to the front instead
+template<class T>
+T ROR(T x, uint8_t N, unsigned shift) {
+    shift %= N;
+    return LSR(x, N, shift) | LSL(x, N, N - shift);
+}
+
+// Returns the value of the bits in x at index high through low inclusive, where the LSB is index 0 and the MSB's index >= high.
+template<class T>
+T bits(T x, uint8_t high, uint8_t low) {
+    return trunc(x >> low, high - low + 1);
 }
 
 // Wrapper for easier use (no need to cast the pointer to void*)
@@ -50,11 +123,6 @@ void analyzeBytes(const T* ptr) {
 
 extern "C" {
 #endif /* __cplusplus */
-
-// Interprets the result of an ADRP instruction
-int64_t ADRP_Get_Result(const int32_t* adrpPC);
-// Extracts the offset from an STR (immediate) instruction
-int64_t STR_Imm_Extract_Offset(const int32_t* strPC);
 
 // Restores an existing stringstream to a newly created state.
 void resetSS(std::stringstream& ss);

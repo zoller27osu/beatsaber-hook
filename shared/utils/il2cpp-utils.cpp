@@ -395,8 +395,8 @@ namespace il2cpp_utils {
         log(DEBUG, "property_count: %i, field_count: %i", klass->property_count, klass->field_count);
         while ((field = il2cpp_functions::class_get_fields(klass, &myIter))) {
             LogField(field);
-            usleep(100);
         }
+        usleep(100);
     }
 
     void GenericsToStringHelper(Il2CppGenericClass* genClass, std::ostream& os) {
@@ -457,11 +457,12 @@ namespace il2cpp_utils {
         for (int i = 0; i < klass->method_count; i++) {
             if (klass->methods[i]) {
                 log(DEBUG, "Method %i:", i);
-                log(DEBUG, "Name: %s Params: %i", klass->methods[i]->name, klass->methods[i]->parameters_count);
+                LogMethod(klass->methods[i]);
             } else {
                 log(DEBUG, "Method: %i Does not exist!", i);
             }
         }
+        usleep(100);
     }
 
     static int indent = -1;
