@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include "alphanum.hpp"
+#include <algorithm>
 #include <map>
 #include <unordered_set>
 
@@ -11,21 +12,7 @@ namespace std
     }
 
     // Let a "sequence" type be any type that supports .size() and iteration and whose elements are hashable and support !=.
-    // Determines whether two sequences are equal
-    template<class T> bool operator==(T& lhs, T& rhs)
-    {
-        if (lhs.size() != rhs.size()) return false;
-        auto l = lhs.begin();
-        auto r = rhs.begin();
-        while (l != lhs.end()) {
-            if (*l != *r) return false;
-            l++;
-            r++;
-        }
-        return true;
-    }
-
-    // Calculates a hash for a sequence
+    // Calculates a hash for a sequence.
     template<class T> std::size_t hash_seq(T const& seq) noexcept {
         std::size_t seed = seq.size();
         for(auto i: seq) {
@@ -34,9 +21,9 @@ namespace std
         return seed;
     }
 
-    // Specializes std::hash for std::initializer_list
-    template<class T> struct hash<std::initializer_list<T>> {
-        std::size_t operator()(std::initializer_list<T> const& seq) const noexcept {
+    // Specializes std::hash for std::vector
+    template<class T> struct hash<std::vector<T>> {
+        std::size_t operator()(std::vector<T> const& seq) const noexcept {
             return hash_seq(seq);
         }
     };
@@ -67,7 +54,7 @@ namespace il2cpp_utils {
     static std::unordered_map<std::pair<std::string, std::string>, Il2CppClass*, hash_pair> namesToClassesCache;
     static std::unordered_map<std::pair<Il2CppClass*, std::pair<std::string, int>>, const MethodInfo*, hash_pair_3> classesNamesToMethodsCache;
 
-    typedef std::pair<std::string, std::initializer_list<const Il2CppType*>> classesNamesTypesInnerPairType;
+    typedef std::pair<std::string, std::vector<const Il2CppType*>> classesNamesTypesInnerPairType;
     static std::unordered_map<std::pair<Il2CppClass*, classesNamesTypesInnerPairType>, const MethodInfo*, hash_pair_3> classesNamesTypesToMethodsCache;
     static std::unordered_map<std::pair<Il2CppClass*, std::string>, FieldInfo*, hash_pair> classesNamesToFieldsCache;
     // Maximum length of characters of an exception message - 1
@@ -81,6 +68,14 @@ namespace il2cpp_utils {
         // auto exception_message = csstrtostr(exp->message);
         // return to_utf8(exception_message);
         return msg;
+    }
+
+    std::vector<const Il2CppType*> ClassVecToTypes(std::vector<const Il2CppClass*> seq) {
+        il2cpp_functions::Init();
+
+        std::vector<const Il2CppType*> types(seq.size());
+        std::transform(seq.begin(), seq.end(), types.begin(), il2cpp_functions::class_get_type_const);
+        return types;
     }
 
     bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, int count) {
@@ -189,7 +184,7 @@ namespace il2cpp_utils {
         return methodInfo;
     }
 
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::initializer_list<const Il2CppType*> argTypes) {
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes) {
         il2cpp_functions::Init();
         
         if (!klass) return nullptr;
@@ -227,15 +222,19 @@ namespace il2cpp_utils {
         return methodInfo;
     }
 
-    // const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, std::string_view methodName, std::initializer_list<Il2CppType*> argTypes) {
-    //     return FindMethod(GetClassFromName(nameSpace.data(), className.data()), methodName, argTypes);
-    // }
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses) {
+        std::vector<const Il2CppType*> argTypes = ClassVecToTypes(argClasses);
+        return FindMethod(klass, methodName, argTypes);
+    }
 
-    // const MethodInfo* FindMethod(Il2CppObject* instance, std::string_view methodName, std::initializer_list<Il2CppType*> argTypes) {
-    //     il2cpp_functions::Init();
-
-    //     return FindMethod(il2cpp_functions::object_get_class(instance), methodName, argTypes);
-    // }
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass) {
+        std::vector<const Il2CppType*> argTypes;
+        for (int i = 0; i < argSpaceClass.size() - 1; i += 2) {
+            auto clazz = GetClassFromName(argSpaceClass[i].data(), argSpaceClass[i+1].data());
+            argTypes.push_back(il2cpp_functions::class_get_type(clazz));
+        }
+        return FindMethod(klass, methodName, argTypes);
+    }
 
     FieldInfo* FindField(Il2CppClass* klass, std::string_view fieldName) {
         il2cpp_functions::Init();
@@ -361,7 +360,7 @@ namespace il2cpp_utils {
         return reinterpret_cast<Il2CppReflectionType*>(genericType);
     }
 
-    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::initializer_list<const Il2CppClass*> args) {
+    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args) {
         il2cpp_functions::Init();
  
         auto typ = GetClassFromName("System", "Type");

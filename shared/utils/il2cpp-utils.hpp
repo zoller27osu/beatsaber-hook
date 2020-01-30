@@ -146,6 +146,8 @@ namespace il2cpp_utils {
         };
     }
 
+    std::vector<const Il2CppType*> ClassVecToTypes(std::vector<const Il2CppClass*> seq);
+
     // Returns if a given MethodInfo's parameters match the Il2CppType array provided as type_arr
     bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, int count);
 
@@ -157,10 +159,9 @@ namespace il2cpp_utils {
         return ParameterMatch(method, argarr, count);
     }
 
-    template<typename T>
-    // Returns if a given MethodInfo's parameters match the Il2CppTypes provided as an initializer_list, vector, etc
-    bool ParameterMatch(const MethodInfo* method, T const& seq) {
-        return ParameterMatch(method, seq.begin(), seq.size());
+    // Returns if a given MethodInfo's parameters match the Il2CppTypes provided as a vector
+    inline bool ParameterMatch(const MethodInfo* method, std::vector<const Il2CppType*> seq) {
+        return ParameterMatch(method, seq.data(), seq.size());
     }
 
     // Returns the MethodInfo for the method on the given class with the given name and number of arguments
@@ -169,7 +170,13 @@ namespace il2cpp_utils {
 
     // Returns the MethodInfo for the method on the given class with the given name and types of arguments
     // Created by zoller27osu
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::initializer_list<const Il2CppType*> argTypes);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass);
+    // Varargs to vector helper
+    template<typename... TArgs> const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, TArgs&&... argTypes) {
+        return FindMethod(klass, methodName, {argTypes...});
+    }
 
     // Returns the MethodInfo for the method on class found via namespace and name with the given other arguments
     template<class... TArgs>
@@ -453,7 +460,7 @@ namespace il2cpp_utils {
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types);
 
     // Function made by zoller27osu, modified by Sc2ad
-    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::initializer_list<const Il2CppClass*> args);
+    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
 
     // Gets a type Il2CppObject* from an Il2CppClass*
     Il2CppObject* GetType(Il2CppClass* klass);
