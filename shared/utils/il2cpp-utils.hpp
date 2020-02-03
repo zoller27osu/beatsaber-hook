@@ -146,104 +146,63 @@ namespace il2cpp_utils {
         };
     }
 
-    template<typename... TArgs>
-    // Returns if a given MethodInfo's parameters match the Il2CppTypes provided as args
-    bool ParameterMatch(const MethodInfo* method, TArgs* ...args) {
-        il2cpp_functions::Init();
+    std::vector<const Il2CppType*> ClassVecToTypes(std::vector<const Il2CppClass*> seq);
 
-        constexpr auto count = sizeof...(TArgs);
-        Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
-        if (method->parameters_count != count) {
-            return false;
+    inline Il2CppClass* GetClassOfObject(Il2CppObject* instance, std::string_view whosAsking) {
+        il2cpp_functions::Init();
+        auto klass = il2cpp_functions::object_get_class(instance);
+        if (!klass) {
+            log(ERROR, "il2cpp_utils: %s: Could not find object's class!", whosAsking.data());
+            return nullptr;
         }
-        for (int i = 0; i < method->parameters_count; i++) {
-            if (!il2cpp_functions::type_equals(method->parameters[i].parameter_type, argarr[i])) {
-                return false;
-            }
-        }
-        return true;
+        return klass;
     }
 
     // Returns if a given MethodInfo's parameters match the Il2CppType array provided as type_arr
-    bool ParameterMatch(const MethodInfo* method, Il2CppType** type_arr, int count);
+    bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, decltype(MethodInfo::parameters_count) count);
 
-    template<typename TObj = Il2CppObject, typename... TArgs>
-    // Creates a new object of the given class and Il2CppTypes parameters and casts it to TObj*
-    TObj* New(Il2CppClass* klass, TArgs const& ...args) {
-        il2cpp_functions::Init();
-
+    template<typename... TArgs>
+    // Returns if a given MethodInfo's parameters match the Il2CppTypes provided as args
+    bool ParameterMatch(const MethodInfo* method, TArgs* ...args) {
         constexpr auto count = sizeof...(TArgs);
-
-        void* invokeParams[] = { il2cpp_type_check::il2cpp_arg_ptr<decltype(args)>::get(args)... };
-        Il2CppType const* argarr[] = { il2cpp_type_check::il2cpp_arg_type<decltype(args)>::get(args)... };
-        // object_new call
-        auto obj = il2cpp_functions::object_new(klass);
-        // runtime_invoke constructor with right number of args, return null if multiple matches (or take a vector of type pointers to resolve it), return null if constructor errors
-        
-        void* myIter = nullptr;
-        const MethodInfo* current;
-        const MethodInfo* ctor = nullptr;
-        // Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
-        while ((current = il2cpp_functions::class_get_methods(klass, &myIter))) {
-            if (ParameterMatch(current, argarr, count) && strcmp(ctor->name, ".ctor") == 0) {
-                ctor = current;
-            }
-        }
-        if (!ctor) {
-            log(ERROR, "il2cpp_utils: New: Could not find constructor for provided class!");
-            return nullptr;
-        }
-        // TODO FIX CTOR CHECKING
-        if (strcmp(ctor->name, ".ctor") != 0) {
-            log(ERROR, "il2cpp_utils: New: Found a method matching parameter count and types, but it is not a constructor!");
-            return nullptr;
-        }
-        Il2CppException* exp = nullptr;
-        il2cpp_functions::runtime_invoke(ctor, obj, invokeParams, &exp);
-        if (exp) {
-            log(ERROR, "il2cpp_utils: New: Failed with exception: %s", ExceptionToString(exp).c_str());
-            return nullptr;
-        }
-        return reinterpret_cast<TObj*>(obj);
+        Il2CppType* argarr[] = {reinterpret_cast<Il2CppType*>(args)...};
+        return ParameterMatch(method, argarr, count);
     }
 
-    template<typename TObj = Il2CppObject, typename... TArgs>
-    // Creates a New object of the given class and parameters and casts it to TObj*
-    // DOES NOT PERFORM TYPE-SAFE CHECKING!
-    TObj* NewUnsafe(Il2CppClass* klass, TArgs* ...args) {
-        il2cpp_functions::Init();
-
-        void* invokeParams[] = {reinterpret_cast<void*>(args)...};
-        // object_new call
-        auto obj = il2cpp_functions::object_new(klass);
-        // runtime_invoke constructor with right number of args, return null if constructor errors
-        constexpr auto count = sizeof...(TArgs);
-        log(DEBUG, "Attempting to find .ctor with paramCount: %lu for class name: %s", count, il2cpp_functions::class_get_name(klass));
-        const MethodInfo* ctor = il2cpp_functions::class_get_method_from_name(klass, ".ctor", count);
-
-        if (!ctor) {
-            log(ERROR, "il2cpp_utils: New: Could not find constructor for provided class!");
-            return nullptr;
-        }
-        Il2CppException* exp;
-        il2cpp_functions::runtime_invoke(ctor, obj, invokeParams, &exp);
-        if (exp) {
-            log(ERROR, "il2cpp_utils: New: Failed with exception: %s", ExceptionToString(exp).c_str());
-            return nullptr;
-        }
-        return reinterpret_cast<TObj*>(obj);
+    // Returns if a given MethodInfo's parameters match the Il2CppTypes provided as a vector
+    inline bool ParameterMatch(const MethodInfo* method, std::vector<const Il2CppType*> seq) {
+        return ParameterMatch(method, seq.data(), seq.size());
     }
 
     // Returns the MethodInfo for the method on the given class with the given name and number of arguments
-    // TODO: HASH MAP KNOWN FUNCTIONS
     // Created by zoller27osu
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, int argsCount);
+    // TODO: instead of this 1 additional resolution, direct all integer-only or non-pointer/string params to the argsCount overload
+    inline const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, size_t argsCount) {
+        return FindMethod(klass, methodName, static_cast<int>(argsCount));
+    }
 
-    // Returns the MethodInfo for the method on class found via namespace and name with the given name and number of arguments
-    const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount);
+    // Returns the MethodInfo for the method on the given class with the given name and types of arguments
+    // Created by zoller27osu
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass);
+    // Varargs to vector helper
+    template<typename... TArgs> const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, TArgs&&... argTypes) {
+        return FindMethod(klass, methodName, {argTypes...});
+    }
+
+    // Returns the MethodInfo for the method on class found via namespace and name with the given other arguments
+    template<class... TArgs>
+    const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
+        return FindMethod(GetClassFromName(nameSpace.data(), className.data()), params...);
+    }
 
     // Returns the MethodInfo for the method on the given instance
-    const MethodInfo* FindMethod(Il2CppObject* instance, std::string_view methodName, int argsCount);
+    template<class... TArgs>
+    const MethodInfo* FindMethod(Il2CppObject* instance, TArgs&&... params) {
+        return FindMethod(GetClassOfObject(instance, "FindMethod"), params...);
+    }
 
     template<class TOut, class... TArgs>
     // Runs a MethodInfo with the specified parameters and instance, with return type TOut
@@ -308,12 +267,7 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: RunMethod: Null instance parameter!");
             return false;
         }
-        auto klass = il2cpp_functions::object_get_class(instance);
-        if (!klass) {
-            log(ERROR, "il2cpp_utils: RunMethod: Could not get the object's class!");
-            return false;
-        }
-        auto method = FindMethod(klass, methodName, sizeof...(TArgs));
+        auto method = FindMethod(instance, methodName, sizeof...(TArgs));
         if (!method) return false;
         return RunMethod(out, instance, method, params...);
     }
@@ -336,9 +290,51 @@ namespace il2cpp_utils {
         return RunMethod(&out, instance, methodName, params...);
     }
 
+    template<typename TObj = Il2CppObject, typename... TArgs>
+    // Creates a new object of the given class and Il2CppTypes parameters and casts it to TObj*
+    TObj* New(Il2CppClass* klass, TArgs const& ...args) {
+        il2cpp_functions::Init();
+
+        // object_new call
+        auto obj = il2cpp_functions::object_new(klass);
+        // runtime_invoke constructor with right type(s) of arguments, return null if constructor errors
+        const MethodInfo* ctor = FindMethod(klass, ".ctor", args...);
+        if (!ctor) return nullptr;
+
+        if (!RunMethod(obj, ctor, args...)) return nullptr;
+        return reinterpret_cast<TObj*>(obj);
+    }
+
+    template<typename TObj = Il2CppObject, typename... TArgs>
+    // Creates a New object of the given class and parameters and casts it to TObj*
+    // DOES NOT PERFORM TYPE-SAFE CHECKING!
+    TObj* NewUnsafe(Il2CppClass* klass, TArgs* ...args) {
+        il2cpp_functions::Init();
+
+        // object_new call
+        auto obj = il2cpp_functions::object_new(klass);
+        // runtime_invoke constructor with right number of args, return null if constructor errors
+        constexpr auto count = sizeof...(TArgs);
+        const MethodInfo* ctor = FindMethod(klass, ".ctor", count);
+        if (!ctor) return nullptr;
+
+        if (!RunMethod(obj, ctor, args...)) return nullptr;
+        return reinterpret_cast<TObj*>(obj);
+    }
+
     // Returns the FieldInfo for the field of the given class with the given name
     // Created by zoller27osu
     FieldInfo* FindField(Il2CppClass* klass, std::string_view fieldName);
+    // Wrapper for FindField taking a namespace and class name in place of an Il2CppClass*
+    template<class... TArgs>
+    FieldInfo* FindField(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
+        return FindField(GetClassFromName(nameSpace.data(), className.data()), params...);
+    }
+    // Wrapper for FindField taking an Il2CppObject* in place of an Il2CppClass*
+    template<class... TArgs>
+    FieldInfo* FindField(Il2CppObject* instance, TArgs&&... params) {
+        return FindField(GetClassOfObject(instance, "FindField"), params...);
+    }
 
     // Gets an Il2cppObject* from the given object instance and FieldInfo
     // instance can only be null for static fields
@@ -407,12 +403,7 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: GetFieldValue: Null instance parameter!");
             return false;
         }
-        auto klass = il2cpp_functions::object_get_class(instance);
-        if (!klass) {
-            log(ERROR, "il2cpp_utils: GetFieldValue: Could not find object class!");
-            return false;
-        }
-        auto field = FindField(klass, fieldName);
+        auto field = FindField(instance, fieldName);
         if (!field) return false;
         return GetFieldValue(out, instance, field);
     }
@@ -444,6 +435,7 @@ namespace il2cpp_utils {
 
     template<typename T = MulticastDelegate, typename R, typename... TArgs>
     // Creates an Action and casts it to a MulticastDelegate*
+    // actionType should be extracted from the FieldInfo or MethodInfo you plan to send the action to!
     // Created by zoller27osu
     T* MakeAction(Il2CppObject* obj, function_ptr_t<R, TArgs...> callback, const Il2CppType* actionType) {
         Il2CppClass* actionClass = il2cpp_functions::class_from_il2cpp_type(actionType);
@@ -473,7 +465,7 @@ namespace il2cpp_utils {
     }
 
     template<typename T = MulticastDelegate>
-    T* MakeAction(Il2CppObject* obj, void* callback, const Il2CppType* actionType) {
+    T* MakeAction(Il2CppObject* obj, Il2CppMethodPointer callback, const Il2CppType* actionType) {
         auto tmp = reinterpret_cast<function_ptr_t<void>>(callback);
         return MakeAction(obj, tmp, actionType);
     }
@@ -482,7 +474,7 @@ namespace il2cpp_utils {
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types);
 
     // Function made by zoller27osu, modified by Sc2ad
-    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::initializer_list<const Il2CppClass*> args);
+    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
 
     // Gets a type Il2CppObject* from an Il2CppClass*
     Il2CppObject* GetType(Il2CppClass* klass);
