@@ -7,6 +7,7 @@
 
 namespace std
 {
+    // From https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine
     template<class T> void hash_combine(size_t& seed, T v) {
         seed ^= std::hash<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     }
@@ -52,6 +53,7 @@ namespace il2cpp_utils {
     };
     // It doesn't matter what types these are, they just need to be used correctly within the methods
     static std::unordered_map<std::pair<std::string, std::string>, Il2CppClass*, hash_pair> namesToClassesCache;
+    // decltype is static so this should make the hashmap use as little memory as needed regardless of il2cpp changes
     static std::unordered_map<std::pair<Il2CppClass*, std::pair<std::string, decltype(MethodInfo::parameters_count)>>, const MethodInfo*, hash_pair_3> classesNamesToMethodsCache;
 
     typedef std::pair<std::string, std::vector<const Il2CppType*>> classesNamesTypesInnerPairType;

@@ -177,6 +177,7 @@ namespace il2cpp_utils {
     // Returns the MethodInfo for the method on the given class with the given name and number of arguments
     // Created by zoller27osu
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, int argsCount);
+    // TODO: instead of this 1 additional resolution, direct all integer-only or non-pointer/string params to the argsCount overload
     inline const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, size_t argsCount) {
         return FindMethod(klass, methodName, static_cast<int>(argsCount));
     }
@@ -464,7 +465,7 @@ namespace il2cpp_utils {
     }
 
     template<typename T = MulticastDelegate>
-    T* MakeAction(Il2CppObject* obj, void* callback, const Il2CppType* actionType) {
+    T* MakeAction(Il2CppObject* obj, Il2CppMethodPointer callback, const Il2CppType* actionType) {
         auto tmp = reinterpret_cast<function_ptr_t<void>>(callback);
         return MakeAction(obj, tmp, actionType);
     }
