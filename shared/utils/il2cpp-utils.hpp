@@ -434,6 +434,7 @@ namespace il2cpp_utils {
 
     template<typename T = MulticastDelegate, typename R, typename... TArgs>
     // Creates an Action and casts it to a MulticastDelegate*
+    // actionType should be extracted from the FieldInfo or MethodInfo you plan to send the action to!
     // Created by zoller27osu
     T* MakeAction(Il2CppObject* obj, function_ptr_t<R, TArgs...> callback, const Il2CppType* actionType) {
         Il2CppClass* actionClass = il2cpp_functions::class_from_il2cpp_type(actionType);
