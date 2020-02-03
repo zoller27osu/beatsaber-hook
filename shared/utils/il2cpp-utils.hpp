@@ -148,8 +148,18 @@ namespace il2cpp_utils {
 
     std::vector<const Il2CppType*> ClassVecToTypes(std::vector<const Il2CppClass*> seq);
 
+    inline Il2CppClass* GetClassOfObject(Il2CppObject* instance, std::string_view whosAsking) {
+        il2cpp_functions::Init();
+        auto klass = il2cpp_functions::object_get_class(instance);
+        if (!klass) {
+            log(ERROR, "il2cpp_utils: %s: Could not find object's class!", whosAsking.data());
+            return nullptr;
+        }
+        return klass;
+    }
+
     // Returns if a given MethodInfo's parameters match the Il2CppType array provided as type_arr
-    bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, int count);
+    bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, decltype(MethodInfo::parameters_count) count);
 
     template<typename... TArgs>
     // Returns if a given MethodInfo's parameters match the Il2CppTypes provided as args
@@ -167,6 +177,9 @@ namespace il2cpp_utils {
     // Returns the MethodInfo for the method on the given class with the given name and number of arguments
     // Created by zoller27osu
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, int argsCount);
+    inline const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, size_t argsCount) {
+        return FindMethod(klass, methodName, static_cast<int>(argsCount));
+    }
 
     // Returns the MethodInfo for the method on the given class with the given name and types of arguments
     // Created by zoller27osu
@@ -187,8 +200,7 @@ namespace il2cpp_utils {
     // Returns the MethodInfo for the method on the given instance
     template<class... TArgs>
     const MethodInfo* FindMethod(Il2CppObject* instance, TArgs&&... params) {
-        il2cpp_functions::Init();
-        return FindMethod(il2cpp_functions::object_get_class(instance), params...);
+        return FindMethod(GetClassOfObject(instance, "FindMethod"), params...);
     }
 
     template<class TOut, class... TArgs>
@@ -254,12 +266,7 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: RunMethod: Null instance parameter!");
             return false;
         }
-        auto klass = il2cpp_functions::object_get_class(instance);
-        if (!klass) {
-            log(ERROR, "il2cpp_utils: RunMethod: Could not get the object's class!");
-            return false;
-        }
-        auto method = FindMethod(klass, methodName, sizeof...(TArgs));
+        auto method = FindMethod(instance, methodName, sizeof...(TArgs));
         if (!method) return false;
         return RunMethod(out, instance, method, params...);
     }
@@ -317,6 +324,16 @@ namespace il2cpp_utils {
     // Returns the FieldInfo for the field of the given class with the given name
     // Created by zoller27osu
     FieldInfo* FindField(Il2CppClass* klass, std::string_view fieldName);
+    // Wrapper for FindField taking a namespace and class name in place of an Il2CppClass*
+    template<class... TArgs>
+    FieldInfo* FindField(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
+        return FindField(GetClassFromName(nameSpace.data(), className.data()), params...);
+    }
+    // Wrapper for FindField taking an Il2CppObject* in place of an Il2CppClass*
+    template<class... TArgs>
+    FieldInfo* FindField(Il2CppObject* instance, TArgs&&... params) {
+        return FindField(GetClassOfObject(instance, "FindField"), params...);
+    }
 
     // Gets an Il2cppObject* from the given object instance and FieldInfo
     // instance can only be null for static fields
@@ -385,12 +402,7 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: GetFieldValue: Null instance parameter!");
             return false;
         }
-        auto klass = il2cpp_functions::object_get_class(instance);
-        if (!klass) {
-            log(ERROR, "il2cpp_utils: GetFieldValue: Could not find object class!");
-            return false;
-        }
-        auto field = FindField(klass, fieldName);
+        auto field = FindField(instance, fieldName);
         if (!field) return false;
         return GetFieldValue(out, instance, field);
     }

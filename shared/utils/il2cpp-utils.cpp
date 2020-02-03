@@ -52,7 +52,7 @@ namespace il2cpp_utils {
     };
     // It doesn't matter what types these are, they just need to be used correctly within the methods
     static std::unordered_map<std::pair<std::string, std::string>, Il2CppClass*, hash_pair> namesToClassesCache;
-    static std::unordered_map<std::pair<Il2CppClass*, std::pair<std::string, int>>, const MethodInfo*, hash_pair_3> classesNamesToMethodsCache;
+    static std::unordered_map<std::pair<Il2CppClass*, std::pair<std::string, decltype(MethodInfo::parameters_count)>>, const MethodInfo*, hash_pair_3> classesNamesToMethodsCache;
 
     typedef std::pair<std::string, std::vector<const Il2CppType*>> classesNamesTypesInnerPairType;
     static std::unordered_map<std::pair<Il2CppClass*, classesNamesTypesInnerPairType>, const MethodInfo*, hash_pair_3> classesNamesTypesToMethodsCache;
@@ -78,12 +78,12 @@ namespace il2cpp_utils {
         return types;
     }
 
-    bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, int count) {
+    bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, decltype(MethodInfo::parameters_count) count) {
         il2cpp_functions::Init();
         if (method->parameters_count != count) {
             return false;
         }
-        for (int i = 0; i < method->parameters_count; i++) {
+        for (decltype(method->parameters_count) i = 0; i < method->parameters_count; i++) {
             if (!il2cpp_functions::type_equals(method->parameters[i].parameter_type, type_arr[i])) {
                 return false;
             }
@@ -168,8 +168,8 @@ namespace il2cpp_utils {
         
         if (!klass) return nullptr;
         // Check Cache
-        auto innerPair = std::pair<std::string, int>(methodName.data(), argsCount);
-        auto key = std::pair<Il2CppClass*, std::pair<std::string, int>>(klass, innerPair);
+        auto innerPair = std::pair<std::string, decltype(MethodInfo::parameters_count)>(methodName.data(), argsCount);
+        auto key = std::pair<Il2CppClass*, decltype(innerPair)>(klass, innerPair);
         auto itr = classesNamesToMethodsCache.find(key);
         if (itr != classesNamesToMethodsCache.end()) {
             return itr->second;
@@ -282,12 +282,7 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: GetFieldValueObject: Null instance parameter!");
             return nullptr;
         }
-        auto klass = il2cpp_functions::object_get_class(instance);
-        if (!klass) {
-            log(ERROR, "il2cpp_utils: GetFieldValueObject: Could not find object class!");
-            return nullptr;
-        }
-        auto field = FindField(klass, fieldName);
+        auto field = FindField(instance, fieldName);
         if (!field) return nullptr;
         return GetFieldValue(instance, field);
     }
@@ -326,12 +321,7 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: SetFieldValue: Null instance parameter!");
             return false;
         }
-        auto klass = il2cpp_functions::object_get_class(instance);
-        if (!klass) {
-            log(ERROR, "il2cpp_utils: SetFieldValue: Could not find object class!");
-            return false;
-        }
-        auto field = FindField(klass, fieldName);
+        auto field = FindField(instance, fieldName);
         if (!field) return false;
         return SetFieldValue(instance, field, value);
     }
