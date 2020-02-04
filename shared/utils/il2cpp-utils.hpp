@@ -186,10 +186,12 @@ namespace il2cpp_utils {
     // Created by zoller27osu
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes);
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppObject*> args);
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass);
     // Varargs to vector helper
-    template<typename... TArgs> const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, TArgs&&... argTypes) {
-        return FindMethod(klass, methodName, {argTypes...});
+    template <typename... TArgs>
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, TArgs&&... args) {
+        return FindMethod(klass, methodName, std::vector{std::forward<TArgs>(args)...});
     }
 
     // Returns the MethodInfo for the method on class found via namespace and name with the given other arguments
@@ -484,17 +486,17 @@ namespace il2cpp_utils {
 
     // Gets the standard class name of an Il2CppClass*
     std::string ClassStandardName(Il2CppClass* klass, bool generics = true);
- 
+
     // Gets a C# name of a type
     const char* TypeGetSimpleName(const Il2CppType* type);
-    
+
     // Function made by zoller27osu, modified by Sc2ad
     // Logs information about the given MethodInfo* as log(DEBUG)
     void LogMethod(const MethodInfo* method);
 
     // Created by zoller27osu
     // Calls LogMethod on all methods in the given class
-    void LogMethods(const Il2CppClass* klass);
+    void LogMethods(Il2CppClass* klass, bool logParents = false);
 
     // Created by zoller27osu
     // Logs information about the given FieldInfo* as log(DEBUG)
@@ -502,11 +504,11 @@ namespace il2cpp_utils {
 
     // Created by zoller27osu
     // Calls LogField on all fields in the given class
-    void LogFields(Il2CppClass* klass);
+    void LogFields(Il2CppClass* klass, bool logParents = false);
 
     // Some parts provided by zoller27osu
     // Logs information about the given Il2CppClass* as log(DEBUG)
-    void LogClass(const Il2CppClass* klass, bool logParents = false);
+    void LogClass(Il2CppClass* klass, bool logParents = false);
 
     // Logs all classes (from every namespace) that start with the given prefix
     // WARNING: THIS FUNCTION IS VERY SLOW. ONLY USE THIS FUNCTION ONCE AND WITH A FAIRLY SPECIFIC PREFIX!

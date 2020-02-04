@@ -167,7 +167,7 @@ namespace il2cpp_utils {
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, int argsCount) {
         il2cpp_functions::Init();
-        
+
         if (!klass) return nullptr;
         // Check Cache
         auto innerPair = std::pair<std::string, decltype(MethodInfo::parameters_count)>(methodName.data(), argsCount);
@@ -180,7 +180,7 @@ namespace il2cpp_utils {
         if (!methodInfo) {
             log(ERROR, "could not find method %s with %i parameters in class %s (namespace '%s')!", methodName.data(),
                 argsCount, il2cpp_functions::class_get_name(klass), il2cpp_functions::class_get_namespace(klass));
-            LogMethods(klass);
+            LogMethods(klass, true);
         }
         classesNamesToMethodsCache.insert({key, methodInfo});
         return methodInfo;
@@ -188,7 +188,7 @@ namespace il2cpp_utils {
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes) {
         il2cpp_functions::Init();
-        
+
         if (!klass) return nullptr;
         // Check Cache
         auto innerPair = classesNamesTypesInnerPairType(methodName.data(), argTypes);
@@ -218,7 +218,7 @@ namespace il2cpp_utils {
             }
             ss << ") in class " << il2cpp_functions::class_get_name(klass) << " (namespace '" << il2cpp_functions::class_get_namespace(klass) << "')!";
             log(ERROR, "%s", ss.str().c_str());
-            LogMethods(klass);
+            LogMethods(klass, true);
         }
         classesNamesTypesToMethodsCache.insert({key, methodInfo});
         return methodInfo;
@@ -226,6 +226,15 @@ namespace il2cpp_utils {
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses) {
         std::vector<const Il2CppType*> argTypes = ClassVecToTypes(argClasses);
+        return FindMethod(klass, methodName, argTypes);
+    }
+
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppObject*> args) {
+        std::vector<const Il2CppType*> argTypes;
+        for (auto o : args) {
+            auto clazz = il2cpp_functions::object_get_class(o);
+            argTypes.push_back(il2cpp_functions::class_get_type(clazz));
+        }
         return FindMethod(klass, methodName, argTypes);
     }
 
@@ -252,7 +261,8 @@ namespace il2cpp_utils {
         if (!field) {
             log(ERROR, "could not find field %s in class %s (namespace '%s')!", fieldName.data(),
                 il2cpp_functions::class_get_name(klass), il2cpp_functions::class_get_namespace(klass));
-            LogFields(klass);
+            LogFields(klass, true);
+            if (klass->parent != klass) field = FindField(klass->parent, fieldName);
         }
         classesNamesToFieldsCache.insert({key, field});
         return field;
@@ -458,15 +468,21 @@ namespace il2cpp_utils {
         log(DEBUG, "%s%s %s; // 0x%lx, flags: 0x%.4X", flagStr, typeStr, name, offset, flags);
     }
 
-    void LogFields(Il2CppClass* klass) {
+    void LogFields(Il2CppClass* klass, bool logParents) {
+        if (!klass) return;
         void* myIter = nullptr;
         FieldInfo* field;
         if (klass->name) il2cpp_functions::Class_Init(klass);
+        if (logParents) log(INFO, "class name: %s", ClassStandardName(klass).c_str());
+
         log(DEBUG, "property_count: %i, field_count: %i", klass->property_count, klass->field_count);
         while ((field = il2cpp_functions::class_get_fields(klass, &myIter))) {
             LogField(field);
         }
         usleep(100);
+        if (logParents && klass->parent && klass->parent != klass) {
+            LogFields(klass->parent, logParents);
+        }
     }
 
     void GenericsToStringHelper(Il2CppGenericClass* genClass, std::ostream& os) {
@@ -522,7 +538,11 @@ namespace il2cpp_utils {
         return "?";
     }
 
-    void LogMethods(const Il2CppClass* klass) {
+    void LogMethods(Il2CppClass* klass, bool logParents) {
+        if (!klass) return;
+        if (klass->name) il2cpp_functions::Class_Init(klass);
+        if (logParents) log(INFO, "class name: %s", ClassStandardName(klass).c_str());
+
         log(DEBUG, "method_count: %i", klass->method_count);
         for (int i = 0; i < klass->method_count; i++) {
             if (klass->methods[i]) {
@@ -533,12 +553,15 @@ namespace il2cpp_utils {
             }
         }
         usleep(100);
+        if (logParents && klass->parent && (klass->parent != klass)) {
+            LogMethods(klass->parent, logParents);
+        }
     }
 
     static int indent = -1;
     static int maxIndent;
-    std::unordered_set<const Il2CppClass*> loggedClasses;
-    void LogClass(const Il2CppClass* klass, bool logParents) {
+    std::unordered_set<Il2CppClass*> loggedClasses;
+    void LogClass(Il2CppClass* klass, bool logParents) {
         il2cpp_functions::Init();
 
         if (loggedClasses.count(klass)) {
@@ -563,31 +586,30 @@ namespace il2cpp_utils {
         // Note: il2cpp stops at GenericMetadata::MaximumRuntimeGenericDepth (which is 8)
         maxIndent = std::max(indent, maxIndent);
 
-        auto unconst = const_cast<Il2CppClass*>(klass);
         void* myIter = nullptr;
         bool methodInit = false;
         if (klass->name) {
-            if (!il2cpp_functions::Class_Init(unconst)) {
+            if (!il2cpp_functions::Class_Init(klass)) {
                 log(WARNING, "Class::Init failed!");
             } else {
                 methodInit = true;
             }
         }
         if (!methodInit) {
-            il2cpp_functions::class_get_methods(unconst, &myIter);  // this initializes the method data
+            il2cpp_functions::class_get_methods(klass, &myIter);  // this initializes the method data
         }
-        log(DEBUG, "%i ======================CLASS INFO FOR CLASS: %s======================", indent, ClassStandardName(unconst).c_str());
+        log(DEBUG, "%i ======================CLASS INFO FOR CLASS: %s======================", indent, ClassStandardName(klass).c_str());
         log(DEBUG, "Pointer: %p", klass);
-        log(DEBUG, "Type Token: %i", il2cpp_functions::class_get_type_token(unconst));
-        auto typeDefIdx = klass->generic_class ? klass->generic_class->typeDefinitionIndex : il2cpp_functions::MetadataCache_GetIndexForTypeDefinition(unconst);
+        log(DEBUG, "Type Token: %i", il2cpp_functions::class_get_type_token(klass));
+        auto typeDefIdx = klass->generic_class ? klass->generic_class->typeDefinitionIndex : il2cpp_functions::MetadataCache_GetIndexForTypeDefinition(klass);
         log(DEBUG, "TypeDefinitionIndex: %i", typeDefIdx);
         // Repair the typeDefinition value if it was null but we found one
-        if (!unconst->typeDefinition && typeDefIdx > 0) unconst->typeDefinition = il2cpp_functions::MetadataCache_GetTypeDefinitionFromIndex(typeDefIdx);
+        if (!klass->typeDefinition && typeDefIdx > 0) klass->typeDefinition = il2cpp_functions::MetadataCache_GetTypeDefinitionFromIndex(typeDefIdx);
         log(DEBUG, "Type definition: %p", klass->typeDefinition);
 
         log(DEBUG, "Assembly Name: %s", il2cpp_functions::class_get_assemblyname(klass));
 
-        auto typ = il2cpp_functions::class_get_type(unconst);
+        auto typ = il2cpp_functions::class_get_type(klass);
         if (typ) {
             log(DEBUG, "Type name: %s", il2cpp_functions::type_get_name(typ));
             auto ch = il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_REFLECTION);
@@ -664,18 +686,18 @@ namespace il2cpp_utils {
         log(DEBUG, "%i =========METHODS=========", indent);
         LogMethods(klass);
 
-        auto declaring = il2cpp_functions::class_get_declaring_type(unconst);
+        auto declaring = il2cpp_functions::class_get_declaring_type(klass);
         log(DEBUG, "declaring type: %p", declaring);
         if (declaring && logParents) LogClass(declaring, logParents);
-        auto element = il2cpp_functions::class_get_element_class(unconst);
+        auto element = il2cpp_functions::class_get_element_class(klass);
         log(DEBUG, "element class: %p (self = %p)", element, klass);
         if (element && element != klass && logParents) LogClass(element, logParents);
 
         log(DEBUG, "%i =========FIELDS=========", indent);
-        LogFields(unconst);
+        LogFields(klass);
         log(DEBUG, "%i =========END FIELDS=========", indent);
 
-        auto parent = il2cpp_functions::class_get_parent(unconst);
+        auto parent = il2cpp_functions::class_get_parent(klass);
         log(DEBUG, "parent: %p (%s)", parent, parent ? ClassStandardName(parent).c_str() : "");
         if (parent && logParents) LogClass(parent, logParents);
         log(DEBUG, "%i, ==================================================================================", indent);
