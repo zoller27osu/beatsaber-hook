@@ -2,9 +2,7 @@
 // CUSTOM UI
 
 #include "../utils/utils.h"
-#include "../utils/utils-functions.h"
 #include "customui.hpp"
-
 using namespace il2cpp_utils;
 
 int CustomUI::TextObject::counter = 0;
