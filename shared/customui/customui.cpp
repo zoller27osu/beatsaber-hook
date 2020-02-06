@@ -27,7 +27,7 @@ namespace CustomUI
 
         // gameObj.AddComponent<TextMeshProUGUI>();
         log(DEBUG, "TextObject::create: Getting type of TMPro.TextMeshProUGUI");
-        Il2CppObject *type_tmpugui = GetSystemType(GetClassFromName("TMPro", "TextMeshProUGUI"));
+        Il2CppObject *type_tmpugui = GetSystemType("TMPro", "TextMeshProUGUI");
         
         log(DEBUG, "TextObject::create: Adding component TMPro.TextMeshProUGUI");
         if (!RunMethod(&textMesh, gameObj, "AddComponent", type_tmpugui))
@@ -37,7 +37,7 @@ namespace CustomUI
         }
         // textMesh.font = GameObject.Instantiate(Resources.FindObjectsOfTypeAll<TMP_FontAsset>().First(t => t.name == "Teko-Medium SDF No Glow"));
         log(DEBUG, "TextObject::create: Getting type of TMPro.TMP_FontAsset");
-        Il2CppObject *type_fontasset = GetSystemType(GetClassFromName("TMPro", "TMP_FontAsset"));
+        Il2CppObject *type_fontasset = GetSystemType("TMPro", "TMP_FontAsset");
         log(DEBUG, "TextObject::create: Gotten the type!");
         Array<Il2CppObject *> *allObjects;
 
@@ -250,7 +250,7 @@ namespace CustomUI
             {
                 log(DEBUG, "Failed to set gameObj active to false");
             }
-            if (!RunMethod(&obj->rawImage, obj->gameObj, "AddComponent", GetSystemType(GetClassFromName("UnityEngine.UI", "RawImage"))))
+            if (!RunMethod(&obj->rawImage, obj->gameObj, "AddComponent", GetSystemType("UnityEngine.UI", "RawImage")))
             {
                 log(DEBUG, "Failed to AddComponent rawImage");
             }
@@ -309,8 +309,7 @@ namespace CustomUI
             return false;
         }
         log(INFO, "Callback success!");
-        usleep(100);
-        // TODO: if debug, play a sound or sound-making menu transition?
+        // TODO: if debug, play a sound?
         return true;
     }
 

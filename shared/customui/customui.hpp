@@ -36,7 +36,7 @@ namespace CustomUI {
             // Returns true on success, false otherwise.
             bool create();
     };
-    // Except where mentioned, original code by Rugtveit.
+    // Except where mentioned, original code by Rugtveit and only slight modifications by zoller27osu.
     class RawImageObject : public Il2CppObject {
         private:
             // This counter increments every time a CustomUIRawImage object is created by the same mod.
