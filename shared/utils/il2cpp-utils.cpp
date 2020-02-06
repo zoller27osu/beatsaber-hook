@@ -95,7 +95,7 @@ namespace il2cpp_utils {
 
     // Gets the type enum of a given type
     // TODO Remove this method! Replace with default typesystem
-    int GetTypeEnum(const char* name_space, const char* type_name) {
+    int GetTypeEnum(std::string_view name_space, std::string_view type_name) {
         auto klass = GetClassFromName(name_space, type_name);
         auto typ = il2cpp_functions::class_get_type(klass);
         return il2cpp_functions::type_get_type(typ);
@@ -131,7 +131,7 @@ namespace il2cpp_utils {
         }
     }
 
-    Il2CppClass* GetClassFromName(const char* name_space, const char* type_name) {
+    Il2CppClass* GetClassFromName(std::string_view name_space, std::string_view type_name) {
         il2cpp_functions::Init();
 
         // Check cache
@@ -155,13 +155,14 @@ namespace il2cpp_utils {
                 log(ERROR, "Assembly with name: %s has a null image!", assemb->aname.name);
                 continue;
             }
-            auto klass = il2cpp_functions::class_from_name(img, name_space, type_name);
+            auto klass = il2cpp_functions::class_from_name(img, name_space.data(), type_name.data());
             if (klass) {
                 namesToClassesCache.insert({key, klass});
                 return klass;
             }
         }
-        log(ERROR, "il2cpp_utils: GetClassFromName: Could not find class with namepace: %s and name: %s", name_space, type_name);
+        log(ERROR, "il2cpp_utils: GetClassFromName: Could not find class with namepace: %s and name: %s",
+            name_space.data(), type_name.data());
         return nullptr;
     }
 
@@ -170,7 +171,7 @@ namespace il2cpp_utils {
 
         if (!klass) return nullptr;
         // Check Cache
-        auto innerPair = std::pair<std::string, decltype(MethodInfo::parameters_count)>(methodName.data(), argsCount);
+        auto innerPair = std::pair<std::string, decltype(MethodInfo::parameters_count)>(methodName, argsCount);
         auto key = std::pair<Il2CppClass*, decltype(innerPair)>(klass, innerPair);
         auto itr = classesNamesToMethodsCache.find(key);
         if (itr != classesNamesToMethodsCache.end()) {
@@ -191,7 +192,7 @@ namespace il2cpp_utils {
 
         if (!klass) return nullptr;
         // Check Cache
-        auto innerPair = classesNamesTypesInnerPairType(methodName.data(), argTypes);
+        auto innerPair = classesNamesTypesInnerPairType(methodName, argTypes);
         auto key = std::pair<Il2CppClass*, classesNamesTypesInnerPairType>(klass, innerPair);
         auto itr = classesNamesTypesToMethodsCache.find(key);
         if (itr != classesNamesTypesToMethodsCache.end()) {
@@ -241,7 +242,7 @@ namespace il2cpp_utils {
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass) {
         std::vector<const Il2CppType*> argTypes;
         for (int i = 0; i < argSpaceClass.size() - 1; i += 2) {
-            auto clazz = GetClassFromName(argSpaceClass[i].data(), argSpaceClass[i+1].data());
+            auto clazz = GetClassFromName(argSpaceClass[i], argSpaceClass[i+1]);
             argTypes.push_back(il2cpp_functions::class_get_type(clazz));
         }
         return FindMethod(klass, methodName, argTypes);
@@ -252,7 +253,7 @@ namespace il2cpp_utils {
 
         if (!klass) return nullptr;
         // Check Cache
-        auto key = std::pair<Il2CppClass*, std::string>(klass, fieldName.data());
+        auto key = std::pair<Il2CppClass*, std::string>(klass, fieldName);
         auto itr = classesNamesToFieldsCache.find(key);
         if (itr != classesNamesToFieldsCache.end()) {
             return itr->second;
@@ -369,13 +370,8 @@ namespace il2cpp_utils {
         if (!typ) {
             return nullptr;
         }
-        auto getType = il2cpp_functions::class_get_method_from_name(typ, "GetType", 1);
-        if (!getType) {
-            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get System.Type.GetType(param1) method!");
-            return nullptr;
-        }
  
-        auto klassType = GetType(klass);
+        auto klassType = GetSystemType(klass);
         if (!klassType) {
             log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get class type object!");
             return nullptr;
@@ -390,7 +386,7 @@ namespace il2cpp_utils {
  
         int i = 0;
         for (auto arg : args) {
-            auto o = GetType(arg);
+            auto o = GetSystemType(arg);
             if (!o) {
                 log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get type for %s", il2cpp_functions::class_get_name_const(arg));
                 return nullptr;
@@ -414,14 +410,14 @@ namespace il2cpp_utils {
         return ret;
     }
 
-    Il2CppObject* GetType(Il2CppClass* klass) {
-        il2cpp_functions::Init();
-        return il2cpp_functions::type_get_object(il2cpp_functions::class_get_type(klass));
-    }
-
-    Il2CppObject* GetType(const Il2CppClass* klass) {
+    Il2CppObject* GetSystemType(const Il2CppClass* klass) {
+        if (!klass) return nullptr;
         il2cpp_functions::Init();
         return il2cpp_functions::type_get_object(il2cpp_functions::class_get_type_const(klass));
+    }
+
+    Il2CppObject* GetSystemType(std::string_view nameSpace, std::string_view className) {
+        return GetSystemType(il2cpp_utils::GetClassFromName(nameSpace, className));
     }
 
     void LogMethod(const MethodInfo* method) {

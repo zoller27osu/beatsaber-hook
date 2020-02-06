@@ -56,7 +56,7 @@ namespace il2cpp_utils {
     std::string ExceptionToString(Il2CppException* exp);
 
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
-    Il2CppClass* GetClassFromName(const char* name_space, const char* type_name);
+    Il2CppClass* GetClassFromName(std::string_view name_space, std::string_view type_name);
 
     // Framework provided by DaNike
     namespace il2cpp_type_check {
@@ -197,7 +197,7 @@ namespace il2cpp_utils {
     // Returns the MethodInfo for the method on class found via namespace and name with the given other arguments
     template<class... TArgs>
     const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
-        return FindMethod(GetClassFromName(nameSpace.data(), className.data()), params...);
+        return FindMethod(GetClassFromName(nameSpace, className), params...);
     }
 
     // Returns the MethodInfo for the method on the given instance
@@ -330,7 +330,7 @@ namespace il2cpp_utils {
     // Wrapper for FindField taking a namespace and class name in place of an Il2CppClass*
     template<class... TArgs>
     FieldInfo* FindField(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
-        return FindField(GetClassFromName(nameSpace.data(), className.data()), params...);
+        return FindField(GetClassFromName(nameSpace, className), params...);
     }
     // Wrapper for FindField taking an Il2CppObject* in place of an Il2CppClass*
     template<class... TArgs>
@@ -478,11 +478,11 @@ namespace il2cpp_utils {
     // Function made by zoller27osu, modified by Sc2ad
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
 
-    // Gets a type Il2CppObject* from an Il2CppClass*
-    Il2CppObject* GetType(Il2CppClass* klass);
+    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for an Il2CppClass*
+    Il2CppObject* GetSystemType(const Il2CppClass* klass);
 
-    // Gets a type Il2CppObject* from a const Il2CppClass*
-    Il2CppObject* GetType(const Il2CppClass* klass);
+    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for the class with the given namespace and name
+    Il2CppObject* GetSystemType(std::string_view nameSpace, std::string_view className);
 
     // Gets the standard class name of an Il2CppClass*
     std::string ClassStandardName(Il2CppClass* klass, bool generics = true);
