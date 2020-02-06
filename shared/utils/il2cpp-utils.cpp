@@ -359,13 +359,8 @@ namespace il2cpp_utils {
         if (!typ) {
             return nullptr;
         }
-        auto getType = il2cpp_functions::class_get_method_from_name(typ, "GetType", 1);
-        if (!getType) {
-            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get System.Type.GetType(param1) method!");
-            return nullptr;
-        }
  
-        auto klassType = GetType(klass);
+        auto klassType = GetSystemType(klass);
         if (!klassType) {
             log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get class type object!");
             return nullptr;
@@ -380,7 +375,7 @@ namespace il2cpp_utils {
  
         int i = 0;
         for (auto arg : args) {
-            auto o = GetType(arg);
+            auto o = GetSystemType(arg);
             if (!o) {
                 log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get type for %s", il2cpp_functions::class_get_name_const(arg));
                 return nullptr;
@@ -404,12 +399,12 @@ namespace il2cpp_utils {
         return ret;
     }
 
-    Il2CppObject* GetType(Il2CppClass* klass) {
+    Il2CppObject* GetSystemType(Il2CppClass* klass) {
         il2cpp_functions::Init();
         return il2cpp_functions::type_get_object(il2cpp_functions::class_get_type(klass));
     }
 
-    Il2CppObject* GetType(const Il2CppClass* klass) {
+    Il2CppObject* GetSystemType(const Il2CppClass* klass) {
         il2cpp_functions::Init();
         return il2cpp_functions::type_get_object(il2cpp_functions::class_get_type_const(klass));
     }

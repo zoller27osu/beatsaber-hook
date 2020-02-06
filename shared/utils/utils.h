@@ -16,6 +16,7 @@ namespace std {
 #else
 #error No string_view implementation available!
 #endif
+#include <thread>
 
 #include "typedefs.h"
 #include "utils-functions.h"
@@ -119,6 +120,12 @@ T bits(T x, uint8_t high, uint8_t low) {
 template<class T>
 void analyzeBytes(const T* ptr) {
     analyzeBytes((const void*)ptr);
+}
+
+template <typename Function, typename... Args>
+static void StartCoroutine(Function&& fun, Args&&... args) {
+    auto t = new std::thread(std::forward<Function>(fun), std::forward<Args>(args)...);
+    t->detach();
 }
 
 extern "C" {

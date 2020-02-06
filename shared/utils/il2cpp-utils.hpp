@@ -476,11 +476,11 @@ namespace il2cpp_utils {
     // Function made by zoller27osu, modified by Sc2ad
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
 
-    // Gets a type Il2CppObject* from an Il2CppClass*
-    Il2CppObject* GetType(Il2CppClass* klass);
+    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for an Il2CppClass*
+    Il2CppObject* GetSystemType(Il2CppClass* klass);
 
-    // Gets a type Il2CppObject* from a const Il2CppClass*
-    Il2CppObject* GetType(const Il2CppClass* klass);
+    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for a const Il2CppClass*
+    Il2CppObject* GetSystemType(const Il2CppClass* klass);
 
     // Gets the standard class name of an Il2CppClass*
     std::string ClassStandardName(Il2CppClass* klass, bool generics = true);
