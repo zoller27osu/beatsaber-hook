@@ -239,7 +239,16 @@ namespace il2cpp_utils {
         return FindMethod(klass, methodName, argTypes);
     }
 
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass) {
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppString*> args) {
+        std::vector<const Il2CppType*> argTypes;
+        for (auto s : args) {
+            auto clazz = il2cpp_functions::object_get_class(&(s->object));
+            argTypes.push_back(il2cpp_functions::class_get_type(clazz));
+        }
+        return FindMethod(klass, methodName, argTypes);
+    }
+
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const char*> argSpaceClass) {
         std::vector<const Il2CppType*> argTypes;
         for (int i = 0; i < argSpaceClass.size() - 1; i += 2) {
             auto clazz = GetClassFromName(argSpaceClass[i], argSpaceClass[i+1]);

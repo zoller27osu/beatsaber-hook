@@ -158,6 +158,18 @@ namespace il2cpp_utils {
         return klass;
     }
 
+    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for an Il2CppClass*
+    Il2CppObject* GetSystemType(Il2CppClass* klass);
+
+    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for a const Il2CppClass*
+    Il2CppObject* GetSystemType(const Il2CppClass* klass);
+
+    // Gets the standard class name of an Il2CppClass*
+    std::string ClassStandardName(Il2CppClass* klass, bool generics = true);
+
+    // Gets a C# name of a type
+    const char* TypeGetSimpleName(const Il2CppType* type);
+
     // Returns if a given MethodInfo's parameters match the Il2CppType array provided as type_arr
     bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, decltype(MethodInfo::parameters_count) count);
 
@@ -187,11 +199,30 @@ namespace il2cpp_utils {
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes);
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses);
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppObject*> args);
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass);
+    // TODO: make Il2CppString* convertible to Il2CppObject* instead of adding this
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppString*> args);
+    // TODO: make std::vector<const char*> convertible to std::vector<string_view>?
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const char*> argSpaceClass);
     // Varargs to vector helper
-    template <typename... TArgs>
+    template <typename T>
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::initializer_list<T> args) {
+        return FindMethod(klass, methodName, std::vector<T>(args));
+    }
+
+    template<class T>
+    struct is_vector {
+        static bool const value = false;
+    };
+
+    template<class T>
+    struct is_vector<std::vector<T>> {
+        static bool const value = true;
+    };
+
+    // Varargs to vector helper
+    template <typename... TArgs, std::enable_if_t<(... && !is_vector<TArgs>::value), int> = 0>
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, TArgs&&... args) {
-        return FindMethod(klass, methodName, std::vector{std::forward<TArgs>(args)...});
+        return FindMethod(klass, methodName, {args...});
     }
 
     // Returns the MethodInfo for the method on class found via namespace and name with the given other arguments
@@ -478,17 +509,7 @@ namespace il2cpp_utils {
     // Function made by zoller27osu, modified by Sc2ad
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
 
-    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for an Il2CppClass*
-    Il2CppObject* GetSystemType(const Il2CppClass* klass);
 
-    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for the class with the given namespace and name
-    Il2CppObject* GetSystemType(std::string_view nameSpace, std::string_view className);
-
-    // Gets the standard class name of an Il2CppClass*
-    std::string ClassStandardName(Il2CppClass* klass, bool generics = true);
-
-    // Gets a C# name of a type
-    const char* TypeGetSimpleName(const Il2CppType* type);
 
     // Function made by zoller27osu, modified by Sc2ad
     // Logs information about the given MethodInfo* as log(DEBUG)
