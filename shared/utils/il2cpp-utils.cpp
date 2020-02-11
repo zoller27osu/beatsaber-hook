@@ -80,13 +80,55 @@ namespace il2cpp_utils {
         return types;
     }
 
+    bool IsConvertible(const Il2CppType* to, const Il2CppType* from) {
+        if (il2cpp_functions::type_equals(to, from)) {
+            log(DEBUG, "IsConvertible: types equal (%s), returning true", TypeGetSimpleName(to));
+            return true;
+        }
+        log(DEBUG, "%s (%x) != %s (%x)", TypeGetSimpleName(to), to->type, TypeGetSimpleName(from), from->type);
+
+        auto classFrom = il2cpp_functions::class_from_il2cpp_type(from);
+        auto classTo = il2cpp_functions::class_from_il2cpp_type(to);
+        if (classTo) {
+            if (classTo->enumtype) {
+                auto e = classTo->element_class;
+                if (e != classTo) {
+                    log(DEBUG, "IsConvertible: extracted value type '%s' from Enum 'to', recursing!", TypeGetSimpleName(&e->byval_arg));
+                    if (IsConvertible(&e->byval_arg, from)) return true;
+                }
+            }
+
+            // See if 'from' satisfies the interface represented by 'to'.
+            if (IsInterface(classTo)) {
+                void* iter = nullptr;
+                Il2CppClass* interface;
+                while ((interface = il2cpp_functions::class_get_interfaces(classFrom, &iter))) {
+                    log(DEBUG, "IsConvertible: comparing interfaces: %s, %s", ClassStandardName(classTo).c_str(), ClassStandardName(interface).c_str());
+                    if (classTo == interface) {
+                        log(DEBUG, "IsConvertible: interface match (%s), returning true!", ClassStandardName(classTo).c_str());
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // Try from's parent
+        if (classFrom && classFrom->parent && classFrom->parent != classFrom) {
+            log(DEBUG, "IsConvertible: recursing on 'from's parent");
+            return IsConvertible(to, il2cpp_functions::class_get_type(classFrom->parent));
+        }
+        log(DEBUG, "IsConvertible: no match found, returning false!");
+        return false;
+    }
+
     bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, decltype(MethodInfo::parameters_count) count) {
         il2cpp_functions::Init();
         if (method->parameters_count != count) {
             return false;
         }
+        // TODO: supply boolStrictMatch and use type_equals instead of IsConvertible if supplied?
         for (decltype(method->parameters_count) i = 0; i < method->parameters_count; i++) {
-            if (!il2cpp_functions::type_equals(method->parameters[i].parameter_type, type_arr[i])) {
+            if (!(IsConvertible(method->parameters[i].parameter_type, type_arr[i]))) {
                 return false;
             }
         }
@@ -129,6 +171,12 @@ namespace il2cpp_utils {
         } else {
             return il2cpp_functions::type_get_name(type);
         }
+    }
+
+    bool IsInterface(const Il2CppClass* klass) {
+        return (klass->flags & TYPE_ATTRIBUTE_INTERFACE) ||
+            (klass->byval_arg.type == IL2CPP_TYPE_VAR) ||
+            (klass->byval_arg.type == IL2CPP_TYPE_MVAR);
     }
 
     Il2CppClass* GetClassFromName(std::string_view name_space, std::string_view type_name) {
@@ -203,14 +251,14 @@ namespace il2cpp_utils {
         const MethodInfo* current;
         const MethodInfo* methodInfo = nullptr;
         while ((current = il2cpp_functions::class_get_methods(klass, &myIter))) {
-            if (ParameterMatch(current, argTypes) && strcmp(current->name, methodName.data()) == 0) {
+            if (strcmp(current->name, methodName.data()) == 0 && ParameterMatch(current, argTypes)) {
                 methodInfo = current;
             }
         }
 
         if (!methodInfo) {
-            std::stringstream ss("could not find method ");
-            ss << methodName << "(";
+            std::stringstream ss;
+            ss << "could not find method " << methodName << "(";
             bool first = true;
             for (auto t : argTypes) {
                 if (!first) ss << ", ";
@@ -225,33 +273,15 @@ namespace il2cpp_utils {
         return methodInfo;
     }
 
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses) {
-        std::vector<const Il2CppType*> argTypes = ClassVecToTypes(argClasses);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> classFromes) {
+        std::vector<const Il2CppType*> argTypes = ClassVecToTypes(classFromes);
         return FindMethod(klass, methodName, argTypes);
     }
 
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppObject*> args) {
-        std::vector<const Il2CppType*> argTypes;
-        for (auto o : args) {
-            auto clazz = il2cpp_functions::object_get_class(o);
-            argTypes.push_back(il2cpp_functions::class_get_type(clazz));
-        }
-        return FindMethod(klass, methodName, argTypes);
-    }
-
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppString*> args) {
-        std::vector<const Il2CppType*> argTypes;
-        for (auto s : args) {
-            auto clazz = il2cpp_functions::object_get_class(&(s->object));
-            argTypes.push_back(il2cpp_functions::class_get_type(clazz));
-        }
-        return FindMethod(klass, methodName, argTypes);
-    }
-
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const char*> argSpaceClass) {
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass) {
         std::vector<const Il2CppType*> argTypes;
         for (int i = 0; i < argSpaceClass.size() - 1; i += 2) {
-            auto clazz = GetClassFromName(argSpaceClass[i], argSpaceClass[i+1]);
+            auto clazz = GetClassFromName(argSpaceClass[i].data(), argSpaceClass[i+1].data());
             argTypes.push_back(il2cpp_functions::class_get_type(clazz));
         }
         return FindMethod(klass, methodName, argTypes);
@@ -446,11 +476,11 @@ namespace il2cpp_utils {
         std::stringstream paramStream;
         for (int i = 0; i < il2cpp_functions::method_get_param_count(method); i++) {
             if (i > 0) paramStream << ", ";
-            auto paramType = il2cpp_functions::method_get_param(method, i);
-            if (il2cpp_functions::type_is_byref(paramType)) {
+            auto argType = il2cpp_functions::method_get_param(method, i);
+            if (il2cpp_functions::type_is_byref(argType)) {
                 paramStream << "out/ref ";
             }
-            paramStream << TypeGetSimpleName(paramType) << " ";
+            paramStream << TypeGetSimpleName(argType) << " ";
             auto name = il2cpp_functions::method_get_param_name(method, i);
             paramStream << (name ? name : "__noname__");
         }

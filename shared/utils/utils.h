@@ -18,6 +18,10 @@ namespace std {
 #endif
 #include <thread>
 
+template <typename Container> struct is_vector : std::false_type { };
+template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type { };
+// TODO: figure out how to write an is_vector_v that compiles properly?
+
 #include "typedefs.h"
 #include "utils-functions.h"
 #include "../inline-hook/And64InlineHook.hpp"
