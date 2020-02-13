@@ -132,6 +132,9 @@ namespace il2cpp_utils {
             }
         };
 
+        // Unlike many Il2CppObject*, this has no real subclasses to worry about
+        DEFINE_IL2CPP_ARG_TYPE(Il2CppString*, "System", "String");
+
         DEFINE_MEMBER_CHECKER(obj)
         DEFINE_MEMBER_CHECKER(object)
         template<typename T>
