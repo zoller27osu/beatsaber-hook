@@ -18,6 +18,23 @@ namespace std {
 #endif
 #include <thread>
 
+template <typename Container> struct is_vector : std::false_type { };
+template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type { };
+// TODO: figure out how to write an is_vector_v that compiles properly?
+
+// Produces a has_[member]<T, U> type trait whose ::value tells you whether T has a member named [member] with type U.
+#define DEFINE_MEMBER_CHECKER(member) \
+    template<typename T, typename U, typename Enable = void> \
+    struct has_ ## member : std::false_type { }; \
+    template<typename T, typename U> \
+    struct has_ ## member<T, U, \
+        typename std::enable_if_t< \
+            std::is_same_v<decltype(T::member), U>> \
+        > : std::true_type { };
+
+// For use in fire-if-compiled asserts e.g. static_assert(false_t<T>, "message")
+template <class...> constexpr std::false_type false_t{};
+
 #include "typedefs.h"
 #include "utils-functions.h"
 #include "../inline-hook/And64InlineHook.hpp"

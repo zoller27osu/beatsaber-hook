@@ -58,79 +58,102 @@ namespace il2cpp_utils {
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
     Il2CppClass* GetClassFromName(std::string_view name_space, std::string_view type_name);
 
+    inline Il2CppClass* GetClassOfObject(Il2CppObject* instance, std::string_view whosAsking) {
+        il2cpp_functions::Init();
+        auto klass = il2cpp_functions::object_get_class(instance);
+        if (!klass) {
+            log(ERROR, "il2cpp_utils: %s: Could not find object's class!", whosAsking.data());
+            return nullptr;
+        }
+        return klass;
+    }
+
     // Framework provided by DaNike
     namespace il2cpp_type_check {
+        // To fix "no member named 'get' in il2cpp_type_check::il2cpp_arg_type_<Blah>", define il2cpp_arg_type_<Blah>!
+        // When the Il2CppType* would depend only on the type of T (not its value), just use DEFINE_IL2CPP_ARG_TYPE!
         template<typename T>
         struct il2cpp_arg_type_ {};
 
         template<typename T>
         using il2cpp_arg_type = il2cpp_arg_type_<std::decay_t<T>>;
 
+        #define DEFINE_IL2CPP_ARG_TYPE(type, nameSpace, className) \
+        template<> \
+        struct il2cpp_utils::il2cpp_type_check::il2cpp_arg_type_<type> { \
+            static inline Il2CppType const* get(type arg) { \
+                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName(nameSpace, className)); \
+            } \
+        }
+
+        DEFINE_IL2CPP_ARG_TYPE(int8_t, "System", "SByte");
+        DEFINE_IL2CPP_ARG_TYPE(uint8_t, "System", "Byte");
+        DEFINE_IL2CPP_ARG_TYPE(int16_t, "System", "Int16");  // "short"
+        DEFINE_IL2CPP_ARG_TYPE(uint16_t, "System", "UInt16");  // "ushort"
+        DEFINE_IL2CPP_ARG_TYPE(int32_t, "System", "Int32");  // "int"
+        DEFINE_IL2CPP_ARG_TYPE(uint32_t, "System", "UInt32");  // "uint"
+        DEFINE_IL2CPP_ARG_TYPE(int64_t, "System", "Int64");  // "long"
+        DEFINE_IL2CPP_ARG_TYPE(uint64_t, "System", "UInt64");  // "ulong"
+
+        DEFINE_IL2CPP_ARG_TYPE(float, "System", "Single");
+        DEFINE_IL2CPP_ARG_TYPE(double, "System", "Double");
+        DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
+
+        DEFINE_IL2CPP_ARG_TYPE(bool, "System", "Boolean");
+        DEFINE_IL2CPP_ARG_TYPE(Il2CppChar, "System", "Char");
+
+        DEFINE_IL2CPP_ARG_TYPE(Color, "UnityEngine", "Color");
+        DEFINE_IL2CPP_ARG_TYPE(Vector2, "UnityEngine", "Vector2");
+        DEFINE_IL2CPP_ARG_TYPE(Vector3, "UnityEngine", "Vector3");
+        DEFINE_IL2CPP_ARG_TYPE(Quaternion, "UnityEngine", "Quaternion");
+
+        template<>
+        struct il2cpp_arg_type_<Il2CppType*> {
+            static inline Il2CppType const* get(Il2CppType* arg) {
+                return arg;
+            }
+        };
+
+        template<>
+        struct il2cpp_arg_type_<Il2CppClass*> {
+            static inline Il2CppType const* get(Il2CppClass* arg) {
+                il2cpp_functions::Init();
+                return il2cpp_functions::class_get_type(arg);
+            }
+        };
+
+        template<>
+        struct il2cpp_arg_type_<Il2CppObject*> {
+            static inline Il2CppType const* get(Il2CppObject* arg) {
+                if (!arg) return nullptr;
+                il2cpp_functions::Init();
+                auto klass = GetClassOfObject(arg, "il2cpp_arg_type_<Il2CppObject*>");
+                return il2cpp_functions::class_get_type(klass);
+            }
+        };
+
+        DEFINE_MEMBER_CHECKER(obj)
+        DEFINE_MEMBER_CHECKER(object)
         template<typename T>
-        struct il2cpp_arg_type_<T*> { // we assume that pointers are already objects to get the type of
-            static inline Il2CppType const* get(T const* arg) {
-                return il2cpp_functions::class_get_type(
-                    il2cpp_functions::object_get_class(reinterpret_cast<Il2CppObject*>(arg)));
+        struct il2cpp_arg_type_<T*> {
+            static inline Il2CppType const* get(T* arg) {
+                // These first 2 conditions handle Il2CppObject subclasses that were created
+                //   in libil2cpp via composition instead of inheritance
+                auto constexpr hasObj = has_obj<T, Il2CppObject>::value;
+                auto constexpr hasObject = has_object<T, Il2CppObject>::value;
+                if constexpr (hasObj) {
+                    return il2cpp_arg_type_<Il2CppObject*>::get(&arg->obj);
+                } else if constexpr (hasObject) {
+                    return il2cpp_arg_type_<Il2CppObject*>::get(&arg->object);
+                } else {
+                    static_assert(false_t<T*>, "Turning this kind of pointer into an Il2CppType is not implemented! "
+                        "Please pass primitives and structs as themselves instead of taking their address. "
+                        "If the pointer should be treatable as Il2CppObject*, please file an issue on sc2ad/beatsaber-hook.");
+                }
             }
         };
-
-        template<>
-        struct il2cpp_arg_type_<int8_t> {
-            static inline Il2CppType const* get(int8_t) {
-                // return System.SByte
-                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "SByte"));
-            }
-        };
-
-        template<>
-        struct il2cpp_arg_type_<uint8_t> {
-            static inline Il2CppType const* get(uint8_t) {
-                // return System.Byte
-                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "SByte"));
-            }
-        };
-
-        template<>
-        struct il2cpp_arg_type_<float> {
-            static inline Il2CppType const* get(float) {
-                // return System.Single
-                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "Single"));
-            }
-        };
-
-        template<>
-        struct il2cpp_arg_type_<double> {
-            static inline Il2CppType const* get(double) {
-                // return System.Double
-                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "Double"));
-            }
-        };
-
-        template<>
-        struct il2cpp_arg_type_<int16_t> {
-            static inline Il2CppType const* get(int16_t) {
-                // return System.Int16
-                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "Int16"));
-            }
-        };
-
-        template<>
-        struct il2cpp_arg_type_<int> {
-            static inline Il2CppType const* get(int) {
-                // return System.Int32
-                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "Int32"));
-            }
-        };
-
-        template<>
-        struct il2cpp_arg_type_<int64_t> {
-            static inline Il2CppType const* get(int64_t) {
-                // return System.Int64
-                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName("System", "Int64"));
-            }
-        };
-
-        // TODO Add more types
+        #undef has_obj
+        #undef has_object
 
         template<typename T>
         struct il2cpp_arg_ptr {
@@ -148,14 +171,42 @@ namespace il2cpp_utils {
 
     std::vector<const Il2CppType*> ClassVecToTypes(std::vector<const Il2CppClass*> seq);
 
-    inline Il2CppClass* GetClassOfObject(Il2CppObject* instance, std::string_view whosAsking) {
-        il2cpp_functions::Init();
-        auto klass = il2cpp_functions::object_get_class(instance);
-        if (!klass) {
-            log(ERROR, "il2cpp_utils: %s: Could not find object's class!", whosAsking.data());
-            return nullptr;
+    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for an Il2CppClass*
+    Il2CppObject* GetSystemType(const Il2CppClass* klass);
+
+    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for the class with the given namespace and name
+    Il2CppObject* GetSystemType(std::string_view nameSpace, std::string_view className);
+
+    // Gets the standard class name of an Il2CppClass*
+    std::string ClassStandardName(Il2CppClass* klass, bool generics = true);
+
+    // Gets a C# name of a type
+    const char* TypeGetSimpleName(const Il2CppType* type);
+
+    bool IsInterface(const Il2CppClass* klass);
+
+    inline auto ExtractTypes() {
+        return std::vector<const Il2CppType*>();
+    }
+
+    template<typename T>
+    std::vector<const Il2CppType*> ExtractTypes(T&& arg) {
+        std::vector<const Il2CppType*> type;
+        auto typ = il2cpp_type_check::il2cpp_arg_type<T>::get(arg);
+        if (typ) {
+            type.push_back(typ);
+        } else {
+            log(ERROR, "ExtractTypes: failed to determine type! Tips: instead of nullptr, pass the Il2CppType* or Il2CppClass* of the argument instead!");
         }
-        return klass;
+        return type;
+    }
+
+    template<typename T, typename... TArgs>
+    std::vector<const Il2CppType*> ExtractTypes(T&& arg, TArgs&&... args) {
+        auto base = ExtractTypes(arg);
+        auto rec = ExtractTypes(args...);
+        base.insert(base.end(), rec.begin(), rec.end());
+        return base;
     }
 
     // Returns if a given MethodInfo's parameters match the Il2CppType array provided as type_arr
@@ -188,8 +239,9 @@ namespace il2cpp_utils {
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses);
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass);
     // Varargs to vector helper
-    template<typename... TArgs> const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, TArgs&&... argTypes) {
-        return FindMethod(klass, methodName, {argTypes...});
+    template <typename... TArgs, std::enable_if_t<(... && !is_vector<TArgs>::value), int> = 0>  // prevents template recursion
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, TArgs&&... args) {
+        return FindMethod(klass, methodName, {args...});
     }
 
     // Returns the MethodInfo for the method on class found via namespace and name with the given other arguments
@@ -204,21 +256,49 @@ namespace il2cpp_utils {
         return FindMethod(GetClassOfObject(instance, "FindMethod"), params...);
     }
 
+    inline auto ExtractValues() {
+        return std::vector<void*>();
+    }
+
+    template<class T>
+    std::vector<void*> ExtractValues(T&& arg) {
+        using Dt = std::decay_t<T>;
+        std::vector<void*> valVec;
+        void* val;
+        if constexpr (std::is_same_v<Dt, Il2CppType*> || std::is_same_v<Dt, Il2CppClass*>) {
+            val = nullptr;
+        } else if constexpr (std::is_pointer_v<Dt>) {
+            val = reinterpret_cast<void*>(arg);
+        } else {
+            val = &arg;
+        }
+        valVec.push_back(val);
+        return valVec;
+    }
+
+    template<class T, class... TArgs>
+    std::vector<void*> ExtractValues(T&& arg, TArgs&& ...args) {
+        auto base = ExtractValues(arg);
+        auto rec = ExtractValues(args...);
+        base.insert(base.end(), rec.begin(), rec.end());
+        return base;
+    }
+
     template<class TOut, class... TArgs>
     // Runs a MethodInfo with the specified parameters and instance, with return type TOut
     // Assumes a static method if instance == nullptr
     // Returns false if it fails
     // Created by zoller27osu, modified by Sc2ad
-    bool RunMethod(TOut* out, void* instance, const MethodInfo* method, TArgs* ...params) {
+    bool RunMethod(TOut* out, void* instance, const MethodInfo* method, TArgs&& ...params) {
         il2cpp_functions::Init();
         if (!method) {
             log(ERROR, "il2cpp_utils: RunMethod: Null MethodInfo!");
             return false;
         }
         Il2CppException* exp = nullptr;
-        void* invokeParams[] = {reinterpret_cast<void*>(params)...};
-        auto ret = il2cpp_functions::runtime_invoke(method, instance, invokeParams, &exp);
-        if constexpr (std::is_pointer<TOut>::value) {
+        auto invokeParamsVec = ExtractValues(params...);
+        auto ret = il2cpp_functions::runtime_invoke(method, instance, invokeParamsVec.data(), &exp);
+        if constexpr (std::is_pointer_v<TOut>) {
             *out = reinterpret_cast<TOut>(ret);
         } else {
             *out = *reinterpret_cast<TOut*>(il2cpp_functions::object_unbox(ret));
@@ -237,88 +317,98 @@ namespace il2cpp_utils {
     // Assumes a static method if instance == nullptr
     // Returns false if it fails
     // Created by zoller27osu
-    bool RunMethod(void* instance, const MethodInfo* method, TArgs* ...params) {
+    bool RunMethod(void* instance, const MethodInfo* method, TArgs&& ...params) {
         void* out = nullptr;
         return RunMethod(&out, instance, method, params...);
     }
 
-    template<class TOut, class... TArgs>
-    // Runs a static method with the specified method name, with return type TOut
-    // Returns false if it fails
+    template<class TOut, class T, class... TArgs>
+    // Runs a (static) method with the specified method name, with return type TOut.
+    // Checks the types of the parameters against the candidate methods. Returns false if it fails.
     // Created by zoller27osu, modified by Sc2ad
-    bool RunMethod(TOut* out, Il2CppClass* klass, std::string_view methodName, TArgs* ...params) {
+    bool RunMethod(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
+        static_assert(std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>);
         il2cpp_functions::Init();
-        if (!klass) {
-            log(ERROR, "il2cpp_utils: RunMethod: Null klass parameter!");
+        if (!classOrInstance) {
+            log(ERROR, "il2cpp_utils: RunMethod: Null classOrInstance parameter!");
             return false;
         }
-        auto method = FindMethod(klass, methodName, sizeof...(TArgs));
-        if (!method) return false;
-        return RunMethod(out, nullptr, method, params...);
-    }
 
-    template<class TOut, class... TArgs>
-    // Runs a method with the specified method name, with return type TOut
-    // Returns false if it fails
-    // Created by zoller27osu, modified by Sc2ad
-    bool RunMethod(TOut* out, Il2CppObject* instance, std::string_view methodName, TArgs* ...params) {
-        il2cpp_functions::Init();
-        if (!instance) {
-            log(ERROR, "il2cpp_utils: RunMethod: Null instance parameter!");
+        auto types = ExtractTypes(params...);
+        if (types.size() != sizeof...(TArgs)) {
+            log(WARNING, "RunMethod: ExtractTypes for method %s failed!", methodName.data());
             return false;
         }
-        auto method = FindMethod(instance, methodName, sizeof...(TArgs));
+        auto method = FindMethod(classOrInstance, methodName, types);
         if (!method) return false;
-        return RunMethod(out, instance, method, params...);
+
+        if constexpr (std::is_base_of_v<Il2CppClass, T>) {
+            return RunMethod(out, nullptr, method, params...);
+        }
+        return RunMethod(out, classOrInstance, method, params...);
     }
 
-    template<class... TArgs>
-    // Runs a static method with the specified method name; best for void return type
-    // Returns false if it fails
-    // Created by zoller27osu
-    bool RunMethod(Il2CppClass* klass, std::string_view methodName, TArgs* ...params) {
-        void* out = nullptr;
-        return RunMethod(&out, klass, methodName, params...);
+    template<class TOut, class T, class... TArgs>
+    // Runs a (static) method with the specified method name and number of arguments, with return type TOut.
+    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
+    // Created by zoller27osu, modified by Sc2ad
+    bool RunMethodUnsafe(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
+        static_assert(std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>);
+        il2cpp_functions::Init();
+        if (!classOrInstance) {
+            log(ERROR, "il2cpp_utils: RunMethod: Null classOrInstance parameter!");
+            return false;
+        }
+        auto method = FindMethod(classOrInstance, methodName, sizeof...(TArgs));
+        if (!method) return false;
+
+        if constexpr (std::is_base_of_v<Il2CppClass, T>) {
+            return RunMethod(out, nullptr, method, params...);
+        }
+        return RunMethod(out, classOrInstance, method, params...);
     }
 
-    template<class... TArgs>
-    // Runs a method with the specified method name; best for void return type
-    // Returns false if it fails
+    template<class T, class... TArgs>
+    // Runs a (static) method with the specified method name; best for void return type
+    // Checks the types of the parameters against the candidate methods. Returns false if it fails.
     // Created by zoller27osu
-    bool RunMethod(Il2CppObject* instance, std::string_view methodName, TArgs* ...params) {
+    bool RunMethod(T* klassOrInstance, std::string_view methodName, TArgs&& ...params) {
         void* out = nullptr;
-        return RunMethod(&out, instance, methodName, params...);
+        return RunMethod(&out, klassOrInstance, methodName, params...);
+    }
+
+    template<class T, class... TArgs>
+    // Runs a (static) method with the specified method name and number of arguments; best for void return type
+    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
+    // Created by zoller27osu
+    bool RunMethodUnsafe(T* klassOrInstance, std::string_view methodName, TArgs&& ...params) {
+        void* out = nullptr;
+        return RunMethodUnsafe(&out, klassOrInstance, methodName, params...);
     }
 
     template<typename TObj = Il2CppObject, typename... TArgs>
-    // Creates a new object of the given class and Il2CppTypes parameters and casts it to TObj*
+    // Creates a new object of the given class using the given constructor parameters and casts it to TObj*
+    // Will only run a .ctor whose parameter types match the given arguments.
     TObj* New(Il2CppClass* klass, TArgs const& ...args) {
         il2cpp_functions::Init();
 
         // object_new call
         auto obj = il2cpp_functions::object_new(klass);
         // runtime_invoke constructor with right type(s) of arguments, return null if constructor errors
-        const MethodInfo* ctor = FindMethod(klass, ".ctor", args...);
-        if (!ctor) return nullptr;
-
-        if (!RunMethod(obj, ctor, args...)) return nullptr;
+        if (!RunMethod(obj, ".ctor", args...)) return nullptr;
         return reinterpret_cast<TObj*>(obj);
     }
 
     template<typename TObj = Il2CppObject, typename... TArgs>
-    // Creates a New object of the given class and parameters and casts it to TObj*
-    // DOES NOT PERFORM TYPE-SAFE CHECKING!
+    // Creates a new object of the given class using the given constructor parameters and casts it to TObj*
+    // DOES NOT PERFORM ARGUMENT TYPE CHECKING! Uses the first .ctor with the right number of parameters it sees.
     TObj* NewUnsafe(Il2CppClass* klass, TArgs* ...args) {
         il2cpp_functions::Init();
 
         // object_new call
         auto obj = il2cpp_functions::object_new(klass);
         // runtime_invoke constructor with right number of args, return null if constructor errors
-        constexpr auto count = sizeof...(TArgs);
-        const MethodInfo* ctor = FindMethod(klass, ".ctor", count);
-        if (!ctor) return nullptr;
-
-        if (!RunMethod(obj, ctor, args...)) return nullptr;
+        if (!RunMethodUnsafe(obj, ".ctor", args...)) return nullptr;
         return reinterpret_cast<TObj*>(obj);
     }
 
@@ -355,7 +445,7 @@ namespace il2cpp_utils {
     template<class TOut, class... TArgs>
     TOut* GetFieldValue(TArgs... params) {
         static_assert(sizeof...(TArgs) == 2);
-        static_assert(std::is_base_of<Il2CppObject, TOut>::value, "The return type of this function must inherit Il2CppObject! See GetFieldValueUnsafe for an alternative.");
+        static_assert(std::is_base_of_v<Il2CppObject, TOut>, "The return type of this function must inherit Il2CppObject! See GetFieldValueUnsafe for an alternative.");
         return reinterpret_cast<TOut*>(GetFieldValue(params...));
     }
 
@@ -465,7 +555,7 @@ namespace il2cpp_utils {
     }
 
     template<typename T = MulticastDelegate>
-    T* MakeAction(Il2CppObject* obj, Il2CppMethodPointer callback, const Il2CppType* actionType) {
+    T* MakeAction(Il2CppObject* obj, void* callback, const Il2CppType* actionType) {
         auto tmp = reinterpret_cast<function_ptr_t<void>>(callback);
         return MakeAction(obj, tmp, actionType);
     }
@@ -476,25 +566,15 @@ namespace il2cpp_utils {
     // Function made by zoller27osu, modified by Sc2ad
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
 
-    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for an Il2CppClass*
-    Il2CppObject* GetSystemType(const Il2CppClass* klass);
 
-    // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for the class with the given namespace and name
-    Il2CppObject* GetSystemType(std::string_view nameSpace, std::string_view className);
 
-    // Gets the standard class name of an Il2CppClass*
-    std::string ClassStandardName(Il2CppClass* klass, bool generics = true);
- 
-    // Gets a C# name of a type
-    const char* TypeGetSimpleName(const Il2CppType* type);
-    
     // Function made by zoller27osu, modified by Sc2ad
     // Logs information about the given MethodInfo* as log(DEBUG)
     void LogMethod(const MethodInfo* method);
 
     // Created by zoller27osu
     // Calls LogMethod on all methods in the given class
-    void LogMethods(const Il2CppClass* klass);
+    void LogMethods(Il2CppClass* klass, bool logParents = false);
 
     // Created by zoller27osu
     // Logs information about the given FieldInfo* as log(DEBUG)
@@ -502,11 +582,11 @@ namespace il2cpp_utils {
 
     // Created by zoller27osu
     // Calls LogField on all fields in the given class
-    void LogFields(Il2CppClass* klass);
+    void LogFields(Il2CppClass* klass, bool logParents = false);
 
     // Some parts provided by zoller27osu
     // Logs information about the given Il2CppClass* as log(DEBUG)
-    void LogClass(const Il2CppClass* klass, bool logParents = false);
+    void LogClass(Il2CppClass* klass, bool logParents = false);
 
     // Logs all classes (from every namespace) that start with the given prefix
     // WARNING: THIS FUNCTION IS VERY SLOW. ONLY USE THIS FUNCTION ONCE AND WITH A FAIRLY SPECIFIC PREFIX!
@@ -538,7 +618,7 @@ namespace il2cpp_utils {
     template<class To, class From>
     // Downcasts a class from From* to To*
     [[nodiscard]] auto down_cast(From* in) noexcept {
-        static_assert(std::is_convertible<To*, From*>::value);
+        static_assert(std::is_convertible_v<To*, From*>);
         return static_cast<To*>(in);
     }
 

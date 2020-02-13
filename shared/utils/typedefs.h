@@ -27,10 +27,9 @@
 template<class T>
 struct is_value_type : std::integral_constant< 
     bool,
-    (std::is_arithmetic<T>::value || std::is_enum<T>::value ||
-    std::is_pointer<T>::value) &&
-    !std::is_base_of<Il2CppObject, T>::value
+    (std::is_arithmetic_v<T> || std::is_enum_v<T> || std::is_pointer_v<T>) && !std::is_base_of_v<Il2CppObject, T>
 > {};
+template<class _T> using is_value_type_v = typename is_value_type<_T>::value;
 
 typedef struct ArrayBounds
 {
@@ -163,6 +162,6 @@ typedef struct Quaternion {
 } Quaternion;
 
 #ifdef __cplusplus
-}
+}  /* extern "C" */
 #endif /* __cplusplus */
 #endif /* TYPEDEFS_H */
