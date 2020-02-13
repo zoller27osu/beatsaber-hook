@@ -100,7 +100,7 @@ namespace il2cpp_utils {
         DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
 
         DEFINE_IL2CPP_ARG_TYPE(bool, "System", "Boolean");
-        DEFINE_IL2CPP_ARG_TYPE(wchar_t, "System", "Char");
+        DEFINE_IL2CPP_ARG_TYPE(Il2CppChar, "System", "Char");
 
         DEFINE_IL2CPP_ARG_TYPE(Color, "UnityEngine", "Color");
         DEFINE_IL2CPP_ARG_TYPE(Vector2, "UnityEngine", "Vector2");
