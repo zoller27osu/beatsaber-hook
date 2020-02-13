@@ -555,7 +555,7 @@ namespace il2cpp_utils {
     }
 
     template<typename T = MulticastDelegate>
-    T* MakeAction(Il2CppObject* obj, Il2CppMethodPointer callback, const Il2CppType* actionType) {
+    T* MakeAction(Il2CppObject* obj, void* callback, const Il2CppType* actionType) {
         auto tmp = reinterpret_cast<function_ptr_t<void>>(callback);
         return MakeAction(obj, tmp, actionType);
     }
