@@ -128,6 +128,7 @@ namespace il2cpp_utils {
         }
         // TODO: supply boolStrictMatch and use type_equals instead of IsConvertible if supplied?
         for (decltype(method->parameters_count) i = 0; i < method->parameters_count; i++) {
+            // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
             if (!(IsConvertible(method->parameters[i].parameter_type, type_arr[i]))) {
                 return false;
             }
@@ -225,6 +226,7 @@ namespace il2cpp_utils {
         if (itr != classesNamesToMethodsCache.end()) {
             return itr->second;
         }
+        // Recurses through klass's parents
         auto methodInfo = il2cpp_functions::class_get_method_from_name(klass, methodName.data(), argsCount);
         if (!methodInfo) {
             log(ERROR, "could not find method %s with %i parameters in class %s (namespace '%s')!", methodName.data(),
@@ -250,10 +252,14 @@ namespace il2cpp_utils {
         void* myIter = nullptr;
         const MethodInfo* current;
         const MethodInfo* methodInfo = nullptr;
+        // Does NOT automatically recurse through klass's parents
         while ((current = il2cpp_functions::class_get_methods(klass, &myIter))) {
             if (strcmp(current->name, methodName.data()) == 0 && ParameterMatch(current, argTypes)) {
                 methodInfo = current;
             }
+        }
+        if (!methodInfo && klass->parent && klass->parent != klass) {
+            methodInfo = FindMethod(klass->parent, methodName, argTypes);
         }
 
         if (!methodInfo) {
@@ -267,7 +273,7 @@ namespace il2cpp_utils {
             }
             ss << ") in class " << il2cpp_functions::class_get_name(klass) << " (namespace '" << il2cpp_functions::class_get_namespace(klass) << "')!";
             log(ERROR, "%s", ss.str().c_str());
-            LogMethods(klass, true);
+            LogMethods(klass);
         }
         classesNamesTypesToMethodsCache.insert({key, methodInfo});
         return methodInfo;

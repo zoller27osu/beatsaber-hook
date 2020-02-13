@@ -162,6 +162,6 @@ typedef struct Quaternion {
 } Quaternion;
 
 #ifdef __cplusplus
-}
+}  /* extern "C" */
 #endif /* __cplusplus */
 #endif /* TYPEDEFS_H */
