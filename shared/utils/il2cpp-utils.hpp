@@ -273,7 +273,7 @@ namespace il2cpp_utils {
         } else if constexpr (std::is_pointer_v<Dt>) {
             val = reinterpret_cast<void*>(arg);
         } else {
-            val = &arg;
+            val = const_cast<Dt*>(&arg);
         }
         valVec.push_back(val);
         return valVec;
