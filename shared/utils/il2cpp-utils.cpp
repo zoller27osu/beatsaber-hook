@@ -582,6 +582,10 @@ namespace il2cpp_utils {
     void LogMethods(Il2CppClass* klass, bool logParents) {
         if (!klass) return;
         if (klass->name) il2cpp_functions::Class_Init(klass);
+        if (klass->method_count && !(klass->methods)) {
+            log(WARNING, "Class is valid and claims to have methods but ->methods is null! class name: %s", ClassStandardName(klass).c_str());
+            return;
+        }
         if (logParents) log(INFO, "class name: %s", ClassStandardName(klass).c_str());
 
         log(DEBUG, "method_count: %i", klass->method_count);
@@ -605,15 +609,14 @@ namespace il2cpp_utils {
     void LogClass(Il2CppClass* klass, bool logParents) {
         il2cpp_functions::Init();
 
+        if (!klass) return;
+
         if (loggedClasses.count(klass)) {
             log(DEBUG, "Already logged %p!", klass);
             return;
         }
         loggedClasses.insert(klass);
 
-        if (!klass) {
-            return;
-        }
         if (klass->klass != klass) {
             log(WARNING, "LogClass: %p is likely NOT an Il2CppClass*! Returning!", klass);
             return;
@@ -627,19 +630,29 @@ namespace il2cpp_utils {
         // Note: il2cpp stops at GenericMetadata::MaximumRuntimeGenericDepth (which is 8)
         maxIndent = std::max(indent, maxIndent);
 
-        void* myIter = nullptr;
         bool methodInit = false;
         if (klass->name) {
-            if (!il2cpp_functions::Class_Init(klass)) {
-                log(WARNING, "Class::Init failed!");
-            } else {
+            // note: unless vm/Class.cpp is wrong, Class::Init always returns true
+            il2cpp_functions::Class_Init(klass);
+            if (klass->initialized_and_no_error) {
                 methodInit = true;
             }
         }
-        if (!methodInit) {
-            il2cpp_functions::class_get_methods(klass, &myIter);  // this initializes the method data
-        }
+
         log(DEBUG, "%i ======================CLASS INFO FOR CLASS: %s======================", indent, ClassStandardName(klass).c_str());
+        void* myIter = nullptr;
+        if (!methodInit) {
+            // log results of Class::Init
+            log(WARNING, "klass->initialized: %i, init_pending: %i, has_initialization_error: %i, initializationExceptionGCHandle: %Xll",
+                    klass->initialized, klass->init_pending, klass->has_initialization_error, klass->initializationExceptionGCHandle);
+            auto meth = il2cpp_functions::class_get_methods(klass, &myIter);  // attempt again to initialize the method data
+            if (klass->method_count && !klass->methods) {
+                log(ERROR, "Class::Init and class_get_methods failed to initialize klass->methods! class_get_methods returned: %p",
+                    meth);
+                if (meth) LogMethod(meth);
+            }
+        }
+
         log(DEBUG, "Pointer: %p", klass);
         log(DEBUG, "Type Token: %i", il2cpp_functions::class_get_type_token(klass));
         auto typeDefIdx = klass->generic_class ? klass->generic_class->typeDefinitionIndex : il2cpp_functions::MetadataCache_GetIndexForTypeDefinition(klass);
@@ -665,7 +678,7 @@ namespace il2cpp_utils {
         log(DEBUG, "Is Generic: %i", il2cpp_functions::class_is_generic(klass));
         log(DEBUG, "Is Abstract: %i", il2cpp_functions::class_is_abstract(klass));
 
-        // Some methods, such as GenericClass::GetClass, may not initialize all fields in Il2CppClass, thus not meet all implicit contracts defined by the comments in Il2CppClass's struct definition.
+        // Some methods, such as GenericClass::GetClass, may not initialize all fields in Il2CppClass, and thus not meet all implicit contracts defined by the comments in Il2CppClass's struct definition.
         // But unless we're blind, the only method that sets is_generic on non-methods is MetadataCache::FromTypeDefinition. That method also contains the only assignment of genericContainerIndex.
         // Therefore, this code makes only the following assumptions:
         // 1. If is_generic is set, then genericContainerIndex was also intentionally set (even if it's 0) and is not -1 (invalid)
@@ -691,6 +704,8 @@ namespace il2cpp_utils {
         }
 
         auto typDef = klass->typeDefinition;
+        // TODO: investigate MetadataCache::GetRGCTXs as a replacement for this?
+        /*
         if (typDef) {
             Il2CppClass* childClass;
             log(DEBUG, "rgctxCount: %i, startIndex: %i", typDef->rgctxCount, typDef->rgctxStartIndex);
@@ -723,9 +738,11 @@ namespace il2cpp_utils {
                 }
             }
         }
+        */
 
         log(DEBUG, "%i =========METHODS=========", indent);
         LogMethods(klass);
+        log(DEBUG, "%i =======END METHODS=======", indent);
 
         auto declaring = il2cpp_functions::class_get_declaring_type(klass);
         log(DEBUG, "declaring type: %p", declaring);
@@ -736,7 +753,7 @@ namespace il2cpp_utils {
 
         log(DEBUG, "%i =========FIELDS=========", indent);
         LogFields(klass);
-        log(DEBUG, "%i =========END FIELDS=========", indent);
+        log(DEBUG, "%i =======END FIELDS=======", indent);
 
         auto parent = il2cpp_functions::class_get_parent(klass);
         log(DEBUG, "parent: %p (%s)", parent, parent ? ClassStandardName(parent).c_str() : "");
@@ -747,7 +764,7 @@ namespace il2cpp_utils {
 
     static std::unordered_map<Il2CppClass*, std::map<std::string, Il2CppGenericClass*, doj::alphanum_less<std::string>>> classToGenericClassMap;
     void BuildGenericsMap() {
-        auto metadataReg = *il2cpp_functions::s_Il2CppMetadataRegistration;
+        auto metadataReg = *il2cpp_functions::s_Il2CppMetadataRegistrationPtr;
         log(DEBUG, "metadataReg: %p, offset = %llX", metadataReg, ((long long)metadataReg) - getRealOffset(nullptr));
         if (!metadataReg) {
             log(WARNING, "metadataReg not found!");
