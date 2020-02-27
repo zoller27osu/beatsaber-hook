@@ -605,15 +605,16 @@ namespace il2cpp_utils {
     void LogClass(Il2CppClass* klass, bool logParents) {
         il2cpp_functions::Init();
 
+        if (!klass) {
+            return;
+        }
+
         if (loggedClasses.count(klass)) {
             log(DEBUG, "Already logged %p!", klass);
             return;
         }
         loggedClasses.insert(klass);
 
-        if (!klass) {
-            return;
-        }
         if (klass->klass != klass) {
             log(WARNING, "LogClass: %p is likely NOT an Il2CppClass*! Returning!", klass);
             return;
@@ -691,6 +692,8 @@ namespace il2cpp_utils {
         }
 
         auto typDef = klass->typeDefinition;
+        // TODO: investigate MetadataCache::GetRGCTXs as a replacement for this?
+        /*
         if (typDef) {
             Il2CppClass* childClass;
             log(DEBUG, "rgctxCount: %i, startIndex: %i", typDef->rgctxCount, typDef->rgctxStartIndex);
@@ -723,6 +726,7 @@ namespace il2cpp_utils {
                 }
             }
         }
+        */
 
         log(DEBUG, "%i =========METHODS=========", indent);
         LogMethods(klass);
@@ -747,7 +751,7 @@ namespace il2cpp_utils {
 
     static std::unordered_map<Il2CppClass*, std::map<std::string, Il2CppGenericClass*, doj::alphanum_less<std::string>>> classToGenericClassMap;
     void BuildGenericsMap() {
-        auto metadataReg = *il2cpp_functions::s_Il2CppMetadataRegistration;
+        auto metadataReg = *il2cpp_functions::s_Il2CppMetadataRegistrationPtr;
         log(DEBUG, "metadataReg: %p, offset = %llX", metadataReg, ((long long)metadataReg) - getRealOffset(nullptr));
         if (!metadataReg) {
             log(WARNING, "metadataReg not found!");

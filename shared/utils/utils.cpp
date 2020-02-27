@@ -256,11 +256,29 @@ Instruction::Instruction(const int32_t* inst) {
                 auto V = op1;
                 uint_fast8_t opc = bits(code, 23, 22);
                 uint_fast16_t imm12 = bits(code, 21, 10);
-                if (size >= 0b10) {
-                    if ((V == 0) && (opc == 0b00)) {
-                        kind[parseLevel++] = "STR (immediate) — 64-bit";
-                        log(DEBUG, "size: %i; imm12: 0x%llX", size, imm12);
-                        imm = SignExtend<int64_t>(imm12, 12) << size;
+                if (V == 0) {
+                    log(DEBUG, "size: %i; imm12: 0x%llX", size, imm12);
+                    imm = SignExtend<int64_t>(imm12, 12) << size;
+                    if (opc == 0b00) {
+                        if (size == 3) {
+                            kind[parseLevel++] = "STR (immediate) — 64-bit";
+                        } else if (size == 2) {
+                            kind[parseLevel++] = "STR (immediate) — 32-bit";
+                        } else if (size == 1) {
+                            kind[parseLevel++] = "STRH (immediate)";
+                        } else {
+                            kind[parseLevel++] = "STRB (immediate)";
+                        }
+                    } else if (opc == 0b01) {
+                        if (size == 3) {
+                            kind[parseLevel++] = "LDR (immediate) — 64-bit";
+                        } else if (size == 2) {
+                            kind[parseLevel++] = "LDR (immediate) — 32-bit";
+                        } else if (size == 1) {
+                            kind[parseLevel++] = "LDRH (immediate)";
+                        } else {
+                            kind[parseLevel++] = "LDRB (immediate)";
+                        }
                     }
                 }
             }
@@ -576,7 +594,7 @@ void* loadfromasset(const char* assetFilePath, const char* assetName) {
 bool parsejson(ConfigDocument& doc, string_view js) {
     char temp[js.length()];
     memcpy(temp, js.data(), js.length());
-    
+
     if (doc.ParseInsitu(temp).HasParseError()) {
         return false;
     }
