@@ -133,12 +133,6 @@ T bits(T x, uint8_t high, uint8_t low) {
     return trunc(x >> low, high - low + 1);
 }
 
-// Wrapper for easier use (no need to cast the pointer to void*)
-// template<class T>
-// void analyzeBytes(const T* ptr) {
-//     analyzeBytes((const void*)ptr);
-// }
-
 template <typename Function, typename... Args>
 static void StartCoroutine(Function&& fun, Args&&... args) {
     auto t = new std::thread(std::forward<Function>(fun), std::forward<Args>(args)...);
