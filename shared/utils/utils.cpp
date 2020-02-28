@@ -41,9 +41,13 @@ static const int_fast8_t SP = 31;
 std::ostream& operator<<(std::ostream& os, const Register& regName) {
     auto reg = regName.num;
     if (reg == SP) {
-        os << "SP";
+        if (regName.r31_is_sp) {
+            os << "SP";
+        } else {
+            os << "XZR";
+        }
     } else if (reg == 30) {
-        os << "R30 (return)";
+        os << "R30 (link register)";
     } else if (reg == 29) {
         os << "R29 (frame ptr)";
     } else {
@@ -65,15 +69,18 @@ std::ostream& operator<<(std::ostream& os, const Instruction& inst) {
     os << '"' << inst.kind[inst.parseLevel - 1] << '"';
     if (inst.valid) {
         if (inst.imm) os << ", imm: " << std::hex << inst.imm;
-        if (inst.Rd >= 0) os << ", destination register: " << Register(inst.Rd);
+        if (inst.Rd >= 0) os << ", destination register: " << Register(inst.Rd, inst.RdCanBeSP);
         if (inst.numSourceRegisters == 0) {
-            os << ", result: " << std::hex << inst.result;
+            if (inst.Rd >= 0) os << ", result: " << std::hex << inst.result;
         } else if (inst.numSourceRegisters > 0) {
             os << ", source registers: ";
             for (int j = 0; j < inst.numSourceRegisters; j++) {
                 if (j != 0) os << ", ";
-                os << Register(inst.Rs[j]);
+                os << Register(inst.Rs[j], inst.RsCanBeSP);
             }
+        }
+        if (inst.branchType != Instruction::NOBRANCH) {
+            os << ", branch type: " << Instruction::branchTypeInfo[inst.branchType];
         }
     }
     return os << std::noshowbase;
@@ -115,6 +122,7 @@ Instruction::Instruction(const int32_t* inst) {
             if ((op2 & 0b1000) == 0) {  // 0xxx
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-register#log_shift
                 kind[parseLevel++] = "Logical (shifted register)";
+                RdCanBeSP = RsCanBeSP = false;
                 numSourceRegisters = 2;
                 Rd = bits(code, 4, 0);
                 auto Rn = Rs[0] = bits(code, 9, 5);
@@ -128,9 +136,14 @@ Instruction::Instruction(const int32_t* inst) {
                     if (N == 0) {
                         if ((shiftType == LSL) && (imm == 0) && Rn == RZR) {
                             kind[parseLevel++] = "MOV (register)";  // preferred alias
-                            numSourceRegisters = 1;
-                            Rs[0] = Rm;
-                            Rs[1] = -1;
+                            if (Rm == RZR) {
+                                numSourceRegisters = 0;
+                                result = 0;
+                            } else {
+                                numSourceRegisters = 1;
+                                Rs[0] = Rm;
+                                Rs[1] = -1;
+                            }
                         } else {
                             if (sf == 0) {
                                 kind[parseLevel++] = "ORR (shifted register) — 32-bit";
@@ -156,6 +169,7 @@ Instruction::Instruction(const int32_t* inst) {
         if (op0 == 0) {
             // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#pcreladdr
             kind[parseLevel++] = "PC-rel. addressing";
+            RdCanBeSP = false;
             numSourceRegisters = 0;
             bool op = sf;
             const uint_fast8_t ilh = 30, ill = 29, ihh = 23, ihl = 5;
@@ -180,18 +194,21 @@ Instruction::Instruction(const int32_t* inst) {
             log(DEBUG, "imm: 0x%llX; result: 0x%llX (offset 0x%llX)", imm, result, result - getRealOffset(0));
         } else if (op0 == 0b1) {
             numSourceRegisters = 1;
+            RsCanBeSP = true;
             Rs[0] = bits(code, 9, 5);
             bool op = bits(code, 30, 30);
             bool S = bits(code, 29, 29);
             if ((op1 | 0b1) == 0b11) {  // 1x
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#addsub_immtags
                 kind[parseLevel++] = "Add/subtract (immediate, with tags)";
+                RdCanBeSP = true;
                 if ((sf == 0) || ((sf == 1) && (S == 1))) {
                     kind[parseLevel++] = unalloc;
                 }
             } else {
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#addsub_imm
                 kind[parseLevel++] = "Add/subtract (immediate)";
+                RdCanBeSP = !S;
                 auto shift = op1;
                 uint_fast16_t imm12 = bits(code, 21, 10);
                 if ((op == 0) && (S == 0)) {
@@ -216,11 +233,23 @@ Instruction::Instruction(const int32_t* inst) {
             if ((op1 & 0b10) == 0) {  // 0x
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#log_imm
                 kind[parseLevel++] = "Logical (immediate)";
+                RdCanBeSP = (opc != 0b11);
+                RsCanBeSP = false;
                 bool N = bits(code, 22, 22);
                 uint_fast8_t immr = bits(code, 21, 16);
                 uint_fast8_t imms = bits(code, 15, 10);
-                numSourceRegisters = 1;
-                Rs[0] = bits(code, 9, 5);
+                uint_fast8_t Rn = bits(code, 9, 5);
+                imm = DecodeBitMasks(N, imms, immr, sf ? 64 : 32);
+                log(DEBUG, "N: %i, immr: 0x%llX, imms: 0x%llX, decoded imm: 0x%llX", N, immr, imms, imm);
+                if (imm == -1) valid = false;
+
+                if (Rn == RZR) {
+                    result = imm;
+                } else {
+                    numSourceRegisters = 1;
+                    Rs[0] = Rn;
+                }
+
                 if ((sf == 0) && (N == 1)) {
                     kind[parseLevel++] = unalloc;
                 } else if (opc == 0b10) {
@@ -230,14 +259,51 @@ Instruction::Instruction(const int32_t* inst) {
                         kind[parseLevel++] = "EOR (immediate) — 64-bit";
                     }
                 }
-                imm = DecodeBitMasks(N, imms, immr, sf ? 64 : 32);
-                log(DEBUG, "N: %i, immr: 0x%llX, imms: 0x%llX, decoded imm: 0x%llX", N, immr, imms, imm);
-                if (imm == -1) valid = false;
             }
         }
     } else if ((top0 | 0b1) == 0b1011) {  // 101x
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions
         kind[parseLevel++] = "Branches, Exception Generating and System instructions";
+        Rd = -1;
+        uint_fast8_t op0 = bits(code, 31, 29);
+        uint_fast16_t op1 = bits(code, 25, 12);
+        uint_fast8_t op2 = bits(code, 4, 0);
+        if (op0 == 0b10) {
+            if ((op1 & 0b10000000000000) != 0) {  // 1xxxxxxxxxxxxx
+                kind[parseLevel++] = unalloc;
+            } else {
+                // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions#condbranch
+                kind[parseLevel++] = "Conditional branch (immediate)";
+            }
+        } else if (op0 == 0b110) {
+            if ((op1 & 0b10000000000000) != 0) {  // 1xxxxxxxxxxxxx
+                // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions#branch_reg
+                kind[parseLevel++] = "Unconditional branch (register)";
+            } else {
+                log(DEBUG, "op0 = 110, op1: %i", op1);
+            }
+        } else if ((op0 & 0b11) == 0) {  // x00
+            // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions#branch_imm
+            kind[parseLevel++] = "Unconditional branch (immediate)";
+            numSourceRegisters = 0;
+            bool op = bits(code, 31, 31);
+            uint_fast32_t imm26 = bits(code, 25, 0);
+            auto offset = SignExtend<int64_t>(imm26 << 2, 26);
+            auto pc = (int64_t)inst;
+            imm = pc + offset;
+            log(DEBUG, "imm's offset: %llX", imm - getRealOffset(0));
+            if (!op) {
+                kind[parseLevel++] = "B";
+                branchType = DIR;
+            } else {
+                kind[parseLevel++] = "BL";
+                Rd = 30;
+                result = pc + 4;
+                branchType = DIRCALL;
+            }
+        } else {
+            log(DEBUG, "op0: %i", op0);
+        }
     } else if ((top0 & 0b101) == 0b100) {  // x1x0
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores
         kind[parseLevel++] = "Loads and Stores";
@@ -249,6 +315,8 @@ Instruction::Instruction(const int32_t* inst) {
             if ((op2 | 0b1) == 0b11) {  // 1x
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores#ldst_pos
                 kind[parseLevel++] = "Load/store register (unsigned immediate)";
+                RdCanBeSP = false;
+                RsCanBeSP = true;
                 numSourceRegisters = 1;
                 Rs[0] = bits(code, 4, 0);
                 Rd = bits(code, 9, 5);

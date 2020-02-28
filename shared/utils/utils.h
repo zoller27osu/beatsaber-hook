@@ -45,13 +45,15 @@ template <class...> constexpr std::false_type false_t{};
 class Register {
 public:
     int_fast8_t num;
-    Register(int_fast8_t reg) : num(reg) {};
+    bool r31_is_sp;
+    Register(int_fast8_t reg, bool r31) : num(reg), r31_is_sp(r31) {};
     std::string toString();
     friend std::ostream& operator<<(std::ostream& os, const Register& n);
 };
 
 class Instruction {
 public:
+    // TODO: puzzle out and support 32-bit views of registers
     const int32_t* addr;  // the pointer to the instruction
     // Rd and Rs are capitalized in accordance with typical Register notation
     int_fast8_t Rd = -2;  // the destination register's number, or -1 if none
@@ -64,8 +66,43 @@ public:
     enum ShiftType {
         LSL, LSR, ASR, ROR, none
     } shiftType = none;
+
+    #define BRANCH_ENUM(DO) \
+        DO(NOBRANCH,  "") \
+        DO(DIRCALL,   "Direct Branch with link") \
+        DO(INDCALL,   "Indirect Branch with link") \
+        DO(ERET,      "Exception return (indirect)") \
+        DO(DBGEXIT,   "Exit from Debug state") \
+        DO(RET,       "Indirect branch with function return hint") \
+        DO(DIR,       "Direct branch") \
+        DO(INDIR,     "Indirect branch") \
+        DO(EXCEPTION, "Exception entry") \
+        DO(RESET,     "Reset") \
+        DO(UNKNOWN,   "Other")
+
+    enum BranchType {
+        #define MAKE_ENUM(VAR, STR) VAR,  // if only we could add STR as a comment (for IDE purposes only)
+        BRANCH_ENUM(MAKE_ENUM)
+        #undef MAKE_ENUM
+    } branchType = NOBRANCH;
+
+    inline static const char* const branchTypeNames[] = {
+        #define MAKE_NAMES(VAR, STR) #VAR,
+        BRANCH_ENUM(MAKE_NAMES)
+        #undef MAKE_NAMES
+    };
+
+    inline static const char* const branchTypeInfo[] = {
+        #define MAKE_STRINGS(VAR, STR) STR,
+        BRANCH_ENUM(MAKE_STRINGS)
+        #undef MAKE_STRINGS
+    };
+    #undef BRANCH_ENUM
+
     bool parsed;  // whether the instruction was fully and successfully parsed
     bool valid = true;  // iff parsed, whether the instruction is a valid one
+    bool RdCanBeSP = false;
+    bool RsCanBeSP = false;
 
     Instruction(const int32_t* inst);
     std::string toString();
