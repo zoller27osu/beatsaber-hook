@@ -16,7 +16,10 @@ namespace std {
 #else
 #error No string_view implementation available!
 #endif
+#include <array>
 #include <thread>
+#include <unordered_map>
+#include <unordered_set>
 
 template <typename Container> struct is_vector : std::false_type { };
 template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type { };
@@ -57,6 +60,7 @@ public:
     const int32_t* addr;  // the pointer to the instruction
     // Rd and Rs are capitalized in accordance with typical Register notation
     int_fast8_t Rd = -2;  // the destination register's number, or -1 if none
+    int_fast8_t Rd2 = -2;  // the 2nd destination register's number, or -1 if none
     int numSourceRegisters = -1;  // the number of source registers this instruction has
     union {
         int_fast8_t Rs[2] = { -1, -1 };  // the number(s) of the source register(s), e.g. {12, 31} for X12 & SP
@@ -101,15 +105,85 @@ public:
 
     bool parsed;  // whether the instruction was fully and successfully parsed
     bool valid = true;  // iff parsed, whether the instruction is a valid one
-    bool RdCanBeSP = false;
-    bool RsCanBeSP = false;
 
     Instruction(const int32_t* inst);
+    inline bool isBranch() {
+        return branchType != NOBRANCH;
+    }
+    inline bool isUnconditionalBranch() {
+        return isBranch() && cond == -1;
+    }
+    inline bool isReturn() {
+        return branchType == RET;
+    }
+    // i.e. location to jump to is not read from a register, but encoded directly into the instruction
+    inline bool isDirectBranch() {
+        return (branchType == DIRCALL) || (branchType == DIR);
+    }
+    inline bool isIndirectBranch() {
+        return (branchType != NOBRANCH) && (!isDirectBranch());
+    }
+    inline bool isCall() {
+        return (branchType == DIRCALL) || (branchType == INDCALL);
+    }
     std::string toString();
     friend std::ostream& operator<<(std::ostream& os, const Instruction& inst);
 private:
     const char* kind[3];  // strings describing the kind of instruction, from least to most specific
     char parseLevel;  // The lowest level we were able to parse at, 1-3 (subtract 1 for index of most specific string in 'kind')
+    bool RdCanBeSP = false;
+    bool RsCanBeSP = false;
+    // For LDR/STR:
+    bool wback;
+    bool postindex;
+    int_fast8_t cond = -1;  // if set, a 4-bit int. See https://developer.arm.com/docs/ddi0596/a/a64-shared-pseudocode-functions/shared-functions-pseudocode#impl-shared.ConditionHolds.1
+};
+
+struct RegisterSet {
+    int_fast64_t regs[31] = {0};
+};
+
+struct PSTATE {
+    bool N, Z, C, V;
+    bool D, A, I, F;
+    bool SS, IL, nRW, SP;
+    int_fast8_t EL;  // 0, 1, 2, or 3
+};
+
+struct ProgramState {
+    RegisterSet regSet;
+    PSTATE pstate;
+};
+
+struct ParseState;
+
+class InstructionTree : Instruction {
+public:
+    InstructionTree *noBranch;
+    InstructionTree *branch;
+
+    InstructionTree(const int32_t* inst, ParseState& parseState);
+    ~InstructionTree() {
+        if (noBranch) delete noBranch;
+        if (branch) delete branch;
+    }
+};
+
+struct ParseState {
+    std::array<std::unordered_set<int_fast8_t>, 31> dependencyMap;
+    std::unordered_map<const int32_t*, InstructionTree*> codeToInstTree;  // the set of all instructions and their corresponding trees
+    std::unordered_map<const int32_t*, decltype(dependencyMap)> functionCandidates;  // the set of instructions that were jumped to
+};
+
+class AssemblyFunction {
+public:
+    InstructionTree* instructions;
+
+    AssemblyFunction(const int32_t* inst);
+    std::string toString();
+    friend std::ostream& operator<<(std::ostream& os, const AssemblyFunction& func);
+private:
+    ParseState parseState;
 };
 
 // Truncates the given integer to its least significant N bits.
@@ -118,9 +192,17 @@ T trunc(T bits, uint8_t N) {
     return bits & ((1ull << N) - 1ull);
 }
 
+// Transforms the given integer (with M denoting the true number of significant bits) into an unsigned number of type To.
+template<class To, class From>
+To ZeroExtend(From bits, uint8_t M) {
+    static_assert(std::is_unsigned_v<From>);
+    return static_cast<To>(bits);
+}
+
 // Transforms the given integer (with M denoting the true number of significant bits) into a properly signed number of type To.
 template<class To, class From>
 To SignExtend(From bits, uint8_t M) {
+    static_assert(std::is_signed_v<To>);
     constexpr uint8_t N = sizeof(To) * CHAR_BIT;
     assert(N >= M);
     To prep = ((To)bits) << (N - M);
