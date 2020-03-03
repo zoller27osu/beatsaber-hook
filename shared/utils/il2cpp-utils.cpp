@@ -410,25 +410,25 @@ namespace il2cpp_utils {
 
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args) {
         il2cpp_functions::Init();
- 
+
         auto typ = GetClassFromName("System", "Type");
         if (!typ) {
             return nullptr;
         }
- 
+
         auto klassType = GetSystemType(klass);
         if (!klassType) {
             log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get class type object!");
             return nullptr;
         }
- 
+
         // Call Type.MakeGenericType on it
         auto a = il2cpp_functions::array_new_specific(typ, args.size());
         if (!a) {
             log(ERROR, "il2cpp_utils: MakeGeneric: Failed to make new array with length: %zu", args.size());
             return nullptr;
         }
- 
+
         int i = 0;
         for (auto arg : args) {
             auto o = GetSystemType(arg);
@@ -467,13 +467,13 @@ namespace il2cpp_utils {
 
     void LogMethod(const MethodInfo* method) {
         il2cpp_functions::Init();
- 
+
         auto flags = il2cpp_functions::method_get_flags(method, nullptr);
         std::stringstream flagStream;
         if (flags & METHOD_ATTRIBUTE_STATIC) flagStream << "static ";
         if (flags & METHOD_ATTRIBUTE_VIRTUAL) flagStream << "virtual ";
         if (flags & METHOD_ATTRIBUTE_ABSTRACT) flagStream << "abstract ";
-        const auto& flagStrRef = flagStream.str();  
+        const auto& flagStrRef = flagStream.str();
         const char* flagStr = flagStrRef.c_str();
         auto retType = il2cpp_functions::method_get_return_type(method);
         auto retTypeStr = TypeGetSimpleName(retType);
@@ -803,7 +803,7 @@ namespace il2cpp_utils {
         for (size_t i = 0; i < size; ++i) {
             // Get image for each assembly
             if (assembs[i] == nullptr) {
-                log(DEBUG, "Assembly %i was null! Skipping.", i);
+                log(DEBUG, "Assembly %zu was null! Skipping.", i);
                 continue;
             }
             log(DEBUG, "Scanning assembly \"%s\"", assembs[i]->aname.name);
@@ -894,7 +894,7 @@ namespace il2cpp_utils {
     bool AssertMatch(const Il2CppObject* source, const Il2CppClass* klass) {
         il2cpp_functions::Init();
         if (!Match(source, klass)) {
-            log(CRITICAL, "il2cpp_utils: AssertMatch: Unhandled subtype: namespace %s, class %s", 
+            log(CRITICAL, "il2cpp_utils: AssertMatch: Unhandled subtype: namespace %s, class %s",
                 il2cpp_functions::class_get_namespace(source->klass), il2cpp_functions::class_get_name(source->klass));
             std::terminate();
         }

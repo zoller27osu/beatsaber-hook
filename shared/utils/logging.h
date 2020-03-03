@@ -29,23 +29,8 @@ enum LOG_VERBOSE_TYPE {
 
 #define TAG "QuestHook[" MOD_ID "|" VERSION "]"
 
-namespace logging {
-    #define log_base(lvl, ...) __android_log_print(lvl, TAG, __VA_ARGS__)
-    #define log_vbase(lvl, ...) __android_log_vprint(lvl, TAG, __VA_ARGS__)
-
-    static int log(LOG_VERBOSE_TYPE level, const char* fmt, va_list args) {
-        return log_vbase(level, fmt, args);
-    }
-
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wformat-security"
-    template<typename... TArgs>
-    static int log(LOG_VERBOSE_TYPE level, TArgs ...args) {
-        return log_base(level, args...);
-    }
-    #pragma clang diagnostic pop
-}
-using logging::log;
+#define log(lvl, ...) __android_log_print(lvl, TAG, __VA_ARGS__)
+#define logv(lvl, ...) __android_log_vprint(lvl, TAG, __VA_ARGS__)
 
 #ifndef STD_BUFFER_SIZE
 #define STD_BUFFER_SIZE 256

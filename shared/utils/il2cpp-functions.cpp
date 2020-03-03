@@ -1,6 +1,6 @@
 #include "il2cpp-functions.hpp"
-#include "logging.h"
 #include "utils.h"
+#include "logging.h"
 
 template<typename TRet, typename ...TArgs>
 auto ExtractAdrpLdr(function_ptr_t<TRet, TArgs...> func, int adrp, int ldr) {
@@ -9,7 +9,7 @@ auto ExtractAdrpLdr(function_ptr_t<TRet, TArgs...> func, int adrp, int ldr) {
     auto offset = Instruction(&inst[ldr]).imm;
 
     auto jmp = jmpOff + offset;
-    log(DEBUG, "offset: %llX, jmp: %llX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
+    log(DEBUG, "offset: %lX, jmp: %lX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
     return jmp;
 }
 

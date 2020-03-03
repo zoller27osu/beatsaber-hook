@@ -17,6 +17,7 @@ namespace std {
 #error No string_view implementation available!
 #endif
 #include <array>
+#include <stack>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
@@ -67,9 +68,23 @@ public:
         int64_t result;  // iff numSourceRegisters is 0, the value that will be stored to Rd by this instruction
     };
     int64_t imm = 0;  // the immediate, if applicable
-    enum ShiftType {
-        LSL, LSR, ASR, ROR, none
-    } shiftType = none;
+
+    // see https://developer.arm.com/docs/ddi0596/a/a64-shared-pseudocode-functions/aarch64-instrs-pseudocode#impl-aarch64.ShiftReg.3
+    enum ShiftType {  // in most cases (exceptiing noShift) the amount is stored in imm and the shift is applied to Rm (Rs[1])
+        LSL, LSR, ASR, ROR, noShift
+    } shiftType = noShift;
+
+    // see https://developer.arm.com/docs/ddi0596/a/a64-shared-pseudocode-functions/aarch64-instrs-pseudocode#impl-aarch64.ExtendReg.3
+    enum ExtendType {  // in most cases (exceptiing noExtend) the amount is stored in imm and the extend is applied to Rm (Rs[1])
+        UXTB, UXTH, UXTW, UXTX, SXTB, SXTH, SXTW, SXTX, noExtend
+    } extendType = noExtend;
+    static bool extendIsUnsigned(ExtendType extend) {
+        return extend <= UXTX;
+    }
+    static uint_fast8_t extendGetLen(ExtendType extend) {
+        if (extend == noExtend) return 0;
+        return 8 << (extend % 4);
+    }
 
     #define BRANCH_ENUM(DO) \
         DO(NOBRANCH,  "") \
@@ -132,7 +147,7 @@ private:
     const char* kind[3];  // strings describing the kind of instruction, from least to most specific
     char parseLevel;  // The lowest level we were able to parse at, 1-3 (subtract 1 for index of most specific string in 'kind')
     bool RdCanBeSP = false;
-    bool RsCanBeSP = false;
+    bool Rs0CanBeSP = false;
     // For LDR/STR:
     bool wback;
     bool postindex;
@@ -162,7 +177,9 @@ public:
     InstructionTree *noBranch;
     InstructionTree *branch;
 
-    InstructionTree(const int32_t* inst, ParseState& parseState);
+    InstructionTree(const int32_t* inst);
+    // Note: this must be done in a stack frontier fashion to prevent StackOverflow
+    void PopulateChildren(ParseState& parseState);
     ~InstructionTree() {
         if (noBranch) delete noBranch;
         if (branch) delete branch;
@@ -170,6 +187,7 @@ public:
 };
 
 struct ParseState {
+    std::stack<InstructionTree*> frontier;
     std::array<std::unordered_set<int_fast8_t>, 31> dependencyMap;
     std::unordered_map<const int32_t*, InstructionTree*> codeToInstTree;  // the set of all instructions and their corresponding trees
     std::unordered_map<const int32_t*, decltype(dependencyMap)> functionCandidates;  // the set of instructions that were jumped to
@@ -289,7 +307,7 @@ long long findUniquePattern(bool& multiple, long long dwAddress, const char* pat
 #define MAKE_HOOK(name, addr, retval, ...) \
 void* addr_ ## name = (void*) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
-retval hook_ ## name(__VA_ARGS__) 
+retval hook_ ## name(__VA_ARGS__)
 
 #define MAKE_HOOK_OFFSETLESS(name, retval, ...) \
 retval (*name)(__VA_ARGS__) = NULL; \
@@ -298,7 +316,7 @@ retval hook_ ## name(__VA_ARGS__)
 #define MAKE_HOOK_NAT(name, addr, retval, ...) \
 void* addr_ ## name = (void*) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
-retval hook_ ## name(__VA_ARGS__) 
+retval hook_ ## name(__VA_ARGS__)
 
 #ifdef __aarch64__
 
