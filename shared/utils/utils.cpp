@@ -40,7 +40,7 @@ static const uint_fast8_t RZR = 31;
 static const uint_fast8_t SP = 31;
 std::ostream& operator<<(std::ostream& os, const Register& regName) {
     auto reg = regName.num;
-    if (reg == SP) {
+    if (reg == SP || reg == RZR) {
         if (regName.r31_is_sp) {
             os << "SP";
         } else {
@@ -99,7 +99,6 @@ Instruction::Instruction(const int32_t* inst) {
     auto pc = (unsigned long long)inst;
     parseLevel = 0;
     parsed = false;
-    // log(DEBUG, "inst: ptr = 0x%llX (offset 0x%llX)", pc, pc - getRealOffset(0));
     auto code = *inst;
     // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64#top
     uint_fast8_t top0 = bits(code, 28, 25);  // op0 for top-level only
@@ -145,9 +144,8 @@ Instruction::Instruction(const int32_t* inst) {
                                 numSourceRegisters = 0;
                                 result = 0;
                             } else {
+                                Rs[0] = Rs[1];
                                 numSourceRegisters = 1;
-                                Rs[0] = Rm;
-                                Rs[1] = -1;
                             }
                         } else {
                             if (sf == 0) {
@@ -179,15 +177,18 @@ Instruction::Instruction(const int32_t* inst) {
                                 if (Rd == RZR) {
                                     // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/cmn-shifted-register-compare-negative-shifted-register-an-alias-of-adds-shifted-register
                                     kind[parseLevel++] = "CMN (shifted register)";  // preferred alias
+                                    Rd = -1;
                                 } else {
                                     kind[parseLevel++] = sf ? "ADDS (shifted register) — 64-bit" : "ADDS (shifted register) — 32-bit";
                                 }
                             }
                         } else {
                             if (S == 0) {
-                                if (Rd == RZR) {
+                                if (Rn == RZR) {
                                     // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/neg-shifted-register-negate-shifted-register-an-alias-of-sub-shifted-register
                                     kind[parseLevel++] = "NEG (shifted register)";  // preferred alias
+                                    Rs[0] = Rs[1];
+                                    numSourceRegisters = 1;
                                 } else {
                                     kind[parseLevel++] = sf ? "SUB (shifted register) — 64-bit" : "SUB (shifted register) — 32-bit";
                                 }
@@ -195,9 +196,12 @@ Instruction::Instruction(const int32_t* inst) {
                                 if (Rd == RZR) {
                                     // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/cmp-shifted-register-compare-shifted-register-an-alias-of-subs-shifted-register
                                     kind[parseLevel++] = "CMP (shifted register)";  // preferred alias
+                                    Rd = -1;
                                 } else if (Rn == RZR) {
                                     // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/negs-negate-setting-flags-an-alias-of-subs-shifted-register
                                     kind[parseLevel++] = "NEGS";  // preferred alias
+                                    Rs[0] = Rs[1];
+                                    numSourceRegisters = 1;
                                 } else {
                                     kind[parseLevel++] = sf ? "SUBS (shifted register) — 64-bit" : "SUBS (shifted register) — 32-bit";
                                 }
@@ -233,15 +237,18 @@ Instruction::Instruction(const int32_t* inst) {
                                 if (Rd == RZR) {
                                     // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/cmn-shifted-register-compare-negative-shifted-register-an-alias-of-adds-shifted-register
                                     kind[parseLevel++] = "CMN (shifted register)";  // preferred alias
+                                    Rd = -1;
                                 } else {
                                     kind[parseLevel++] = sf ? "ADDS (shifted register) — 64-bit" : "ADDS (shifted register) — 32-bit";
                                 }
                             }
                         } else {
                             if (S == 0) {
-                                if (Rd == RZR) {
+                                if (Rn == RZR) {
                                     // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/neg-shifted-register-negate-shifted-register-an-alias-of-sub-shifted-register
                                     kind[parseLevel++] = "NEG (shifted register)";  // preferred alias
+                                    Rs[0] = Rs[1];
+                                    numSourceRegisters = 1;
                                 } else {
                                     kind[parseLevel++] = sf ? "SUB (shifted register) — 64-bit" : "SUB (shifted register) — 32-bit";
                                 }
@@ -249,9 +256,12 @@ Instruction::Instruction(const int32_t* inst) {
                                 if (Rd == RZR) {
                                     // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/cmp-shifted-register-compare-shifted-register-an-alias-of-subs-shifted-register
                                     kind[parseLevel++] = "CMP (shifted register)";  // preferred alias
+                                    Rd = -1;
                                 } else if (Rn == RZR) {
                                     // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/negs-negate-setting-flags-an-alias-of-subs-shifted-register
                                     kind[parseLevel++] = "NEGS";  // preferred alias
+                                    Rs[0] = Rs[1];
+                                    numSourceRegisters = 1;
                                 } else {
                                     kind[parseLevel++] = sf ? "SUBS (shifted register) — 64-bit" : "SUBS (shifted register) — 32-bit";
                                 }
@@ -351,7 +361,7 @@ Instruction::Instruction(const int32_t* inst) {
                 imm = ZeroExtend<int64_t>(imm12, 12) << 12 * shift;
                 if (op == 0) {
                     if (S == 0) {
-                        if ((shift == 0) && (imm12 == 0) && ((Rd == RZR) || (Rs[0] == RZR))) {
+                        if ((imm == 0) && ((Rd == SP) || (Rs[0] == SP))) {
                             // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/mov-tofrom-sp-move-between-register-and-stack-pointer-an-alias-of-add-immediate
                             kind[parseLevel++] = "MOV (to/from SP)";  // preferred alias
                         } else {
@@ -361,6 +371,7 @@ Instruction::Instruction(const int32_t* inst) {
                         if (Rd == RZR) {
                             // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/cmn-immediate-compare-negative-immediate-an-alias-of-adds-immediate
                             kind[parseLevel++] = "CMN (immediate)";  // preferred alias
+                            Rd = -1;
                         } else {
                             kind[parseLevel++] = sf ? "ADDS (immediate) — 64-bit" : "ADDS (immediate) — 32-bit";
                         }
@@ -372,6 +383,7 @@ Instruction::Instruction(const int32_t* inst) {
                         if (Rd == RZR) {
                             // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/cmp-immediate-compare-immediate-an-alias-of-subs-immediate
                             kind[parseLevel++] = "CMP (immediate)";  // preferred alias
+                            Rd = -1;
                         } else {
                             kind[parseLevel++] = sf ? "SUBS (immediate) — 64-bit" : "SUBS (immediate) — 32-bit";
                         }
@@ -525,7 +537,7 @@ Instruction::Instruction(const int32_t* inst) {
             auto off = imm - getRealOffset(0);
             log(DEBUG, "imm's offset: %llX", off);
             if (off >= 0x03000000) {
-                abort();
+                log(ERROR, "0x%llX is probably not a valid offset! Please investigate!", off);
             }
             if (!op) {
                 kind[parseLevel++] = "B";
@@ -748,9 +760,9 @@ Instruction::Instruction(const int32_t* inst) {
                     kind[parseLevel++] = unalloc;
                 } else if (!V && !L) {
                     numSourceRegisters = 2;
-                    Rs[0] = Rt;
+                    Rs[0] = Rt; Rs0CanBeSP = true;
                     Rs[1] = Rt2;
-                    Rd = Rn;
+                    Rd = Rn; RdCanBeSP = true;
                     if (opc == 0) {
                         kind[parseLevel++] = "STP — 32-bit";
                     } else if (opc == 0b1) {
@@ -760,8 +772,8 @@ Instruction::Instruction(const int32_t* inst) {
                     }
                 } else if (!V && L) {
                     numSourceRegisters = 1;
-                    Rs[0] = Rn;
-                    Rd = Rt;
+                    Rs[0] = Rn; Rs0CanBeSP = true;
+                    Rd = Rt; RdCanBeSP = false;
                     Rd2 = Rt2;
                     if (opc == 0) {
                         kind[parseLevel++] = "LDP — 32-bit";
@@ -814,11 +826,13 @@ InstructionTree* FindOrCreateInstruction(const int32_t* pc, ParseState& parseSta
 void InstructionTree::PopulateChildren(ParseState& parseState) {
     auto pc = this->addr;
     log(DEBUG, "InstructionTree: %p, %s", pc, this->toString().c_str());
-    if (this->numSourceRegisters < 0) {
-        abort();
-    }
     // If instruction was not fully parsed, stop.
     if (!parsed || !valid) return;
+
+    if ((this->numSourceRegisters < 0) || (this->Rs[this->numSourceRegisters - 1] < 0)) {
+        log(ERROR, "The Instruction constructor did not properly parse this instruction's source registers! Please fix!");
+    }
+
     // if instruction is return, stop parsing.
     if (isReturn()) return;
 
