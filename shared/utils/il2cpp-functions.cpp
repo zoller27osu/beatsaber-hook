@@ -1,6 +1,6 @@
 #include "il2cpp-functions.hpp"
-#include "logging.h"
 #include "utils.h"
+#include "logging.h"
 
 template<typename TRet, typename ...TArgs>
 auto ExtractAdrpLdr(function_ptr_t<TRet, TArgs...> func, int adrp, int ldr) {
@@ -9,7 +9,7 @@ auto ExtractAdrpLdr(function_ptr_t<TRet, TArgs...> func, int adrp, int ldr) {
     auto offset = Instruction(&inst[ldr]).imm;
 
     auto jmp = jmpOff + offset;
-    log(DEBUG, "offset: %llX, jmp: %llX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
+    log(DEBUG, "offset: %lX, jmp: %lX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
     return jmp;
 }
 
@@ -102,33 +102,34 @@ void il2cpp_functions::Init() {
         allSigScanSuccess = false; \
     }
 
+
+    bool multsFound = false;
+    findUniquePattern(multsFound, base, "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? ? 00 ? ? 91 42 ? ? 91 ? ? ? 17", "il2cpp_codegen_register");
+
+    // TODO: instead could follow single call from il2cpp_codegen_register, sigscan "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? ? 00 ? ? 91 42 ? ? 91 ? ? ? 17"
     bool backup = allSigScanSuccess;
-    SEARCH_HOOK(Class, Init,  // 0xA6D1B8 in 1.8.0b
-            "f3 0f 1e f8 fd 7b 01 a9 fd 43 00 91 08 b8 44 39 ? ? ? 37 f3 03 00 aa ? ? ? ? 00 00 12 91 e0 07 00 f9 ? ? ? ? "
-            "e1 23 00 91 e0 03 13 aa ? ? ? ? e0 07 40 f9 ? ? ? ? fd 7b 41 a9 e0 03 00 32 f3 07 42 f8 c0 03 5f d6");
+    // "ff 83 01 d1 f6 57 03 a9 f4 4f 04 a9 fd 7b 05 a9 fd 43 01 91 ? ? ? ? ? ? ? ? ? ? ? ? 00 05 04 f9 21 09 04 f9 "
+    // "42 0d 04 f9 28 00 40 b9 f4 03 01 aa f3 03 00 aa 1f 05 00 71 ? ? ? 54 f5 03 1f aa"
+    SEARCH_HOOK(MetadataCache, Register,  // 0xA78B38 in 1.8.0b
+        "ff ? ? d1 ? ? ? a9 ? ? ? a9 ? ? ? a9 ? ? ? 91 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? f9 ? ? ? f9 ? ? ? f9 ? ? 40 b9 "
+        "? 03 ? aa ? 03 ? aa ? ? ? 71 ? ? ? 54 ? 03 1f aa");
     if (!hookAddr) {
-        log(WARNING, "Failed to find Class::Init. Will use pre 1.8 sigscans from now on.");
+        log(WARNING, "Failed to find MetadataCache::Register. Will use pre 1.8 sigscans from now on.");
         v1_8 = false;
         allSigScanSuccess = backup;
-        SEARCH_HOOK(Class, Init,  // 0x846A68 in 1.5, 0x9EC0A4 in 1.7.0
-            "f3 0f 1e f8 fd 7b 01 a9 fd 43 00 91 f3 03 00 aa 68 9a 44 39 48 01 10 37");
-    }
-
-    if (v1_8) {
-        // "ff 83 01 d1 f6 57 03 a9 f4 4f 04 a9 fd 7b 05 a9 fd 43 01 91 ? ? ? ? ? ? ? ? ? ? ? ? 00 05 04 f9 21 09 04 f9 "
-        // "42 0d 04 f9 28 00 40 b9 f4 03 01 aa f3 03 00 aa 1f 05 00 71 ? ? ? 54 f5 03 1f aa"
-        SEARCH_HOOK(MetadataCache, Register,  // 0xA78B38 in 1.8.0b
-            "ff ? ? d1 ? ? ? a9 ? ? ? a9 ? ? ? a9 ? ? ? 91 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? f9 ? ? ? f9 ? ? ? f9 ? ? 40 b9 "
-            "? 03 ? aa ? 03 ? aa ? ? ? 71 ? ? ? 54 ? 03 1f aa");
-    } else {
         SEARCH_HOOK(MetadataCache, Register,  // 0x84DE9C in 1.5, 0x9F3988 in 1.7.0
             "ff 83 01 d1 f6 57 03 a9 f4 4f 04 a9 fd 7b 05 a9 fd 43 01 91 f4 03 01 aa f3 03 00 aa");
     }
 
+    // vm::Class::Init->InitLocked->SetupFieldsLocked->SetupFieldsFromDefinitionLocked
+    // GenericMetadata::GetGenericClass
+    // Runtime::Init_call101->Image::InitNestedTypes->Image::AddNestedTypesToNametoClassHashTable
     SEARCH_HOOK(MetadataCache, GetIndexForTypeDefinition,  // 0x8504BC in 1.5
         "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 0a 34 40 f9 08 a1 80 b9 28 01 08 8b 48 01 08 cb");
+
     SEARCH_HOOK(MetadataCache, GetStringFromIndex,  // 0x84E5E8 in 1.5
         "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 08 19 80 b9 28 01 08 8b 00 c1 20 8b c0 03 5f d6");
+
     SEARCH_HOOK(MetadataCache, GetTypeInfoFromTypeIndex,  // 0x84F764 in 1.5
         "f5 0f 1d f8 f4 4f 01 a9 fd 7b 02 a9 fd 83 00 91 1f 04 00 31 ? ? ? 54 ? ? ? ? ? ? ? f9 13 d9 60 f8 13 02 00 b5 "
         "? ? ? ? ? ? ? f9 15 7c 40 93");
@@ -174,17 +175,6 @@ void il2cpp_functions::Init() {
     // // Removed in 1.8.0b
     // SEARCH_HOOK(MetadataCache, GetRGCTXDefinitionFromIndex,  // 0x85015C in 1.5
     //     "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 08 a9 80 b9 28 01 08 8b 00 cd 20 8b c0 03 5f d6");
-
-    // TODO: extract from code of il2cpp_type_get_assembly_qualified_name instead?
-    if (v1_8) {
-        SEARCH_HOOK(_Type, GetName_,  // 0xA7B634 in 1.8.0b
-            //f4 4f be a9 fd 7b 01 a9 fd 43 00 91    e2 03 01 2a e1 03 00 aa f3 03 08 aa 1f 7d 00 a9 1f 09 00 f9
-            "? ? be a9 ? ? 01 a9 ? 43 00 91 ? 03 ? 2a ? 03 ? aa ? 03 ? aa ? ? 00 a9 ? ? ? f9");
-    } else {
-        SEARCH_HOOK(_Type, GetName_,  // 0x8735DC in 1.5, 0xA1A458 in 1.7.0
-            // f4 4f be a9 fd 7b 01 a9 fd 43 00 91   f3 03 08 aa 88 d5 00 d0 08 71 40 f9 e9 03 01 2a ea 03 00 aa 08 61 00 91 68 02 00 f9
-            "f4 4f be a9 fd 7b 01 a9 fd 43 00 91 f3 03 08 aa ? ? ? ? ? ? ? f9 e9 03 01 2a");
-    }
 
     if (v1_8) {
         SEARCH_HOOK(GenericClass, GetClass,  // 0xA6E4EC in 1.8.0b
@@ -609,6 +599,32 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_class_get_type CONST VERSION!");
     *(void**)(&il2cpp_functions::class_get_name_const) = dlsym(imagehandle, "il2cpp_class_get_name");
     log(INFO, "Loaded: il2cpp_class_get_name CONST VERSION!");
+
+    Instruction ans((const int32_t*)array_new_specific);
+    Instruction Array_NewSpecific((const int32_t*)ans.imm);
+    log(DEBUG, "Array::NewSpecific offset: %llX", ((long long)Array_NewSpecific.addr) - getRealOffset(0));
+    auto j2Cl_I = Array_NewSpecific.FindNthCall(1);  // also the 113th call in Runtime::Init
+    if (!j2Cl_I) abort();
+    // 0x846A68 in 1.5, 0x9EC0A4 in 1.7.0, 0xA6D1B8 in 1.8.0b
+    Class_Init = (decltype(Class_Init))j2Cl_I->imm;
+    log(DEBUG, "Class::Init found? offset: %llX", ((long long)Class_Init) - getRealOffset(0));
+
+    Instruction ii((const int32_t*)init);
+    auto j2Rt_I = ii.FindNthDirectBranchWithoutLink(1);
+    if (!j2Rt_I) abort();
+    Instruction Runtime_Init((const int32_t*)j2Rt_I->imm);
+    log(DEBUG, "Runtime::Init offset: %llX", ((long long)Runtime_Init.addr) - getRealOffset(0));
+    auto j2MC_R = Runtime_Init.FindNthCall(113);
+    if (!j2MC_R) abort();
+    log(DEBUG, "j2MC_R addr offset: %llX", ((long long)j2MC_R->addr) - getRealOffset(0));
+    // 0x84DE9C in 1.5, 0x9F3988 in 1.7.0, 0xA78B38 in 1.8.0b
+    MetadataCache_Register = (decltype(MetadataCache_Register))j2MC_R->imm;
+    log(DEBUG, "MetadataCache::Register found? offset: %llX", ((long long)MetadataCache_Register) - getRealOffset(0));
+
+    Instruction tanq((const int32_t*)type_get_assembly_qualified_name);
+    // offset 0x8735DC in 1.5, 0xA1A458 in 1.7.0, 0xA7B634 in 1.8.0b
+    _Type_GetName_ = (decltype(_Type_GetName_))tanq.FindNthCall(1)->imm;
+    log(DEBUG, "_Type_GetName_ found? offset: %llX", ((long long)_Type_GetName_) - getRealOffset(0));
 
     // Extract location of s_Il2CppMetadataRegistration from instructions in MetadataCache::Register
     if (v1_8) {
