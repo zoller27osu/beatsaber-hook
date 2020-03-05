@@ -8,7 +8,9 @@
 #include <unistd.h>
 #include <iostream>
 #include <fstream>
+#include <functional>
 #include <new>
+#include <unordered_set>
 
 using namespace std;
 
@@ -35,9 +37,9 @@ uint64_t DecodeBitMasks(unsigned N, unsigned imms, unsigned immr, unsigned regSi
     return pattern;
 }
 
-static const uint_fast8_t RLINK = 30;
-static const uint_fast8_t RZR = 31;
-static const uint_fast8_t SP = 31;
+static const auto &SP = Register::SP;
+static const auto &RZR = Register::RZR;
+static const auto &RLINK = Register::RLINK;
 std::ostream& operator<<(std::ostream& os, const Register& regName) {
     auto reg = regName.num;
     if (reg == SP || reg == RZR) {
@@ -57,7 +59,7 @@ std::ostream& operator<<(std::ostream& os, const Register& regName) {
     return os;
 }
 
-std::string Register::toString() {
+std::string Register::toString() const {
     std::stringstream ss;
     ss << *this;
     return ss.str();
@@ -87,10 +89,19 @@ std::ostream& operator<<(std::ostream& os, const Instruction& inst) {
     return os << std::noshowbase;
 }
 
-std::string Instruction::toString() {
+std::string Instruction::toString() const {
     std::stringstream ss;
     ss << *this;
     return ss.str();
+}
+
+Instruction* Instruction::FindNthCall(int n) {
+    return this->FindNth(n, std::mem_fn(&Instruction::isCall));
+}
+
+// e.g. B
+Instruction* Instruction::FindNthDirectBranchWithoutLink(int n) {
+    return this->FindNth(n, [](Instruction* inst){return inst->branchType == DIR;});
 }
 
 static const char* unalloc = "UNALLOCATED";
@@ -817,10 +828,70 @@ InstructionTree* FindOrCreateInstruction(const int32_t* pc, ParseState& parseSta
     } else {
         log(DEBUG, "%s (pc %p, offset %llX)", msg, pc, ((long long)pc) - getRealOffset(0));
         auto inst = new (std::nothrow) InstructionTree(pc);
-        parseState.frontier.push(inst);
+        parseState.frontier.push({inst, parseState.dependencyMap});  // the inserted depMap is a copy
         parseState.codeToInstTree[pc] = inst;
         return inst;
     }
+}
+
+void ProcessRegisterDependencies(Instruction* inst, uint_fast8_t Rd, decltype(ParseState::dependencyMap)& depMap) {
+    auto newDeps = decltype(ParseState::dependencyMap)::value_type();
+    for (uint_fast8_t i = 0; i < inst->numSourceRegisters; i++) {
+        auto Rs = inst->Rs[i];
+        if ((Rs < 0) || (Rs >= depMap.max_size())) {
+            log(ERROR, "Instruction is wrong! numSourceRegisters = %i but Rs[%i] = %i", inst->numSourceRegisters, i, Rs);
+            abort();
+            continue;
+        }
+        auto oldDeps = depMap[Rs];
+        if (!(oldDeps.empty())) newDeps.insert(oldDeps.begin(), oldDeps.end());
+    }
+    depMap[Rd] = std::move(newDeps);
+}
+
+void ProcessRegisterDependencies(Instruction* inst, decltype(ParseState::dependencyMap)& depMap) {
+    if (inst->Rd >= 0) ProcessRegisterDependencies(inst, inst->Rd, depMap);
+    if (inst->Rd2 >= 0) ProcessRegisterDependencies(inst, inst->Rd2, depMap);
+}
+
+bool OnlySelfDeps(uint_fast8_t reg, decltype(ParseState::dependencyMap)& depMap) {
+    auto deps = depMap[reg];
+    return (deps.size() == 1 && deps.count(reg));
+}
+
+std::string DepMapToString(decltype(ParseState::dependencyMap)& depMap) {
+    std::stringstream ss;
+    ss << "{self deps: [";
+    for (uint_fast8_t i = 0; i < depMap.max_size(); i++) {
+        if ((i != 0) && ((i % 8) == 0)) {
+            ss << "|";
+        }
+        if (OnlySelfDeps(i, depMap)) {
+            ss << "O";  // a loop
+        } else if (depMap[i].empty()) {
+            ss << " ";
+        } else {
+            ss << ">";  // deps are listed on right
+        }
+    }
+    ss << "]; ";
+    bool first = true;
+    for (uint_fast8_t i = 0; i < depMap.max_size(); i++) {
+        if (!OnlySelfDeps(i, depMap) && !depMap[i].empty()) {
+            if (!first) ss << "; ";
+            ss << Register(i, true) << " deps: ";
+            bool innerFirst = true;
+            for (auto dep: depMap[i]) {
+                if (dep)
+                if (!innerFirst) ss << ", ";
+                ss << Register(dep, true);
+                innerFirst = false;
+            }
+            first = false;
+        }
+    }
+    ss << "}";
+    return ss.str();
 }
 
 void InstructionTree::PopulateChildren(ParseState& parseState) {
@@ -836,14 +907,16 @@ void InstructionTree::PopulateChildren(ParseState& parseState) {
     // if instruction is return, stop parsing.
     if (isReturn()) return;
 
-    // TODO: populate parseState.dependencyMap using this' dest and source registers
+    // populate parseState.dependencyMap using this' dest and source registers
+    ProcessRegisterDependencies(this, parseState.dependencyMap);
 
     // if instruction is direct branch, branch's addr is imm
     if (isDirectBranch()) {
         auto immAsAddr = (const int32_t*)imm;
+        // Note: these do not edit the dependency map so there is no need to take a backup of it ourselves
         branch = FindOrCreateInstruction(immAsAddr, parseState, "InstructionTree: recursing to branch location");
         if (isCall()) {
-            parseState.functionCandidates.insert({immAsAddr, parseState.dependencyMap});
+            parseState.functionCandidates.insert({immAsAddr, parseState.dependencyMap});  // the inserted depMap is a copy
         }
     }
     // unless instruction is unconditional branch, populate noBranch with next instruction in memory
@@ -861,19 +934,27 @@ std::ostream& operator<<(std::ostream& os, const AssemblyFunction& func) {
     return os << std::noshowbase;
 }
 
-std::string AssemblyFunction::toString() {
+std::string AssemblyFunction::toString() const {
     std::stringstream ss;
     ss << *this;
     return ss.str();
 }
 
 AssemblyFunction::AssemblyFunction(const int32_t* pc): parseState() {
+    log(DEBUG, "Starting dependency map: %s", DepMapToString(parseState.dependencyMap).c_str());
     auto root = new InstructionTree(pc);
-    parseState.frontier.push(root);
+    parseState.frontier.push({root, std::move(parseState.dependencyMap)});
     while (!parseState.frontier.empty()) {
-        auto next = parseState.frontier.top();
+        auto p = parseState.frontier.top();
         parseState.frontier.pop();
-        next->PopulateChildren(parseState);
+
+        parseState.dependencyMap = std::move(p.second);
+        p.first->PopulateChildren(parseState);
+    }
+
+    log(INFO, "Function candidates: ");
+    for (auto p : parseState.functionCandidates) {
+        log(INFO, "%p (offset %llX): depMap %s", p.first, ((long long)p.first) - getRealOffset(0), DepMapToString(p.second).c_str());
     }
 }
 

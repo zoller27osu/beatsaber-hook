@@ -17,10 +17,10 @@ namespace std {
 #error No string_view implementation available!
 #endif
 #include <array>
+#include <set>
 #include <stack>
 #include <thread>
 #include <unordered_map>
-#include <unordered_set>
 
 template <typename Container> struct is_vector : std::false_type { };
 template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type { };
@@ -48,10 +48,16 @@ template <class...> constexpr std::false_type false_t{};
 #ifdef __cplusplus
 class Register {
 public:
-    int_fast8_t num;
+    inline static const uint_fast8_t TOTAL_NUMBER = 32;
+    inline static const uint_fast8_t RLINK = 30;
+    inline static const uint_fast8_t RZR = 31;
+    inline static const uint_fast8_t SP = 31;
+    static_assert(TOTAL_NUMBER > SP);
+
+    uint_fast8_t num;
     bool r31_is_sp;
-    Register(int_fast8_t reg, bool r31) : num(reg), r31_is_sp(r31) {};
-    std::string toString();
+    Register(uint_fast8_t reg, bool r31) : num(reg), r31_is_sp(r31) {};
+    std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const Register& n);
 };
 
@@ -62,7 +68,7 @@ public:
     // Rd and Rs are capitalized in accordance with typical Register notation
     int_fast8_t Rd = -2;  // the destination register's number, or -1 if none
     int_fast8_t Rd2 = -2;  // the 2nd destination register's number, or -1 if none
-    int numSourceRegisters = -1;  // the number of source registers this instruction has
+    int_fast8_t numSourceRegisters = -1;  // the number of source registers this instruction has
     union {
         int_fast8_t Rs[2] = { -1, -1 };  // the number(s) of the source register(s), e.g. {12, 31} for X12 & SP
         int64_t result;  // iff numSourceRegisters is 0, the value that will be stored to Rd by this instruction
@@ -121,28 +127,59 @@ public:
     bool parsed;  // whether the instruction was fully and successfully parsed
     bool valid = true;  // iff parsed, whether the instruction is a valid one
 
-    Instruction(const int32_t* inst);
-    inline bool isBranch() {
+    inline bool isBranch() const {
         return branchType != NOBRANCH;
     }
-    inline bool isUnconditionalBranch() {
+    inline bool isUnconditionalBranch() const {
         return isBranch() && cond == -1;
     }
-    inline bool isReturn() {
+    inline bool isReturn() const {
         return branchType == RET;
     }
     // i.e. location to jump to is not read from a register, but encoded directly into the instruction
-    inline bool isDirectBranch() {
+    inline bool isDirectBranch() const {
         return (branchType == DIRCALL) || (branchType == DIR);
     }
-    inline bool isIndirectBranch() {
+    inline bool isIndirectBranch() const {
         return (branchType != NOBRANCH) && (!isDirectBranch());
     }
-    inline bool isCall() {
+    inline bool isCall() const {
         return (branchType == DIRCALL) || (branchType == INDCALL);
     }
-    std::string toString();
+
+    Instruction(const int32_t* inst);
+    std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const Instruction& inst);
+
+    // pred should be a https://en.cppreference.com/w/cpp/named_req/FunctionObject that accepts an Instruction* and returns bool.
+    // Returns the nth match of the predicate starting at this->addr, or nullptr if the nth match does not exist.
+    // Use n=1 for the 1st match, not 0.
+    // Stops search when a "ret" instruction (return) is encountered (unless the nth match is found first or "ret" matches pred).
+        // TODO: Instead, continue search until nth match is found, but return the number of ret instructions passed?
+            // or accept a number of ret instructions before the function is considered "over"?
+    // The search does not follow jumps.
+    template<class UnaryPredicate>
+    Instruction* FindNth(int n, UnaryPredicate pred) {
+        auto inst = this;
+        decltype(n) matches = 0;
+        while (true) {
+            if (pred(inst)) {
+                matches++;
+                if (matches == n) return inst;
+            } else if (inst->isReturn()) {
+                break;
+            }
+            auto pc = inst->addr;
+            if (inst != this) delete inst;
+            inst = new Instruction(pc + 1);
+        }
+        log(ERROR, "Only found %i instructions matching this predicate!", matches);
+        return nullptr;
+    }
+    // e.g. BL, BLR. Unless the jump in indirect, the address the instruction jumps to will be at ->imm.
+    Instruction* FindNthCall(int n);
+    // e.g. B
+    Instruction* FindNthDirectBranchWithoutLink(int n);
 private:
     const char* kind[3];  // strings describing the kind of instruction, from least to most specific
     char parseLevel;  // The lowest level we were able to parse at, 1-3 (subtract 1 for index of most specific string in 'kind')
@@ -155,7 +192,7 @@ private:
 };
 
 struct RegisterSet {
-    int_fast64_t regs[31] = {0};
+    int_fast64_t regs[Register::TOTAL_NUMBER] = {0};
 };
 
 struct PSTATE {
@@ -187,10 +224,17 @@ public:
 };
 
 struct ParseState {
-    std::stack<InstructionTree*> frontier;
-    std::array<std::unordered_set<int_fast8_t>, 31> dependencyMap;
+    // TODO: change the sets to bitsets?
+    std::array<std::set<uint_fast8_t>, Register::TOTAL_NUMBER> dependencyMap;
     std::unordered_map<const int32_t*, InstructionTree*> codeToInstTree;  // the set of all instructions and their corresponding trees
     std::unordered_map<const int32_t*, decltype(dependencyMap)> functionCandidates;  // the set of instructions that were jumped to
+    std::stack<std::pair<InstructionTree*, decltype(dependencyMap)>> frontier;
+
+    ParseState() {
+        for (uint_fast8_t i = 0; i < dependencyMap.size(); i++) {
+            dependencyMap[i] = std::move(decltype(dependencyMap)::value_type({i}));
+        }
+    }
 };
 
 class AssemblyFunction {
@@ -198,7 +242,7 @@ public:
     InstructionTree* instructions;
 
     AssemblyFunction(const int32_t* inst);
-    std::string toString();
+    std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const AssemblyFunction& func);
 private:
     ParseState parseState;
