@@ -40,98 +40,9 @@ template <class...> constexpr std::false_type false_t{};
 #include "../inline-hook/And64InlineHook.hpp"
 #include "il2cpp-utils.hpp"
 #include "../config/config-utils.hpp"
+#include "instruction-parsing.hpp"
 
 #ifdef __cplusplus
-class Register {
-public:
-    int_fast8_t num;
-    Register(int_fast8_t reg) : num(reg) {};
-    std::string toString();
-    friend std::ostream& operator<<(std::ostream& os, const Register& n);
-};
-
-class Instruction {
-public:
-    const int32_t* addr;  // the pointer to the instruction
-    // Rd and Rs are capitalized in accordance with typical Register notation
-    int_fast8_t Rd = -2;  // the destination register's number, or -1 if none
-    int numSourceRegisters = -1;  // the number of source registers this instruction has
-    union {
-        int_fast8_t Rs[2] = { -1, -1 };  // the number(s) of the source register(s), e.g. {12, 31} for X12 & SP
-        int64_t result;  // iff numSourceRegisters is 0, the value that will be stored to Rd by this instruction
-    };
-    int64_t imm = 0;  // the immediate, if applicable
-    enum ShiftType {
-        LSL, LSR, ASR, ROR, none
-    } shiftType = none;
-    bool parsed;  // whether the instruction was fully and successfully parsed
-    bool valid = true;  // iff parsed, whether the instruction is a valid one
-
-    Instruction(const int32_t* inst);
-    std::string toString();
-    friend std::ostream& operator<<(std::ostream& os, const Instruction& inst);
-private:
-    const char* kind[3];  // strings describing the kind of instruction, from least to most specific
-    char parseLevel;  // The lowest level we were able to parse at, 1-3 (subtract 1 for index of most specific string in 'kind')
-};
-
-// Truncates the given integer to its least significant N bits.
-template<class T>
-T trunc(T bits, uint8_t N) {
-    return bits & ((1ull << N) - 1ull);
-}
-
-// Transforms the given integer (with M denoting the true number of significant bits) into a properly signed number of type To.
-template<class To, class From>
-To SignExtend(From bits, uint8_t M) {
-    constexpr uint8_t N = sizeof(To) * CHAR_BIT;
-    assert(N >= M);
-    To prep = ((To)bits) << (N - M);
-    return (prep >> (N - M));
-}
-
-// N is the true number of significant bits in x.
-// Returns the index of the most significant ON bit in x.
-template<class T>
-int HighestSetBit(T x, uint8_t N) {
-    for (int i = N - 1; i >= 0; i--) {
-        if (x & (1 << i)) return i;
-    }
-    return -1;
-}
-
-// For all shifts (LSL, LSR, ASR, ROR): N is the true number of significant bits in x.
-// Left shift
-template<class T>
-T LSL(T x, uint8_t N, unsigned shift) {
-    return trunc(x << shift, N);
-}
-
-// Right shift, taking x as unsigned.
-template<class T>
-T LSR(T x, uint8_t N, unsigned shift) {
-    return trunc(x >> shift, N - shift);
-}
-
-// Right shift, taking x as signed.
-template<class T>
-T ASR(T x, uint8_t N, unsigned shift) {
-    typedef typename std::make_signed<T>::type signedT;
-    return trunc(SignExtend<signedT>(x, N) >> shift, N);
-}
-
-// Right shift, but bits that "fall off" move to the front instead
-template<class T>
-T ROR(T x, uint8_t N, unsigned shift) {
-    shift %= N;
-    return LSR(x, N, shift) | LSL(x, N, N - shift);
-}
-
-// Returns the value of the bits in x at index high through low inclusive, where the LSB is index 0 and the MSB's index >= high.
-template<class T>
-T bits(T x, uint8_t high, uint8_t low) {
-    return trunc(x >> low, high - low + 1);
-}
 
 template <typename Function, typename... Args>
 static void StartCoroutine(Function&& fun, Args&&... args) {
@@ -170,7 +81,7 @@ long long findUniquePattern(bool& multiple, long long dwAddress, const char* pat
 #define MAKE_HOOK(name, addr, retval, ...) \
 void* addr_ ## name = (void*) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
-retval hook_ ## name(__VA_ARGS__) 
+retval hook_ ## name(__VA_ARGS__)
 
 #define MAKE_HOOK_OFFSETLESS(name, retval, ...) \
 retval (*name)(__VA_ARGS__) = NULL; \
@@ -179,7 +90,7 @@ retval hook_ ## name(__VA_ARGS__)
 #define MAKE_HOOK_NAT(name, addr, retval, ...) \
 void* addr_ ## name = (void*) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
-retval hook_ ## name(__VA_ARGS__) 
+retval hook_ ## name(__VA_ARGS__)
 
 #ifdef __aarch64__
 

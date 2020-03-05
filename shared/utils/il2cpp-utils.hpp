@@ -475,7 +475,7 @@ namespace il2cpp_utils {
     }
 
     template<typename TOut>
-    // Gets the value of the field with type TOut and the given name from the given class 
+    // Gets the value of the field with type TOut and the given name from the given class
     // Returns false if it fails
     // Adapted by zoller27osu
     bool GetFieldValue(TOut* out, Il2CppClass* klass, std::string_view fieldName) {
@@ -536,7 +536,7 @@ namespace il2cpp_utils {
     T* MakeAction(Il2CppObject* obj, function_ptr_t<R, TArgs...> callback, const Il2CppType* actionType) {
         Il2CppClass* actionClass = il2cpp_functions::class_from_il2cpp_type(actionType);
 
-        /* 
+        /*
         * TODO: call PlatformInvoke::MarshalFunctionPointerToDelegate directly instead of copying code from it,
         * or at least use a cache like utils::NativeDelegateMethodCache::GetNativeDelegate(nativeFunctionPointer);
         */
