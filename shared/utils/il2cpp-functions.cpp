@@ -102,10 +102,6 @@ void il2cpp_functions::Init() {
         allSigScanSuccess = false; \
     }
 
-
-    bool multsFound = false;
-    findUniquePattern(multsFound, base, "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? ? 00 ? ? 91 42 ? ? 91 ? ? ? 17", "il2cpp_codegen_register");
-
     // TODO: instead could follow single call from il2cpp_codegen_register, sigscan "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? ? 00 ? ? 91 42 ? ? 91 ? ? ? 17"
     bool backup = allSigScanSuccess;
     // "ff 83 01 d1 f6 57 03 a9 f4 4f 04 a9 fd 7b 05 a9 fd 43 01 91 ? ? ? ? ? ? ? ? ? ? ? ? 00 05 04 f9 21 09 04 f9 "
@@ -121,9 +117,6 @@ void il2cpp_functions::Init() {
             "ff 83 01 d1 f6 57 03 a9 f4 4f 04 a9 fd 7b 05 a9 fd 43 01 91 f4 03 01 aa f3 03 00 aa");
     }
 
-    // vm::Class::Init->InitLocked->SetupFieldsLocked->SetupFieldsFromDefinitionLocked
-    // GenericMetadata::GetGenericClass
-    // Runtime::Init_call101->Image::InitNestedTypes->Image::AddNestedTypesToNametoClassHashTable
     SEARCH_HOOK(MetadataCache, GetIndexForTypeDefinition,  // 0x8504BC in 1.5
         "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 0a 34 40 f9 08 a1 80 b9 28 01 08 8b 48 01 08 cb");
 
