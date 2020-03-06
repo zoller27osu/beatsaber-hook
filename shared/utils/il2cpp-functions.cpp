@@ -602,18 +602,6 @@ void il2cpp_functions::Init() {
     Class_Init = (decltype(Class_Init))j2Cl_I->imm;
     log(DEBUG, "Class::Init found? offset: %llX", ((long long)Class_Init) - getRealOffset(0));
 
-    Instruction ii((const int32_t*)init);
-    auto j2Rt_I = ii.FindNthDirectBranchWithoutLink(1);
-    if (!j2Rt_I) abort();
-    Instruction Runtime_Init((const int32_t*)j2Rt_I->imm);
-    log(DEBUG, "Runtime::Init offset: %llX", ((long long)Runtime_Init.addr) - getRealOffset(0));
-    auto j2MC_R = Runtime_Init.FindNthCall(113);
-    if (!j2MC_R) abort();
-    log(DEBUG, "j2MC_R addr offset: %llX", ((long long)j2MC_R->addr) - getRealOffset(0));
-    // 0x84DE9C in 1.5, 0x9F3988 in 1.7.0, 0xA78B38 in 1.8.0b
-    MetadataCache_Register = (decltype(MetadataCache_Register))j2MC_R->imm;
-    log(DEBUG, "MetadataCache::Register found? offset: %llX", ((long long)MetadataCache_Register) - getRealOffset(0));
-
     Instruction tanq((const int32_t*)type_get_assembly_qualified_name);
     // offset 0x8735DC in 1.5, 0xA1A458 in 1.7.0, 0xA7B634 in 1.8.0b
     _Type_GetName_ = (decltype(_Type_GetName_))tanq.FindNthCall(1)->imm;
