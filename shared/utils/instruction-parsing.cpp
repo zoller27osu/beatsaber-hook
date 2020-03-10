@@ -824,7 +824,7 @@ InstructionTree* FindOrCreateInstruction(const int32_t* pc, ParseState& parseSta
 }
 
 void ProcessRegisterDependencies(Instruction* inst, uint_fast8_t Rd, decltype(ParseState::dependencyMap)& depMap) {
-    auto newDeps = decltype(ParseState::dependencyMap)::value_type();
+    auto newDeps = decltype(ParseState::dependencyMap)::value_type();  // storage for the dependencies of a single register
     for (uint_fast8_t i = 0; i < inst->numSourceRegisters; i++) {
         auto Rs = inst->Rs[i];
         if ((Rs < 0) || (Rs >= depMap.max_size())) {
@@ -832,8 +832,7 @@ void ProcessRegisterDependencies(Instruction* inst, uint_fast8_t Rd, decltype(Pa
             abort();
             continue;
         }
-        auto oldDeps = depMap[Rs];
-        if (!(oldDeps.empty())) newDeps.insert(oldDeps.begin(), oldDeps.end());
+        newDeps |= depMap[Rs];
     }
     depMap[Rd] = std::move(newDeps);
 }
@@ -845,7 +844,7 @@ void ProcessRegisterDependencies(Instruction* inst, decltype(ParseState::depende
 
 bool OnlySelfDeps(uint_fast8_t reg, decltype(ParseState::dependencyMap)& depMap) {
     auto deps = depMap[reg];
-    return (deps.size() == 1 && deps.count(reg));
+    return ((deps.count() == 1) && deps[reg]);
 }
 
 std::string DepMapToString(decltype(ParseState::dependencyMap)& depMap) {
@@ -855,10 +854,10 @@ std::string DepMapToString(decltype(ParseState::dependencyMap)& depMap) {
         if ((i != 0) && ((i % 8) == 0)) {
             ss << "|";
         }
-        if (OnlySelfDeps(i, depMap)) {
-            ss << "O";  // a loop
-        } else if (depMap[i].empty()) {
+        if (depMap[i].none()) {
             ss << " ";
+        } else if (OnlySelfDeps(i, depMap)) {
+            ss << "O";  // a loop
         } else {
             ss << ">";  // deps are listed on right
         }
@@ -866,12 +865,12 @@ std::string DepMapToString(decltype(ParseState::dependencyMap)& depMap) {
     ss << "]; ";
     bool first = true;
     for (uint_fast8_t i = 0; i < depMap.max_size(); i++) {
-        if (!OnlySelfDeps(i, depMap) && !depMap[i].empty()) {
+        if (!OnlySelfDeps(i, depMap) && depMap[i].any()) {
             if (!first) ss << "; ";
             ss << Register(i, true) << " deps: ";
             bool innerFirst = true;
-            for (auto dep: depMap[i]) {
-                if (dep)
+            for (uint_fast8_t dep = 0; dep < depMap[i].size(); dep++) {
+                if (!depMap[i][dep]) continue;
                 if (!innerFirst) ss << ", ";
                 ss << Register(dep, true);
                 innerFirst = false;
