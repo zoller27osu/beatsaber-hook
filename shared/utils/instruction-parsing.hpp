@@ -1,7 +1,12 @@
 #include <array>
-#include <set>
+#include <bitset>
 #include <stack>
 #include <unordered_map>
+
+constexpr size_t minBitSet = sizeof(std::bitset<1>)*8;
+
+template<size_t N>
+using fastBitSet = std::bitset<minBitSet * ((N  + minBitSet - 1) / minBitSet)>;
 
 class Register {
 public:
@@ -181,15 +186,14 @@ public:
 };
 
 struct ParseState {
-    // TODO: change the sets to bitsets?
-    std::array<std::set<uint_fast8_t>, Register::TOTAL_NUMBER> dependencyMap;
+    std::array<std::bitset<Register::TOTAL_NUMBER>, Register::TOTAL_NUMBER> dependencyMap;
     std::unordered_map<const int32_t*, InstructionTree*> codeToInstTree;  // the set of all instructions and their corresponding trees
     std::unordered_map<const int32_t*, decltype(dependencyMap)> functionCandidates;  // the set of instructions that were jumped to
     std::stack<std::pair<InstructionTree*, decltype(dependencyMap)>> frontier;
 
     ParseState() {
         for (uint_fast8_t i = 0; i < dependencyMap.size(); i++) {
-            dependencyMap[i] = std::move(decltype(dependencyMap)::value_type({i}));
+            dependencyMap[i] = std::move(decltype(dependencyMap)::value_type(1 << i));
         }
     }
 };
@@ -205,68 +209,127 @@ private:
     ParseState parseState;
 };
 
+// Extends the given bitset from length M to N, padding with 0's.
+template<size_t N, size_t M>
+std::bitset<N> ZeroExtend(std::bitset<M> x) {
+    static_assert(M <= sizeof(decltype(x.to_ullong())) * CHAR_BIT);
+    return std::bitset<N>(x.to_ullong());
+}
+
+template<size_t M, size_t N>
+std::bitset<M+N> concat(const std::bitset<M>& a, const std::bitset<N>& b) noexcept {
+    return (ZeroExtend<M+N>(a) << N) | ZeroExtend<M+N>(b);
+}
+
 // Truncates the given integer to its least significant N bits.
 template<class T>
 T trunc(T bits, uint8_t N) {
     return bits & ((1ull << N) - 1ull);
 }
 
-// Transforms the given integer (with M denoting the true number of significant bits) into an unsigned number of type To.
-template<class To, class From>
-To ZeroExtend(From bits, uint8_t M) {
-    static_assert(std::is_unsigned_v<From>);
-    return static_cast<To>(bits);
-}
-
-// Transforms the given integer (with M denoting the true number of significant bits) into a properly signed number of type To.
-template<class To, class From>
-To SignExtend(From bits, uint8_t M) {
-    static_assert(std::is_signed_v<To>);
-    constexpr uint8_t N = sizeof(To) * CHAR_BIT;
-    assert(N >= M);
-    To prep = ((To)bits) << (N - M);
-    return (prep >> (N - M));
-}
-
-// N is the true number of significant bits in x.
-// Returns the index of the most significant ON bit in x.
+// Version that accepts high and low at runtime 
 template<class T>
-int HighestSetBit(T x, uint8_t N) {
+unsigned int bitRangeAsInt(T x, int high, int low) {
+    return trunc(x >> low, high - low + 1);
+}
+
+// Returns the value of the bits in x at index high through low inclusive, where the LSB is index 0 and the MSB's index >= high.
+template<size_t high, size_t low, class T>
+auto bitRange(T x) {
+    return std::bitset<high - low + 1>(x >> low);
+}
+
+template<size_t high, size_t low, class T>
+unsigned int bitRangeAsInt(T x) {
+    static_assert(high - low + 1 <= sizeof(int) * CHAR_BIT);
+    return bitRange<high, low>(x).to_ulong();
+}
+
+template<size_t high, size_t low, size_t N>
+auto range(std::bitset<N> x) {
+    return ZeroExtend<high - low + 1>(x >> low);
+}
+
+template<size_t N>
+std::bitset<N> Replicate(bool x) {
+    auto result = std::bitset<N>(0);
+    if (x) return result.flip();
+    return result;
+}
+
+template<size_t N, size_t M>
+std::bitset<N> Replicate(std::bitset<M> x) {
+    static_assert(N % M == 0);
+
+    auto result = ZeroExtend<N>(x);
+    auto size = M;
+    while (size < N) {
+        result |= (result << size);
+        size *= 2;
+    }
+    return result;
+}
+
+// Extends the given bitset from length M to N, padding with x's sign bit.
+template<size_t N, size_t M>
+std::bitset<N> SignExtend(std::bitset<M> x) {
+    static_assert(N >= M);
+    return concat(Replicate<N-M>(x[M-1]), x);
+}
+
+// Returns the index of the most significant ON bit in x.
+template<size_t N>
+int HighestSetBit(std::bitset<N> x) {
     for (int i = N - 1; i >= 0; i--) {
-        if (x & (1 << i)) return i;
+        if (x[i]) return i;
     }
     return -1;
 }
 
 // For all shifts (LSL, LSR, ASR, ROR): N is the true number of significant bits in x.
 // Left shift
+template<size_t N>
+std::bitset<N> LSL(std::bitset<N> x, unsigned shift) {
+    return x << shift;
+}
+
 template<class T>
-T LSL(T x, uint8_t N, unsigned shift) {
+T LSL(T x, int N, unsigned shift) {
     return trunc(x << shift, N);
 }
 
 // Right shift, taking x as unsigned.
+template<size_t N>
+std::bitset<N> LSR(std::bitset<N> x, unsigned shift) {
+    return x >> shift;
+}
+
 template<class T>
-T LSR(T x, uint8_t N, unsigned shift) {
-    return trunc(x >> shift, N - shift);
+T LSR(T x, int N, unsigned shift) {
+    return x >> shift;
 }
 
 // Right shift, taking x as signed.
+template<size_t N>
+std::bitset<N> ASR(std::bitset<N> x, unsigned shift) {
+    return SignExtend<N>(ZeroExtend<N-shift>(x >> shift));
+}
+
 template<class T>
 T ASR(T x, uint8_t N, unsigned shift) {
     typedef typename std::make_signed<T>::type signedT;
     return trunc(SignExtend<signedT>(x, N) >> shift, N);
 }
 
-// Right shift, but bits that "fall off" move to the front instead
+// Right shift, but bits that "fall off" move to the front instead.
+template<size_t N>
+std::bitset<N> ROR(std::bitset<N> x, unsigned shift) {
+    shift %= N;
+    return LSR(x, shift) | LSL(x, N - shift);
+}
+// N is the true number of significant bits in x.
 template<class T>
 T ROR(T x, uint8_t N, unsigned shift) {
     shift %= N;
     return LSR(x, N, shift) | LSL(x, N, N - shift);
-}
-
-// Returns the value of the bits in x at index high through low inclusive, where the LSB is index 0 and the MSB's index >= high.
-template<class T>
-T bits(T x, uint8_t high, uint8_t low) {
-    return trunc(x >> low, high - low + 1);
 }
