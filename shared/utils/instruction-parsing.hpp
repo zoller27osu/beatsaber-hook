@@ -1,5 +1,5 @@
 #include <array>
-#include <set>
+#include <bitset>
 #include <stack>
 #include <unordered_map>
 
@@ -181,15 +181,15 @@ public:
 };
 
 struct ParseState {
-    // TODO: change the sets to bitsets?
-    std::array<std::set<uint_fast8_t>, Register::TOTAL_NUMBER> dependencyMap;
+    // Note: this uses twice the memory that a 2D bitset would, but is far easier/faster to edit
+    std::array<std::bitset<Register::TOTAL_NUMBER>, Register::TOTAL_NUMBER> dependencyMap;
     std::unordered_map<const int32_t*, InstructionTree*> codeToInstTree;  // the set of all instructions and their corresponding trees
     std::unordered_map<const int32_t*, decltype(dependencyMap)> functionCandidates;  // the set of instructions that were jumped to
-    std::stack<std::pair<InstructionTree*, decltype(dependencyMap)>> frontier;
+    std::stack<std::pair<InstructionTree*, decltype(dependencyMap)>> frontier;  // points that still need ProcessRegisterDependencies run on them
 
     ParseState() {
         for (uint_fast8_t i = 0; i < dependencyMap.size(); i++) {
-            dependencyMap[i] = std::move(decltype(dependencyMap)::value_type({i}));
+            dependencyMap[i] = std::move(decltype(dependencyMap)::value_type(1 << i));
         }
     }
 };
