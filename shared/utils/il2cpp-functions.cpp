@@ -107,7 +107,7 @@ void il2cpp_functions::Init() {
         allSigScanSuccess = false; \
     }
 
-    // TODO: instead could follow single call from il2cpp_codegen_register, sigscan "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? ? 00 ? ? 91 42 ? ? 91 ? ? ? 17"
+    // TODO: remove MetadataCache_Register and its sigscans once we find another way to determine 1.8.0-ness
     bool backup = allSigScanSuccess;
     // "ff 83 01 d1 f6 57 03 a9 f4 4f 04 a9 fd 7b 05 a9 fd 43 01 91 ? ? ? ? ? ? ? ? ? ? ? ? 00 05 04 f9 21 09 04 f9 "
     // "42 0d 04 f9 28 00 40 b9 f4 03 01 aa f3 03 00 aa 1f 05 00 71 ? ? ? 54 f5 03 1f aa"
@@ -122,13 +122,14 @@ void il2cpp_functions::Init() {
             "ff 83 01 d1 f6 57 03 a9 f4 4f 04 a9 fd 7b 05 a9 fd 43 01 91 f4 03 01 aa f3 03 00 aa");
     }
 
-    SEARCH_HOOK(MetadataCache, GetIndexForTypeDefinition,  // 0x8504BC in 1.5
+    SEARCH_HOOK(MetadataCache, GetIndexForTypeDefinition,  // 0x8504BC in 1.5, 0x9F5FA8 in 1.7.0
         "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 0a 34 40 f9 08 a1 80 b9 28 01 08 8b 48 01 08 cb");
 
-    SEARCH_HOOK(MetadataCache, GetStringFromIndex,  // 0x84E5E8 in 1.5
+    SEARCH_HOOK(MetadataCache, GetStringFromIndex,  // 0x84E5E8 in 1.5, 0x9F40D4 in 1.7.0
         "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 08 19 80 b9 28 01 08 8b 00 c1 20 8b c0 03 5f d6");
 
-    SEARCH_HOOK(MetadataCache, GetTypeInfoFromTypeIndex,  // 0x84F764 in 1.5
+    SEARCH_HOOK(MetadataCache, GetTypeInfoFromTypeIndex,  // 0x84F764 in 1.5, 0x9F5250 in 1.7.0, 0xA7A79C in 1.8.0b
+        // f5 0f 1d f8 f4 4f 01 a9 fd 7b 02 a9 fd 83 00 91 1f 04 00 31 60 02 00 54 74 dc 00 d0 88 d2 44 f9 13 d9 60 f8 13 02 00 b5 68 dc 00 d0 08 c1 44 f9 15 7c 40 93
         "f5 0f 1d f8 f4 4f 01 a9 fd 7b 02 a9 fd 83 00 91 1f 04 00 31 ? ? ? 54 ? ? ? ? ? ? ? f9 13 d9 60 f8 13 02 00 b5 "
         "? ? ? ? ? ? ? f9 15 7c 40 93");
 
@@ -139,14 +140,10 @@ void il2cpp_functions::Init() {
     SEARCH_HOOK(MetadataCache, GetGenericContainerFromIndex,  // 0x850018 in 1.5, 0x9F5B04 in 1.7.0, 0xA6EAA4 in 1.8.0b
         // 1f 04 00 31 20 01 00 54 e8 ce 00 d0 08 15 44 f9 e9 ce 00 d0 29 11 44 f9 08 79 80 b9 28 01 08 8b 00 d1 20 8b c0 03 5f d6
         "1f 04 00 31 20 01 00 54 ? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 08 79 80 b9 28 01 08 8b 00 d1 20 8b c0 03 5f d6");
-    SEARCH_HOOK(MetadataCache, GetGenericParameterFromIndex,  // 0x850048 in 1.5
+    SEARCH_HOOK(MetadataCache, GetGenericParameterFromIndex,  // 0x850048 in 1.5, 0x9F5B34 in 1.7.0
         "1f 04 00 31 20 01 00 54 ? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 08 69 80 b9 28 01 08 8b 00 d1 20 8b c0 03 5f d6");
 
     il2cpp_functions::MetadataCache_GetNestedTypeFromIndex = il2cpp_functions::GetNestedTypeFromIndex;
-
-    // // Removed in 1.8.0b
-    // SEARCH_HOOK(MetadataCache, GetRGCTXDefinitionFromIndex,  // 0x85015C in 1.5
-    //     "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 08 a9 80 b9 28 01 08 8b 00 cd 20 8b c0 03 5f d6");
 
     if (!allSigScanSuccess || multiplesFound) {
         if (!allSigScanSuccess) log(ERROR, "One or more sigscans failed!");
@@ -602,13 +599,13 @@ void il2cpp_functions::Init() {
     GenericClass_GetClass = (decltype(GenericClass_GetClass))j2GC_GC->imm;
     log(DEBUG, "GenericClass::GetClass found? offset: %llX", ((long long)GenericClass_GetClass) - getRealOffset(0));
 
-    // Extract location of s_Il2CppMetadataRegistration from instructions in MetadataCache::Register
-    Instruction MC_R((const int32_t*)MetadataCache_Register);
-    auto regAdrp = MC_R.findNthPcRelAdr(2);
+    // Extract location of s_Il2CppMetadataRegistration from instructions in MetadataCache::GetTypeInfoFromTypeIndex
+    Instruction MC_GTIFTI((const int32_t*)MetadataCache_GetTypeInfoFromTypeIndex);
+    auto regAdrp = MC_GTIFTI.findNthPcRelAdr(2);
     if (!regAdrp) abort();
     auto regStr = regAdrp->findNthLoadStoreImmOnReg(1, regAdrp->Rd);
     if (!regStr) abort();
-    log(DEBUG, "regAdrp idx: %lu, regStr idx: %lu", regAdrp->addr - MC_R.addr, regStr->addr - MC_R.addr);
+    log(DEBUG, "regAdrp idx: %lu, regStr idx: %lu", regAdrp->addr - MC_GTIFTI.addr, regStr->addr - MC_GTIFTI.addr);
     log(DEBUG, "regAdrp: %s", regAdrp->toString().c_str());
     log(DEBUG, "regStr:  %s", regStr->toString().c_str());
     il2cpp_functions::s_Il2CppMetadataRegistrationPtr = (decltype(il2cpp_functions::s_Il2CppMetadataRegistrationPtr))ExtractAddress(
