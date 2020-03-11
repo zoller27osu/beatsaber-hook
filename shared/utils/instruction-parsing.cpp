@@ -2,6 +2,11 @@
 
 #include <functional>
 #include <new>
+#include <sstream>
+
+static const char* unalloc = "UNALLOCATED";
+static const char* pcRelAddr = "PC-rel. addressing";
+static const char* ldSt = "Loads and Stores";
 
 // https://developer.arm.com/docs/ddi0596/a/a64-shared-pseudocode-functions/aarch64-instrs-pseudocode#impl-aarch64.DecodeBitMasks
 // Explanation at https://dinfuehr.github.io/blog/encoding-of-immediate-values-on-aarch64/
@@ -84,16 +89,47 @@ std::string Instruction::toString() const {
     return ss.str();
 }
 
-Instruction* Instruction::FindNthCall(int n) {
-    return this->FindNth(n, std::mem_fn(&Instruction::isCall));
+bool Instruction::isPcRelAdr() {
+    return this->kind[1] == pcRelAddr;
 }
 
-// e.g. B
-Instruction* Instruction::FindNthDirectBranchWithoutLink(int n) {
-    return this->FindNth(n, [](Instruction* inst){return inst->branchType == DIR;});
+bool Instruction::isLoadOrStore() {
+    return this->kind[0] == ldSt;
+}
+bool Instruction::isLoad() {
+    return isLoadOrStore() && strncmp(this->kind[2], "LD", 2) == 0;
+}
+bool Instruction::isStore() {
+    return isLoadOrStore() && strncmp(this->kind[2], "ST", 2) == 0;
 }
 
-static const char* unalloc = "UNALLOCATED";
+bool Instruction::hasImmediateOffsetOnReg(uint_fast8_t reg) {
+    if (imm == 0xDEADBEEF) return false;
+    if (isStore()) {
+        return (Rd == reg) || (Rd2 == reg);
+    }
+    for (uint_fast8_t i = 0; i < numSourceRegisters; i++) {
+        if (Rs[i] == reg) return true;
+    }
+    return false;
+}
+
+Instruction* Instruction::findNthCall(int n, int rets) {
+    return this->findNth(n, std::mem_fn(&Instruction::isCall), rets);
+}
+
+Instruction* Instruction::findNthDirectBranchWithoutLink(int n, int rets) {
+    return this->findNth(n, [](Instruction* inst){return inst->branchType == DIR;}, rets);
+}
+
+Instruction* Instruction::findNthPcRelAdr(int n, int rets) {
+    return this->findNth(n, std::mem_fn(&Instruction::isPcRelAdr), rets);
+}
+
+Instruction* Instruction::findNthLoadStoreImmOnReg(int n, uint_fast8_t reg, int rets) {
+    return this->findNth(n, [reg](Instruction* inst){return inst->isLoadOrStore() && inst->hasImmediateOffsetOnReg(reg);});
+}
+
 Instruction::Instruction(const int32_t* inst) {
     addr = inst;
     auto pc = (unsigned long long)inst;
@@ -316,7 +352,7 @@ Instruction::Instruction(const int32_t* inst) {
         uint_fast8_t op1 = bits(code, 23, 22);
         if (op0 == 0) {
             // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#pcreladdr
-            kind[parseLevel++] = "PC-rel. addressing";
+            kind[parseLevel++] = pcRelAddr;  // "PC-rel. addressing"
             RdCanBeSP = false;
             numSourceRegisters = 0;
             bool op = sf;
@@ -553,7 +589,7 @@ Instruction::Instruction(const int32_t* inst) {
         }
     } else if ((top0 & 0b101) == 0b100) {  // x1x0
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores
-        kind[parseLevel++] = "Loads and Stores";
+        kind[parseLevel++] = ldSt;
         uint_fast8_t op0 = bits(code, 31, 28);
         bool op1 = bits(code, 26, 26);
         uint_fast8_t op2 = bits(code, 24, 23);
@@ -567,7 +603,7 @@ Instruction::Instruction(const int32_t* inst) {
             uint_fast8_t Rt = bits(code, 4, 0);  // cannot be SP
             uint_fast8_t Rn = bits(code, 9, 5);  // can be SP
 
-            bool isStandardLdrStr = false;
+            bool hasImmOffset = false;
             if ((op2 | 0b1) == 0b11) {  // 1x
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores#ldst_pos
                 kind[parseLevel++] = "Load/store register (unsigned immediate)";
@@ -576,7 +612,7 @@ Instruction::Instruction(const int32_t* inst) {
                 imm = ZeroExtend<int64_t>(imm12, 12) << size;
                 wback = false;
                 postindex = false;
-                isStandardLdrStr = true;
+                hasImmOffset = true;
             } else if ((op3 & 0b100000) == 0) {  // 0xxxxx
                 uint_fast16_t imm9 = bits(code, 20, 12);
                 log(DEBUG, "size: %i; imm9: 0x%lX", size, imm9);
@@ -587,13 +623,13 @@ Instruction::Instruction(const int32_t* inst) {
                     kind[parseLevel++] = "Load/store register (immediate pre-indexed)";
                     wback = true;
                     postindex = false;
-                    isStandardLdrStr = true;
+                    hasImmOffset = true;
                 } else if (op4 == 0b1) {
                     // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores#ldst_immpost
                     kind[parseLevel++] = "Load/store register (immediate post-indexed)";
                     wback = true;
                     postindex = true;
-                    isStandardLdrStr = true;
+                    hasImmOffset = true;
                 } else {
                     log(DEBUG, "op0 = xx11, op2 = 0x, op3 = 0xxxxx, op4: %i", op4);
                 }
@@ -679,7 +715,7 @@ Instruction::Instruction(const int32_t* inst) {
                 }
             }
 
-            if (isStandardLdrStr) {
+            if (hasImmOffset) {
                 numSourceRegisters = 1;
 
                 if (V == 0) {

@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <stdio.h>
 #include <stdlib.h>
-#include "typedefs.h"
 
 #if defined(__GLIBCXX__) || defined(__GLIBCPP__)
     // We are currently compiling with GNU GCC libstdc++, so we are already using its STL implementation

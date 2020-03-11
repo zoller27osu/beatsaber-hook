@@ -1,16 +1,21 @@
-#include "il2cpp-functions.hpp"
 #include "utils.h"
-#include "logging.h"
 
-template<typename TRet, typename ...TArgs>
-auto ExtractAdrpLdr(function_ptr_t<TRet, TArgs...> func, int adrp, int ldr) {
-    auto inst = reinterpret_cast<const int32_t*>(func);
-    auto jmpOff = Instruction(&inst[adrp]).result;
-    auto offset = Instruction(&inst[ldr]).imm;
+auto ExtractAddress(Instruction* instWithResultAdr, Instruction* instWithImmOffset) {
+    auto jmpOff = instWithResultAdr->result;
+    auto offset = instWithImmOffset->imm;
 
     auto jmp = jmpOff + offset;
     log(DEBUG, "offset: %lX, jmp: %lX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
     return jmp;
+}
+
+template<typename TRet, typename ...TArgs>
+auto ExtractAddress(function_ptr_t<TRet, TArgs...> func, int idxOfInstWithResultAdr, int idxOfInstWithImmOffset) {
+    auto inst = reinterpret_cast<const int32_t*>(func);
+
+    auto instWithResultAdr = Instruction(&inst[idxOfInstWithResultAdr]);
+    auto instWithImmOffset = Instruction(&inst[idxOfInstWithImmOffset]);
+    return ExtractAddress(&instWithResultAdr, &instWithImmOffset);
 }
 
 static bool firstTypeDefOffset = true;
@@ -127,29 +132,9 @@ void il2cpp_functions::Init() {
         "f5 0f 1d f8 f4 4f 01 a9 fd 7b 02 a9 fd 83 00 91 1f 04 00 31 ? ? ? 54 ? ? ? ? ? ? ? f9 13 d9 60 f8 13 02 00 b5 "
         "? ? ? ? ? ? ? f9 15 7c 40 93");
 
-    if (v1_8) {
-        SEARCH_HOOK(MetadataCache, GetTypeInfoFromTypeDefinitionIndex,  // 0xA75958 in 1.8.0b
-            "? ? ba a9 ? ? 01 a9 ? ? 02 a9 ? ? 03 a9 ? ? 04 a9 ? ? 05 a9 ? 43 01 91 ? ? 00 31 ? ? ? 54");
-    } else {
-        SEARCH_HOOK(MetadataCache, GetTypeInfoFromTypeDefinitionIndex,  // 0x84FBA4 in 1.5, 0x9F5690 in 1.7.0
-            "fc 6f ba a9 fa 67 01 a9 f8 5f 02 a9 f6 57 03 a9 f4 4f 04 a9 fd 7b 05 a9 fd 43 01 91 f4 03 00 2a 9f 06 00 31 ? ? ? 54 "
-            "? ? ? ? ? ? ? f9 ? ? ? f8 ? ? ? b5 ? ? ? ? ? ? ? f9");
-    }
+    il2cpp_functions::MetadataCache_GetTypeDefinitionFromIndex = il2cpp_functions::GetTypeDefinitionFromIndex;
 
-    if (v1_8) {
-        il2cpp_functions::MetadataCache_GetTypeDefinitionFromIndex = il2cpp_functions::GetTypeDefinitionFromIndex;
-    } else {
-        SEARCH_HOOK(MetadataCache, GetTypeDefinitionFromIndex,  // 0x84FFBC in 1.5, 0x9F5AA8 in 1.7.0
-            "1f 04 00 31 ? ? ? 54 ? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 ? ? ? b9 28 01 08 8b ? ? ? 52 00 20 29 9b c0 03 5f d6");
-    }
-
-    if (v1_8) {
-        il2cpp_functions::MetadataCache_GetExportedTypeFromIndex = il2cpp_functions::GetExportedTypeFromIndex;
-    } else {
-        SEARCH_HOOK(MetadataCache, GetExportedTypeFromIndex,  // 0x84FFF0 in 1.5, 0x9F5ADC in 1.7.0
-            // "1f 04 00 31 00 01 00 54 c8 e3 00 b0 08 09 44 f9 c9 e3 00 b0 29 05 44 f9 08 09 81 b9 28 01 08 8b 00 d9 60 b8"
-            "1f 04 00 31 ? ? ? 54 ? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 ? ? ? b9 28 01 08 8b 00 d9 60 b8");
-    }
+    il2cpp_functions::MetadataCache_GetExportedTypeFromIndex = il2cpp_functions::GetExportedTypeFromIndex;
 
     SEARCH_HOOK(MetadataCache, GetGenericContainerFromIndex,  // 0x850018 in 1.5, 0x9F5B04 in 1.7.0, 0xA6EAA4 in 1.8.0b
         // 1f 04 00 31 20 01 00 54 e8 ce 00 d0 08 15 44 f9 e9 ce 00 d0 29 11 44 f9 08 79 80 b9 28 01 08 8b 00 d1 20 8b c0 03 5f d6
@@ -157,26 +142,11 @@ void il2cpp_functions::Init() {
     SEARCH_HOOK(MetadataCache, GetGenericParameterFromIndex,  // 0x850048 in 1.5
         "1f 04 00 31 20 01 00 54 ? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 08 69 80 b9 28 01 08 8b 00 d1 20 8b c0 03 5f d6");
 
-    if (v1_8) {
-        il2cpp_functions::MetadataCache_GetNestedTypeFromIndex = il2cpp_functions::GetNestedTypeFromIndex;
-    } else {
-        SEARCH_HOOK(MetadataCache, GetNestedTypeFromIndex,  // 0x8500BC in 1.5, 0x9F5BA8 in 1.7.0
-            // c8 e3 00 b0 08 09 44 f9 c9 e3 00 b0 29 05 44 f9 08 81 80 b9 28 01 08 8b 00 d9 60 b8 b3 fe ff 17
-            "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 08 81 80 b9 28 01 08 8b 00 d9 60 b8");
-    }
+    il2cpp_functions::MetadataCache_GetNestedTypeFromIndex = il2cpp_functions::GetNestedTypeFromIndex;
 
     // // Removed in 1.8.0b
     // SEARCH_HOOK(MetadataCache, GetRGCTXDefinitionFromIndex,  // 0x85015C in 1.5
     //     "? ? ? ? ? ? ? f9 ? ? ? ? ? ? ? f9 08 a9 80 b9 28 01 08 8b 00 cd 20 8b c0 03 5f d6");
-
-    if (v1_8) {
-        SEARCH_HOOK(GenericClass, GetClass,  // 0xA6E4EC in 1.8.0b
-            "? 0f 1c f8 ? ? 01 a9 ? ? 02 a9 ? ? 03 a9 ? c3 00 91 ? 03 00 aa ? ? ? ? 00 ? ? 91 ? ? ? ? ? ? 40 b9");
-    } else {
-        SEARCH_HOOK(GenericClass, GetClass,  // 0x88DF64 in 1.5, 0xA34F20 in 1.7.0
-            // f7 0f 1c f8 f6 57 01 a9 f4 4f 02 a9 fd 7b 03 a9 fd c3 00 91 f3 03 00 aa 00 d5 00 90 00 98 40 f9 0c 88 00 94 60 02 40 b9
-            "f7 0f 1c f8 f6 57 01 a9 f4 4f 02 a9 fd 7b 03 a9 fd c3 00 91 f3 03 00 aa ? ? ? ? ? ? ? f9 ? ? ? ? 60 02 40 b9");
-    }
 
     if (!allSigScanSuccess || multiplesFound) {
         if (!allSigScanSuccess) log(ERROR, "One or more sigscans failed!");
@@ -596,29 +566,58 @@ void il2cpp_functions::Init() {
     Instruction ans((const int32_t*)array_new_specific);
     Instruction Array_NewSpecific((const int32_t*)ans.imm);
     log(DEBUG, "Array::NewSpecific offset: %llX", ((long long)Array_NewSpecific.addr) - getRealOffset(0));
-    auto j2Cl_I = Array_NewSpecific.FindNthCall(1);  // also the 113th call in Runtime::Init
+    auto j2Cl_I = Array_NewSpecific.findNthCall(1);  // also the 113th call in Runtime::Init
     if (!j2Cl_I) abort();
     // 0x846A68 in 1.5, 0x9EC0A4 in 1.7.0, 0xA6D1B8 in 1.8.0b
     Class_Init = (decltype(Class_Init))j2Cl_I->imm;
     log(DEBUG, "Class::Init found? offset: %llX", ((long long)Class_Init) - getRealOffset(0));
 
+    Instruction cl_I((const int32_t*)Class_Init);
+    auto j2Cl_IL = cl_I.findNthCall(2);
+    if (!j2Cl_IL) abort();
+    // 0x9ED828 in 1.7.0, 0xA704A0 in 1.8.0b
+    Instruction Class_InitLocked((const int32_t*)j2Cl_IL->imm);
+
+    Instruction tgcoec((const int32_t*)type_get_class_or_element_class);
+    Instruction Type_GetClassOrElementClass((const int32_t*)tgcoec.imm);
+    auto j2MC_GTIFTDI = Type_GetClassOrElementClass.findNthDirectBranchWithoutLink(5);
+    if (!j2MC_GTIFTDI) abort();
+    // offset 0x84FBA4 in 1.5, 0x9F5690 in 1.7.0, 0xA75958 in 1.8.0b
+    MetadataCache_GetTypeInfoFromTypeDefinitionIndex = (decltype(MetadataCache_GetTypeInfoFromTypeDefinitionIndex))j2MC_GTIFTDI->imm;
+    log(DEBUG, "MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %llX",
+        ((long long)MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
+
     Instruction tanq((const int32_t*)type_get_assembly_qualified_name);
     // offset 0x8735DC in 1.5, 0xA1A458 in 1.7.0, 0xA7B634 in 1.8.0b
-    _Type_GetName_ = (decltype(_Type_GetName_))tanq.FindNthCall(1)->imm;
-    log(DEBUG, "_Type_GetName_ found? offset: %llX", ((long long)_Type_GetName_) - getRealOffset(0));
+    _Type_GetName_ = (decltype(_Type_GetName_))tanq.findNthCall(1)->imm;
+    log(DEBUG, "Type::GetName found? offset: %llX", ((long long)_Type_GetName_) - getRealOffset(0));
+
+    Instruction cfit((const int32_t*)class_from_il2cpp_type);
+    Instruction Class_FromIl2CppType((const int32_t*)cfit.imm);
+    // TODO: count other instruction types or understand the switch statement assembly to reduce match index - 20 is a bit high.
+    auto j2GC_GC = Class_FromIl2CppType.findNthDirectBranchWithoutLink(20);
+    if (!j2GC_GC) abort();
+    log(DEBUG, "j2GC_GC: %s", j2GC_GC->toString().c_str());
+    // offset 0x88DF64 in 1.5, 0xA34F20 in 1.7.0, 0xA6E4EC in 1.8.0b
+    GenericClass_GetClass = (decltype(GenericClass_GetClass))j2GC_GC->imm;
+    log(DEBUG, "GenericClass::GetClass found? offset: %llX", ((long long)GenericClass_GetClass) - getRealOffset(0));
 
     // Extract location of s_Il2CppMetadataRegistration from instructions in MetadataCache::Register
-    if (v1_8) {
-        il2cpp_functions::s_Il2CppMetadataRegistrationPtr = (decltype(il2cpp_functions::s_Il2CppMetadataRegistrationPtr))ExtractAdrpLdr(
-            il2cpp_functions::MetadataCache_Register, 6, 9);
-    } else {
-        il2cpp_functions::s_Il2CppMetadataRegistrationPtr = (decltype(il2cpp_functions::s_Il2CppMetadataRegistrationPtr))ExtractAdrpLdr(
-            il2cpp_functions::MetadataCache_Register, 8, 11);
-    }
+    Instruction MC_R((const int32_t*)MetadataCache_Register);
+    auto regAdrp = MC_R.findNthPcRelAdr(2);
+    if (!regAdrp) abort();
+    auto regStr = regAdrp->findNthLoadStoreImmOnReg(1, regAdrp->Rd);
+    if (!regStr) abort();
+    log(DEBUG, "regAdrp idx: %lu, regStr idx: %lu", regAdrp->addr - MC_R.addr, regStr->addr - MC_R.addr);
+    log(DEBUG, "regAdrp: %s", regAdrp->toString().c_str());
+    log(DEBUG, "regStr:  %s", regStr->toString().c_str());
+    il2cpp_functions::s_Il2CppMetadataRegistrationPtr = (decltype(il2cpp_functions::s_Il2CppMetadataRegistrationPtr))ExtractAddress(
+            regAdrp, regStr);
+
     // Extract locations of s_GlobalMetadata & its header from instructions in MetadataCache::GetGenericContainerFromIndex
-    il2cpp_functions::s_GlobalMetadataHeaderPtr = (decltype(il2cpp_functions::s_GlobalMetadataHeaderPtr))ExtractAdrpLdr(
+    il2cpp_functions::s_GlobalMetadataHeaderPtr = (decltype(il2cpp_functions::s_GlobalMetadataHeaderPtr))ExtractAddress(
         il2cpp_functions::MetadataCache_GetGenericContainerFromIndex, 2, 3);
-    il2cpp_functions::s_GlobalMetadataPtr = (decltype(il2cpp_functions::s_GlobalMetadataPtr))ExtractAdrpLdr(
+    il2cpp_functions::s_GlobalMetadataPtr = (decltype(il2cpp_functions::s_GlobalMetadataPtr))ExtractAddress(
         il2cpp_functions::MetadataCache_GetGenericContainerFromIndex, 4, 5);
 
     dlclose(imagehandle);

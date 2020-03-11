@@ -1,7 +1,6 @@
 #include <array>
 #include <bitset>
 #include <stack>
-#include <unordered_map>
 
 class Register {
 public:
@@ -30,7 +29,7 @@ public:
         int_fast8_t Rs[2] = { -1, -1 };  // the number(s) of the source register(s), e.g. {12, 31} for X12 & SP
         int64_t result;  // iff numSourceRegisters is 0, the value that will be stored to Rd by this instruction
     };
-    int64_t imm = 0;  // the immediate, if applicable
+    int64_t imm = 0xDEADBEEF;  // the immediate, if applicable
 
     // see https://developer.arm.com/docs/ddi0596/a/a64-shared-pseudocode-functions/aarch64-instrs-pseudocode#impl-aarch64.ShiftReg.3
     enum ShiftType {  // in most cases (exceptiing noShift) the amount is stored in imm and the shift is applied to Rm (Rs[1])
@@ -93,7 +92,7 @@ public:
     inline bool isReturn() const {
         return branchType == RET;
     }
-    // i.e. location to jump to is not read from a register, but encoded directly into the instruction
+    // i.e. location to jump to is not read from a register/memory, but encoded directly into the instruction
     inline bool isDirectBranch() const {
         return (branchType == DIRCALL) || (branchType == DIR);
     }
@@ -108,23 +107,36 @@ public:
     std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const Instruction& inst);
 
+    // e.g. ADR, ADRP
+    bool isPcRelAdr();
+
+    bool isLoadOrStore();
+    bool isLoad();
+    bool isStore();
+
+    // Does the instruction have an Immediate that might be an offset that applies to register "reg"?
+    bool hasImmediateOffsetOnReg(uint_fast8_t reg);
+
     // pred should be a https://en.cppreference.com/w/cpp/named_req/FunctionObject that accepts an Instruction* and returns bool.
     // Returns the nth match of the predicate starting at this->addr, or nullptr if the nth match does not exist.
     // Use n=1 for the 1st match, not 0.
     // Stops search when a "ret" instruction (return) is encountered (unless the nth match is found first or "ret" matches pred).
-        // TODO: Instead, continue search until nth match is found, but return the number of ret instructions passed?
-            // or accept a number of ret instructions before the function is considered "over"?
+    //   Will also disregard up to "rets" ret instructions that do not match pred, or an infinite number if rets is negative.
     // The search does not follow jumps.
     template<class UnaryPredicate>
-    Instruction* FindNth(int n, UnaryPredicate pred) {
+    Instruction* findNth(int n, UnaryPredicate pred, int rets = 0) {
         auto inst = this;
         decltype(n) matches = 0;
         while (true) {
             if (pred(inst)) {
                 matches++;
                 if (matches == n) return inst;
-            } else if (inst->isReturn()) {
-                break;
+            } else if ((rets >= 0) && inst->isReturn()) {
+                if (rets == 0) {
+                    log(DEBUG, "Breaking on offset %llX", ((long long)inst->addr) - getRealOffset(0));
+                    break;
+                }
+                rets--;
             }
             auto pc = inst->addr;
             if (inst != this) delete inst;
@@ -134,9 +146,14 @@ public:
         return nullptr;
     }
     // e.g. BL, BLR. Unless the jump in indirect, the address the instruction jumps to will be at ->imm.
-    Instruction* FindNthCall(int n);
-    // e.g. B
-    Instruction* FindNthDirectBranchWithoutLink(int n);
+    Instruction* findNthCall(int n, int rets = 0);
+    // e.g. B, B.eq, B.ne
+    Instruction* findNthDirectBranchWithoutLink(int n, int rets = 0);
+    // e.g. ADR, ADRP
+    Instruction* findNthPcRelAdr(int n, int rets = 0);
+    // Finds the nth Load/store with an Immediate offset that applies to register "reg".
+    Instruction* findNthLoadStoreImmOnReg(int n, uint_fast8_t reg, int rets = 0);
+
 private:
     const char* kind[3];  // strings describing the kind of instruction, from least to most specific
     char parseLevel;  // The lowest level we were able to parse at, 1-3 (subtract 1 for index of most specific string in 'kind')

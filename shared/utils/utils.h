@@ -16,6 +16,7 @@ namespace std {
 #else
 #error No string_view implementation available!
 #endif
+#include <unordered_map>  // breaks if logging is imported before it
 #include <thread>
 
 template <typename Container> struct is_vector : std::false_type { };
@@ -38,9 +39,10 @@ template <class...> constexpr std::false_type false_t{};
 #include "typedefs.h"
 #include "utils-functions.h"
 #include "../inline-hook/And64InlineHook.hpp"
-#include "il2cpp-utils.hpp"
+#include "il2cpp-functions.hpp"
+#include "logging.h"
+#include "il2cpp-utils.hpp"  // uses logging.h
 #include "../config/config-utils.hpp"
-#include "instruction-parsing.hpp"
 
 #ifdef __cplusplus
 
@@ -157,5 +159,7 @@ inlineHook((uint32_t)addr); \
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+#include "instruction-parsing.hpp"
 
 #endif /* UTILS_H_INCLUDED */
