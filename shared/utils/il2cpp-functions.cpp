@@ -1,53 +1,5 @@
 #include "utils.h"
 
-auto ExtractAddress(Instruction* instWithResultAdr, Instruction* instWithImmOffset) {
-    auto jmpOff = instWithResultAdr->result;
-    auto offset = instWithImmOffset->imm;
-
-    auto jmp = jmpOff + offset;
-    log(DEBUG, "offset: %lX, jmp: %lX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
-    return jmp;
-}
-
-// Starting at func, finds the pcRelNth adr(p) and the offsetNth load/store (immediate) after the adr(p), then calls ExtractAddress
-template<typename TRet, typename ...TArgs>
-auto ExtractAddress(function_ptr_t<TRet, TArgs...> func, int pcRelN, int offsetN) {
-    Instruction funcInst(reinterpret_cast<const int32_t*>(func));
-    auto regAdrp = funcInst.findNthPcRelAdr(pcRelN);
-    if (!regAdrp) abort();
-    auto regStr = regAdrp->findNthLoadStoreImmOnReg(offsetN, regAdrp->Rd);
-    if (!regStr) abort();
-    log(DEBUG, "regAdrp idx: %lu, regStr idx: %lu", regAdrp->addr - funcInst.addr, regStr->addr - funcInst.addr);
-    log(DEBUG, "regAdrp: %s", regAdrp->toString().c_str());
-    log(DEBUG, "regStr:  %s", regStr->toString().c_str());
-    return ExtractAddress(regAdrp, regStr);
-}
-
-template<typename TRet, typename ...TArgs>
-auto ExtractAddressFixed(function_ptr_t<TRet, TArgs...> func, int idxOfInstWithResultAdr, int idxOfInstWithImmOffset) {
-    auto inst = reinterpret_cast<const int32_t*>(func);
-
-    auto instWithResultAdr = Instruction(&inst[idxOfInstWithResultAdr]);
-    auto instWithImmOffset = Instruction(&inst[idxOfInstWithImmOffset]);
-    return ExtractAddress(&instWithResultAdr, &instWithImmOffset);
-}
-
-static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataPtr)> s_GlobalMetadata = nullptr;
-static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataHeaderPtr)> s_GlobalMetadataHeader = nullptr;
-
-// must be done on-demand because the pointers aren't necessarily correct at the time of il2cpp_functions::Init
-inline static void CheckS_GlobalMetadata() {
-    if (!s_GlobalMetadataHeader) {
-        s_GlobalMetadata = *(il2cpp_functions::s_GlobalMetadataPtr);
-        s_GlobalMetadataHeader = *(il2cpp_functions::s_GlobalMetadataHeaderPtr);
-        log(DEBUG, "typeDefinitionsOffset: %i", s_GlobalMetadataHeader->typeDefinitionsOffset);
-        log(DEBUG, "exportedTypeDefinitionsOffset: %i", s_GlobalMetadataHeader->exportedTypeDefinitionsOffset);
-        log(DEBUG, "nestedTypesOffset: %i", s_GlobalMetadataHeader->nestedTypesOffset);
-        log(DEBUG, "sanity: %X (should be 0xFAB11BAF)", s_GlobalMetadataHeader->sanity);
-        assert(s_GlobalMetadataHeader->sanity == 0xFAB11BAF);
-    }
-}
-
 // copies of the highly-inlinable functions
 const Il2CppTypeDefinition* il2cpp_functions::MetadataCache_GetTypeDefinitionFromIndex(TypeDefinitionIndex index) {
     CheckS_GlobalMetadata();
@@ -582,7 +534,7 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_class_get_name CONST VERSION!");
 
     // XREF TRACES
-    // Class::Init. 0x846A68 in 1.5, 0x9EC0A4 in 1.7.0, 0xA6D1B8 in 1.8.0b
+    // Class::Init. 0x846A68 in 1.5, 0x9EC0A4 in 1.7.0, 0xA6D1B8 in 1.8.0b1
     Instruction ans((const int32_t*)array_new_specific);
     Instruction Array_NewSpecific((const int32_t*)ans.imm);
     log(DEBUG, "Array::NewSpecific offset: %llX", ((long long)Array_NewSpecific.addr) - getRealOffset(0));
@@ -591,7 +543,7 @@ void il2cpp_functions::Init() {
     Class_Init = (decltype(Class_Init))j2Cl_I->imm;
     log(DEBUG, "Class::Init found? offset: %llX", ((long long)Class_Init) - getRealOffset(0));
 
-    // MetadataCache::GetTypeInfoFromTypeIndex. offset 0x84F764 in 1.5, 0x9F5250 in 1.7.0, 0xA7A79C in 1.8.0b
+    // MetadataCache::GetTypeInfoFromTypeIndex. offset 0x84F764 in 1.5, 0x9F5250 in 1.7.0, 0xA7A79C in 1.8.0b1
     Instruction caha((const int32_t*)custom_attrs_has_attr);
     Instruction MetadataCache_HasAttribute((const int32_t*)caha.imm);
     auto j2MC_GTIFTI = MetadataCache_HasAttribute.findNthCall(1);
@@ -600,7 +552,7 @@ void il2cpp_functions::Init() {
     log(DEBUG, "MetadataCache::GetTypeInfoFromTypeIndex found? offset: %llX",
         ((long long)MetadataCache_GetTypeInfoFromTypeIndex) - getRealOffset(0));
 
-    // MetadataCache::GetTypeInfoFromTypeDefinitionIndex. offset 0x84FBA4 in 1.5, 0x9F5690 in 1.7.0, 0xA75958 in 1.8.0b
+    // MetadataCache::GetTypeInfoFromTypeDefinitionIndex. offset 0x84FBA4 in 1.5, 0x9F5690 in 1.7.0, 0xA75958 in 1.8.0b1
     Instruction tgcoec((const int32_t*)type_get_class_or_element_class);
     Instruction Type_GetClassOrElementClass((const int32_t*)tgcoec.imm);
     auto j2MC_GTIFTDI = Type_GetClassOrElementClass.findNthDirectBranchWithoutLink(5);
@@ -609,22 +561,17 @@ void il2cpp_functions::Init() {
     log(DEBUG, "MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %llX",
         ((long long)MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
 
-    // Type::GetName. offset 0x8735DC in 1.5, 0xA1A458 in 1.7.0, 0xA7B634 in 1.8.0b
+    // Type::GetName. offset 0x8735DC in 1.5, 0xA1A458 in 1.7.0, 0xA7B634 in 1.8.0b1
     Instruction tanq((const int32_t*)type_get_assembly_qualified_name);
     _Type_GetName_ = (decltype(_Type_GetName_))tanq.findNthCall(1)->imm;
     log(DEBUG, "Type::GetName found? offset: %llX", ((long long)_Type_GetName_) - getRealOffset(0));
 
-    // GenericClass::GetClass. offset 0x88DF64 in 1.5, 0xA34F20 in 1.7.0, 0xA6E4EC in 1.8.0b
+    // GenericClass::GetClass. offset 0x88DF64 in 1.5, 0xA34F20 in 1.7.0, 0xA6E4EC in 1.8.0b1
     Instruction cfit((const int32_t*)class_from_il2cpp_type);
     Instruction Class_FromIl2CppType((const int32_t*)cfit.imm);
-    // TODO: find another route or understand the switch statement assembly - the current trace does not play well with inlines or case order.
-    auto temp1 = Class_FromIl2CppType.findNthDirectBranchWithoutLink(7);  // skip a bl Type::GetGenericParameter that does not exist in 1.8.0b1
-    if (!temp1) abort();
-    // TODO: instead of the direct branch skips, find 2nd call specifically to the function itself (Class_FromIl2CppType)?
-    auto temp2 = temp1->findNthCall(2);  // skip the 2 calls to Class::FromIl2cppType
-    log(DEBUG, "temp2: %s", temp2->toString().c_str());
-    if (!temp2) abort();
-    auto j2GC_GC = temp2->findNthDirectBranchWithoutLink(2);
+    auto caseStart = EvalSwitch(Class_FromIl2CppType.addr, 1, 1, IL2CPP_TYPE_GENERICINST);
+    if (!caseStart) abort();
+    auto j2GC_GC = caseStart->findNthDirectBranchWithoutLink(1);
     if (!j2GC_GC) abort();
     log(DEBUG, "j2GC_GC: %s", j2GC_GC->toString().c_str());
     GenericClass_GetClass = (decltype(GenericClass_GetClass))j2GC_GC->imm;

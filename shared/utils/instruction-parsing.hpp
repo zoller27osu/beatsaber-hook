@@ -19,6 +19,9 @@ public:
 
 class Instruction {
 public:
+    Instruction(const int32_t* inst);
+
+    // ~~~ PUBLIC FIELDS ~~~
     // TODO: puzzle out and support 32-bit views of registers
     const int32_t* addr;  // the pointer to the instruction
     // Rd and Rs are capitalized in accordance with typical Register notation
@@ -83,39 +86,22 @@ public:
     bool parsed;  // whether the instruction was fully and successfully parsed
     bool valid = true;  // iff parsed, whether the instruction is a valid one
 
-    inline bool isBranch() const {
-        return branchType != NOBRANCH;
-    }
-    inline bool isUnconditionalBranch() const {
-        return isBranch() && cond == -1;
-    }
-    inline bool isReturn() const {
-        return branchType == RET;
-    }
-    // i.e. location to jump to is not read from a register/memory, but encoded directly into the instruction
-    inline bool isDirectBranch() const {
-        return (branchType == DIRCALL) || (branchType == DIR);
-    }
-    inline bool isIndirectBranch() const {
-        return (branchType != NOBRANCH) && (!isDirectBranch());
-    }
-    inline bool isCall() const {
-        return (branchType == DIRCALL) || (branchType == INDCALL);
-    }
-
-    Instruction(const int32_t* inst);
+    // ~~~ METHODS ~~~
     std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const Instruction& inst);
 
     // e.g. ADR, ADRP
     bool isPcRelAdr();
 
+    // is the Instruction an add or subtract immediate? (e.g. one source reg +- an immediate value)
+    bool isAddOrSubImm();
+
     bool isLoadOrStore();
     bool isLoad();
     bool isStore();
 
     // Does the instruction have an Immediate that might be an offset that applies to register "reg"?
-    bool hasImmediateOffsetOnReg(uint_fast8_t reg);
+    bool hasImmOffsetOnReg(uint_fast8_t reg);
 
     // pred should be a https://en.cppreference.com/w/cpp/named_req/FunctionObject that accepts an Instruction* and returns bool.
     // Returns the nth match of the predicate starting at this->addr, or nullptr if the nth match does not exist.
@@ -152,8 +138,28 @@ public:
     Instruction* findNthDirectBranchWithoutLink(int n, int rets = 0);
     // e.g. ADR, ADRP
     Instruction* findNthPcRelAdr(int n, int rets = 0);
-    // Finds the nth Load/store with an Immediate offset that applies to register "reg".
-    Instruction* findNthLoadStoreImmOnReg(int n, uint_fast8_t reg, int rets = 0);
+    // Finds the nth (Load/store with an Immediate offset) or (Add/subtract immediate) that applies to register "reg".
+    Instruction* findNthImmOffsetOnReg(int n, uint_fast8_t reg, int rets = 0);
+
+    inline bool isBranch() const {
+        return branchType != NOBRANCH;
+    }
+    inline bool isUnconditionalBranch() const {
+        return isBranch() && cond == -1;
+    }
+    inline bool isReturn() const {
+        return branchType == RET;
+    }
+    // i.e. location to jump to is not read from a register/memory, but encoded directly into the instruction
+    inline bool isDirectBranch() const {
+        return (branchType == DIRCALL) || (branchType == DIR);
+    }
+    inline bool isIndirectBranch() const {
+        return (branchType != NOBRANCH) && (!isDirectBranch());
+    }
+    inline bool isCall() const {
+        return (branchType == DIRCALL) || (branchType == INDCALL);
+    }
 
 private:
     const char* kind[3];  // strings describing the kind of instruction, from least to most specific
@@ -171,7 +177,12 @@ struct RegisterSet {
 };
 
 struct PSTATE {
-    bool N, Z, C, V;
+    // https://developer.arm.com/docs/ddi0595/e/aarch64-system-registers/nzcv
+    // https://developer.arm.com/docs/den0024/latest/the-a64-instruction-set/data-processing-instructions/conditional-instructions
+    bool N;  // 1 == result was negative
+    bool Z;  // 1 == result was zero
+    bool C;  // 1 == result had unsigned overflow (carry)
+    bool V;  // 1 == result had signed overflow
     bool D, A, I, F;
     bool SS, IL, nRW, SP;
     int_fast8_t EL;  // 0, 1, 2, or 3
@@ -287,4 +298,39 @@ T ROR(T x, uint8_t N, unsigned shift) {
 template<class T>
 T bits(T x, uint8_t high, uint8_t low) {
     return trunc(x >> low, high - low + 1);
+}
+
+// Uses instWithResultAdr's result and instWithImmOffset's imm to calculate a jump address
+decltype(Instruction::result) ExtractAddress(Instruction* instWithResultAdr, Instruction* instWithImmOffset);
+
+// Starting at addr, finds the pcRelNth adr(p), then the offsetNth instruction after that with an immediate offset
+// which applies to the adr(p)'s destination register, and finally calls the ExtractAddress with 2 Instruction*'s
+decltype(Instruction::result) ExtractAddress(const int32_t* addr, int pcRelN, int offsetN);
+
+// Wrapper for const int32_t* addr version that converts from a function pointer for you
+template<typename TRet, typename ...TFuncArgs, typename ...TArgs>
+decltype(Instruction::result) ExtractAddress(function_ptr_t<TRet, TFuncArgs...> func, TArgs... args) {
+    return ExtractAddress(reinterpret_cast<const int32_t*>(func), args...);
+}
+
+// Makes Instructions from the idxOfInstWithResultAdr-th and idxOfInstWithImmOffset-th instructions after inst,
+// then passes the Instruction*'s to ExtractAddress
+decltype(Instruction::result) ExtractAddressFixed(const int32_t* inst, int idxOfInstWithResultAdr, int idxOfInstWithImmOffset);
+
+// Wrapper for const int32_t* inst version that converts from a function pointer for you
+template<typename TRet, typename ...TFuncArgs, typename ...TArgs>
+decltype(Instruction::result) ExtractAddressFixed(function_ptr_t<TRet, TFuncArgs...> func, TArgs... args) {
+    return ExtractAddressFixed(reinterpret_cast<const int32_t*>(func), args...);
+}
+
+// Reads a switchTable to find the Instruction to jump to for the given case: value.
+Instruction* EvalSwitch(const uint32_t* switchTable, int switchCaseValue);
+
+// Does ExtractAddress(inst, pcRelN, offsetN) for you to get const uint32_t* switchTable
+Instruction* EvalSwitch(const int32_t* inst, int pcRelN, int offsetN, int switchCaseValue);
+
+// Wrapper for const int32_t* inst version that converts from a function pointer for you
+template<typename TRet, typename ...TFuncArgs, typename ...TArgs>
+Instruction* EvalSwitch(function_ptr_t<TRet, TFuncArgs...> func, TArgs... args) {
+    return EvalSwitch(reinterpret_cast<const int32_t*>(func), args...);
 }

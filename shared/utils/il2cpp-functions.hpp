@@ -276,6 +276,22 @@ class il2cpp_functions {
     inline static const void** s_GlobalMetadataPtr;
     inline static const Il2CppGlobalMetadataHeader** s_GlobalMetadataHeaderPtr;
 
+    inline static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataPtr)> s_GlobalMetadata = nullptr;
+    inline static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataHeaderPtr)> s_GlobalMetadataHeader = nullptr;
+
+    // must be done on-demand because the pointers aren't necessarily correct at the time of il2cpp_functions::Init
+    inline static void CheckS_GlobalMetadata() {
+        if (!s_GlobalMetadataHeader) {
+            s_GlobalMetadata = *(il2cpp_functions::s_GlobalMetadataPtr);
+            s_GlobalMetadataHeader = *(il2cpp_functions::s_GlobalMetadataHeaderPtr);
+            log(DEBUG, "sanity: %X (should be 0xFAB11BAF)", s_GlobalMetadataHeader->sanity);
+            assert(s_GlobalMetadataHeader->sanity == 0xFAB11BAF);
+            log(DEBUG, "typeDefinitionsOffset: %i", s_GlobalMetadataHeader->typeDefinitionsOffset);
+            log(DEBUG, "exportedTypeDefinitionsOffset: %i", s_GlobalMetadataHeader->exportedTypeDefinitionsOffset);
+            log(DEBUG, "nestedTypesOffset: %i", s_GlobalMetadataHeader->nestedTypesOffset);
+        }
+    }
+
     // COPIES OFF FREQUENTLY INLINED NON-API LIBIL2CPP FUNCTIONS:
     static const char* MetadataCache_GetStringFromIndex(StringIndex index);
     static const Il2CppTypeDefinition* MetadataCache_GetTypeDefinitionFromIndex(TypeDefinitionIndex index);
