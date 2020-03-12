@@ -264,16 +264,8 @@ class il2cpp_functions {
 
     inline static void (*MetadataCache_Register)(const Il2CppCodeRegistration* const codeRegistration,
         const Il2CppMetadataRegistration* const metadataRegistration, const Il2CppCodeGenOptions* const codeGenOptions);
-    inline static const char* (*MetadataCache_GetStringFromIndex)(StringIndex index);
-    inline static Il2CppClass* (*MetadataCache_GetTypeInfoFromTypeIndex)(TypeIndex index);
     inline static Il2CppClass* (*MetadataCache_GetTypeInfoFromTypeDefinitionIndex)(TypeDefinitionIndex index);
-    inline static const Il2CppTypeDefinition* (*MetadataCache_GetTypeDefinitionFromIndex)(TypeDefinitionIndex index);
-    inline static TypeDefinitionIndex (*MetadataCache_GetExportedTypeFromIndex)(TypeDefinitionIndex index);
-    inline static const Il2CppGenericContainer* (*MetadataCache_GetGenericContainerFromIndex)(GenericContainerIndex index);
-    inline static const Il2CppGenericParameter* (*MetadataCache_GetGenericParameterFromIndex)(GenericParameterIndex index);
-    inline static Il2CppClass* (*MetadataCache_GetNestedTypeFromIndex)(NestedTypeIndex index);
-    // inline static const Il2CppRGCTXDefinition* (*MetadataCache_GetRGCTXDefinitionFromIndex)(RGCTXIndex index);
-    inline static const TypeDefinitionIndex (*MetadataCache_GetIndexForTypeDefinition)(const Il2CppClass* typeDefinition);
+    inline static Il2CppClass* (*MetadataCache_GetTypeInfoFromTypeIndex)(TypeIndex index);
 
     inline static uni_string (*_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
     static const char* Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format);
@@ -284,10 +276,14 @@ class il2cpp_functions {
     inline static const void** s_GlobalMetadataPtr;
     inline static const Il2CppGlobalMetadataHeader** s_GlobalMetadataHeaderPtr;
 
-    // COPIES OF POSSIBLY INLINED NON-API LIBIL2CPP FUNCTIONS:
-    static const Il2CppTypeDefinition* GetTypeDefinitionFromIndex(TypeDefinitionIndex index);
-    static TypeDefinitionIndex GetExportedTypeFromIndex(TypeDefinitionIndex index);
-    static Il2CppClass* GetNestedTypeFromIndex(NestedTypeIndex index);
+    // COPIES OFF FREQUENTLY INLINED NON-API LIBIL2CPP FUNCTIONS:
+    static const char* MetadataCache_GetStringFromIndex(StringIndex index);
+    static const Il2CppTypeDefinition* MetadataCache_GetTypeDefinitionFromIndex(TypeDefinitionIndex index);
+    static TypeDefinitionIndex MetadataCache_GetExportedTypeFromIndex(TypeDefinitionIndex index);
+    static const Il2CppGenericContainer* MetadataCache_GetGenericContainerFromIndex(GenericContainerIndex index);
+    static const Il2CppGenericParameter* MetadataCache_GetGenericParameterFromIndex(GenericParameterIndex index);
+    static Il2CppClass* MetadataCache_GetNestedTypeFromIndex(NestedTypeIndex index);
+    static const TypeDefinitionIndex MetadataCache_GetIndexForTypeDefinition(const Il2CppClass* typeDefinition);
 
     // UTILITY FUNCTIONS PERTAINING TO LIBIL2CPP.SO:
     static bool LibIl2CppUsesGnuString();
