@@ -617,8 +617,14 @@ void il2cpp_functions::Init() {
     // GenericClass::GetClass. offset 0x88DF64 in 1.5, 0xA34F20 in 1.7.0, 0xA6E4EC in 1.8.0b
     Instruction cfit((const int32_t*)class_from_il2cpp_type);
     Instruction Class_FromIl2CppType((const int32_t*)cfit.imm);
-    // TODO: count other instruction types or understand the switch statement assembly to reduce match index - 20 is a bit high.
-    auto j2GC_GC = Class_FromIl2CppType.findNthDirectBranchWithoutLink(20);
+    // TODO: find another route or understand the switch statement assembly - the current trace does not play well with inlines or case order.
+    auto temp1 = Class_FromIl2CppType.findNthDirectBranchWithoutLink(7);  // skip a bl Type::GetGenericParameter that does not exist in 1.8.0b1
+    if (!temp1) abort();
+    // TODO: instead of the direct branch skips, find 2nd call specifically to the function itself (Class_FromIl2CppType)?
+    auto temp2 = temp1->findNthCall(2);  // skip the 2 calls to Class::FromIl2cppType
+    log(DEBUG, "temp2: %s", temp2->toString().c_str());
+    if (!temp2) abort();
+    auto j2GC_GC = temp2->findNthDirectBranchWithoutLink(2);
     if (!j2GC_GC) abort();
     log(DEBUG, "j2GC_GC: %s", j2GC_GC->toString().c_str());
     GenericClass_GetClass = (decltype(GenericClass_GetClass))j2GC_GC->imm;

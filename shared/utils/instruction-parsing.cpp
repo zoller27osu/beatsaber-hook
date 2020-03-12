@@ -97,10 +97,10 @@ bool Instruction::isLoadOrStore() {
     return this->kind[0] == ldSt;
 }
 bool Instruction::isLoad() {
-    return isLoadOrStore() && strncmp(this->kind[2], "LD", 2) == 0;
+    return isLoadOrStore() && (strncmp(this->kind[2], "LD", 2) == 0);
 }
 bool Instruction::isStore() {
-    return isLoadOrStore() && strncmp(this->kind[2], "ST", 2) == 0;
+    return isLoadOrStore() && (strncmp(this->kind[2], "ST", 2) == 0);
 }
 
 bool Instruction::hasImmediateOffsetOnReg(uint_fast8_t reg) {

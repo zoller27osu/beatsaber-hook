@@ -143,6 +143,7 @@ public:
             inst = new Instruction(pc + 1);
         }
         log(ERROR, "Only found %i instructions matching this predicate!", matches);
+        usleep(10000);
         return nullptr;
     }
     // e.g. BL, BLR. Unless the jump in indirect, the address the instruction jumps to will be at ->imm.
