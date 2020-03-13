@@ -66,7 +66,8 @@ const TypeDefinitionIndex il2cpp_functions::MetadataCache_GetIndexForTypeDefinit
 
 const char* il2cpp_functions::Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format) {
     if (!il2cpp_functions::_Type_GetName_) return nullptr;
-    const auto str = il2cpp_functions::_Type_GetName_(type, format);
+    const auto& strRef = il2cpp_functions::_Type_GetName_(type, format);  // TODO figure out why this ref step is needed for 2019
+    const auto str = strRef;
     return str.c_str();
 }
 
