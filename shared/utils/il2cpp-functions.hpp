@@ -285,6 +285,7 @@ class il2cpp_functions {
             s_GlobalMetadata = *(il2cpp_functions::s_GlobalMetadataPtr);
             s_GlobalMetadataHeader = *(il2cpp_functions::s_GlobalMetadataHeaderPtr);
             log(DEBUG, "sanity: %X (should be 0xFAB11BAF)", s_GlobalMetadataHeader->sanity);
+            log(DEBUG, "version: %i", s_GlobalMetadataHeader->version);
             assert(s_GlobalMetadataHeader->sanity == 0xFAB11BAF);
             log(DEBUG, "typeDefinitionsOffset: %i", s_GlobalMetadataHeader->typeDefinitionsOffset);
             log(DEBUG, "exportedTypeDefinitionsOffset: %i", s_GlobalMetadataHeader->exportedTypeDefinitionsOffset);
@@ -292,7 +293,7 @@ class il2cpp_functions {
         }
     }
 
-    // COPIES OFF FREQUENTLY INLINED NON-API LIBIL2CPP FUNCTIONS:
+    // COPIES OF FREQUENTLY INLINED NON-API LIBIL2CPP FUNCTIONS:
     static const char* MetadataCache_GetStringFromIndex(StringIndex index);
     static const Il2CppTypeDefinition* MetadataCache_GetTypeDefinitionFromIndex(TypeDefinitionIndex index);
     static TypeDefinitionIndex MetadataCache_GetExportedTypeFromIndex(TypeDefinitionIndex index);

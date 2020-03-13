@@ -44,9 +44,9 @@ decltype(Instruction::result) ExtractAddress(Instruction* instWithResultAdr, Ins
 decltype(Instruction::result) ExtractAddress(const int32_t* addr, int pcRelN, int offsetN) {
     Instruction funcInst(addr);
     auto instAdrp = funcInst.findNthPcRelAdr(pcRelN);
-    if (!instAdrp) abort();
+    if (!instAdrp) return 0;
     auto instOff = instAdrp->findNthImmOffsetOnReg(offsetN, instAdrp->Rd);
-    if (!instOff) abort();
+    if (!instOff) return 0;
     log(DEBUG, "adrp idx: %lu, offset instruction idx: %lu", instAdrp->addr - funcInst.addr, instOff->addr - funcInst.addr);
     log(DEBUG, "instAdrp: %s", instAdrp->toString().c_str());
     log(DEBUG, "instOff:  %s", instOff->toString().c_str());
@@ -69,6 +69,7 @@ Instruction* EvalSwitch(const uint32_t* switchTable, int switchCaseValue) {
 
 Instruction* EvalSwitch(const int32_t* inst, int pcRelN, int offsetN, int switchCaseValue) {
     auto switchTable = (const uint32_t*)ExtractAddress(inst, pcRelN, offsetN);
+    if (!switchTable) return nullptr;
     return EvalSwitch(switchTable, switchCaseValue);
 }
 
@@ -878,7 +879,7 @@ Instruction::Instruction(const int32_t* inst) {
         valid = false;
     }
     if (parseLevel != sizeof(kind) / sizeof(kind[0])) {
-        log(ERROR, "Could not complete parsing of 0x%X - need more handling for kind '%s'!", code, kind[parseLevel - 1]);
+        log(ERROR, "Could not complete parsing of 0x%X (offset %llX) - need more handling for kind '%s'!", code, ((long long)addr) - getRealOffset(0), kind[parseLevel - 1]);
     } else {
         parsed = true;
         if (kind[parseLevel - 1] == unalloc) {
