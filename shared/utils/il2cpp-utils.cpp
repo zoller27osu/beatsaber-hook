@@ -574,7 +574,8 @@ namespace il2cpp_utils {
             return ClassStandardName(genClass->cached_class);
         }
         if (genClass->typeDefinitionIndex != kTypeDefinitionIndexInvalid) {
-            return ClassStandardName(il2cpp_functions::GenericClass_GetClass(genClass));
+            auto klass = il2cpp_functions::GenericClass_GetClass(genClass);
+            return ClassStandardName(klass);
         }
         return "?";
     }

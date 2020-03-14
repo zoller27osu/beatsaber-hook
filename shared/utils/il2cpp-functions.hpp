@@ -4,13 +4,17 @@
 #include <cstddef>
 #include <stdio.h>
 #include <stdlib.h>
-#include "typedefs.h"
+
+#if __has_include("il2cpp-runtime-stats.h")
+#define UNITY_2019
+#endif
 
 #if defined(__GLIBCXX__) || defined(__GLIBCPP__)
     // We are currently compiling with GNU GCC libstdc++, so we are already using its STL implementation
     typedef std::string gnu_string;
 #else
 
+#ifndef UNITY_2019
 struct _Rep {
     size_t _M_length;
     size_t _M_capacity;
@@ -38,16 +42,9 @@ struct gnu_string {
         return _M_rep()->_M_length;
     }
 };
+#endif  // UNITY_2019
 
 #endif
-
-// NOTE: iff LibIl2CppUsesGnuString(), gstr is valid; else sstr
-union uni_string {
-    gnu_string gstr;
-    std::string sstr;
-
-    ~uni_string() { }
-};
 
 // A class which contains all available il2cpp functions
 // Created by zoller27osu
@@ -263,20 +260,14 @@ class il2cpp_functions {
     // SELECT NON-API LIBIL2CPP FUNCTIONS:
     inline static bool (*Class_Init)(Il2CppClass* klass);
 
-    inline static void (*MetadataCache_Register)(const Il2CppCodeRegistration* const codeRegistration,
-        const Il2CppMetadataRegistration* const metadataRegistration, const Il2CppCodeGenOptions* const codeGenOptions);
-    inline static const char* (*MetadataCache_GetStringFromIndex)(StringIndex index);
-    inline static Il2CppClass* (*MetadataCache_GetTypeInfoFromTypeIndex)(TypeIndex index);
     inline static Il2CppClass* (*MetadataCache_GetTypeInfoFromTypeDefinitionIndex)(TypeDefinitionIndex index);
-    inline static const Il2CppTypeDefinition* (*MetadataCache_GetTypeDefinitionFromIndex)(TypeDefinitionIndex index);
-    inline static TypeDefinitionIndex (*MetadataCache_GetExportedTypeFromIndex)(TypeDefinitionIndex index);
-    inline static const Il2CppGenericContainer* (*MetadataCache_GetGenericContainerFromIndex)(GenericContainerIndex index);
-    inline static const Il2CppGenericParameter* (*MetadataCache_GetGenericParameterFromIndex)(GenericParameterIndex index);
-    inline static Il2CppClass* (*MetadataCache_GetNestedTypeFromIndex)(NestedTypeIndex index);
-    // inline static const Il2CppRGCTXDefinition* (*MetadataCache_GetRGCTXDefinitionFromIndex)(RGCTXIndex index);
-    inline static const TypeDefinitionIndex (*MetadataCache_GetIndexForTypeDefinition)(const Il2CppClass* typeDefinition);
+    inline static Il2CppClass* (*MetadataCache_GetTypeInfoFromTypeIndex)(TypeIndex index);
 
-    inline static uni_string (*_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
+#ifdef UNITY_2019
+    inline static std::string (*_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
+#else
+    inline static gnu_string (*_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
+#endif
     static const char* Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format);
 
     inline static Il2CppClass* (*GenericClass_GetClass)(Il2CppGenericClass* gclass);
@@ -285,13 +276,31 @@ class il2cpp_functions {
     inline static const void** s_GlobalMetadataPtr;
     inline static const Il2CppGlobalMetadataHeader** s_GlobalMetadataHeaderPtr;
 
-    // COPIES OF POSSIBLY INLINED NON-API LIBIL2CPP FUNCTIONS:
-    static const Il2CppTypeDefinition* GetTypeDefinitionFromIndex(TypeDefinitionIndex index);
-    static TypeDefinitionIndex GetExportedTypeFromIndex(TypeDefinitionIndex index);
-    static Il2CppClass* GetNestedTypeFromIndex(NestedTypeIndex index);
+    inline static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataPtr)> s_GlobalMetadata = nullptr;
+    inline static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataHeaderPtr)> s_GlobalMetadataHeader = nullptr;
 
-    // UTILITY FUNCTIONS PERTAINING TO LIBIL2CPP.SO:
-    static bool LibIl2CppUsesGnuString();
+    // must be done on-demand because the pointers aren't necessarily correct at the time of il2cpp_functions::Init
+    inline static void CheckS_GlobalMetadata() {
+        if (!s_GlobalMetadataHeader) {
+            s_GlobalMetadata = *(il2cpp_functions::s_GlobalMetadataPtr);
+            s_GlobalMetadataHeader = *(il2cpp_functions::s_GlobalMetadataHeaderPtr);
+            log(DEBUG, "sanity: %X (should be 0xFAB11BAF)", s_GlobalMetadataHeader->sanity);
+            log(DEBUG, "version: %i", s_GlobalMetadataHeader->version);
+            assert(s_GlobalMetadataHeader->sanity == 0xFAB11BAF);
+            log(DEBUG, "typeDefinitionsOffset: %i", s_GlobalMetadataHeader->typeDefinitionsOffset);
+            log(DEBUG, "exportedTypeDefinitionsOffset: %i", s_GlobalMetadataHeader->exportedTypeDefinitionsOffset);
+            log(DEBUG, "nestedTypesOffset: %i", s_GlobalMetadataHeader->nestedTypesOffset);
+        }
+    }
+
+    // COPIES OF FREQUENTLY INLINED NON-API LIBIL2CPP FUNCTIONS:
+    static const char* MetadataCache_GetStringFromIndex(StringIndex index);
+    static const Il2CppTypeDefinition* MetadataCache_GetTypeDefinitionFromIndex(TypeDefinitionIndex index);
+    static TypeDefinitionIndex MetadataCache_GetExportedTypeFromIndex(TypeDefinitionIndex index);
+    static const Il2CppGenericContainer* MetadataCache_GetGenericContainerFromIndex(GenericContainerIndex index);
+    static const Il2CppGenericParameter* MetadataCache_GetGenericParameterFromIndex(GenericParameterIndex index);
+    static Il2CppClass* MetadataCache_GetNestedTypeFromIndex(NestedTypeIndex index);
+    static const TypeDefinitionIndex MetadataCache_GetIndexForTypeDefinition(const Il2CppClass* typeDefinition);
 
     // Whether all of the il2cpp functions have been initialized or not
     inline static bool initialized = false;

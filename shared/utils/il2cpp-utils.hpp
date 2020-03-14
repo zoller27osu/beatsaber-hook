@@ -4,13 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
-#include <string>
-#include <unordered_map>
-#include <sstream>
-#include "typedefs.h"
-#include "il2cpp-functions.hpp"
-#include "utils-functions.h"
-#include "logging.h"
 
 // function_ptr_t courtesy of DaNike
 template<typename TRet, typename ...TArgs>

@@ -2,6 +2,12 @@
 
 #include <functional>
 #include <new>
+#include <sstream>
+
+static const char* unalloc = "UNALLOCATED";
+static const char* pcRelAddr = "PC-rel. addressing";
+static const char* ldSt = "Loads and Stores";
+static const char* addSubImm = "Add/subtract (immediate)";
 
 // https://developer.arm.com/docs/ddi0596/a/a64-shared-pseudocode-functions/aarch64-instrs-pseudocode#impl-aarch64.DecodeBitMasks
 // Explanation at https://dinfuehr.github.io/blog/encoding-of-immediate-values-on-aarch64/
@@ -24,6 +30,47 @@ uint64_t DecodeBitMasks(unsigned N, unsigned imms, unsigned immr, unsigned regSi
         size *= 2;
     }
     return pattern;
+}
+
+decltype(Instruction::result) ExtractAddress(Instruction* instWithResultAdr, Instruction* instWithImmOffset) {
+    auto jmpOff = instWithResultAdr->result;
+    auto offset = instWithImmOffset->imm;
+
+    auto jmp = jmpOff + offset;
+    log(DEBUG, "offset: %lX, jmp: %lX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
+    return jmp;
+}
+
+decltype(Instruction::result) ExtractAddress(const int32_t* addr, int pcRelN, int offsetN) {
+    Instruction funcInst(addr);
+    auto instAdrp = funcInst.findNthPcRelAdr(pcRelN);
+    if (!instAdrp) return 0;
+    auto instOff = instAdrp->findNthImmOffsetOnReg(offsetN, instAdrp->Rd);
+    if (!instOff) return 0;
+    log(DEBUG, "adrp idx: %lu, offset instruction idx: %lu", instAdrp->addr - funcInst.addr, instOff->addr - funcInst.addr);
+    log(DEBUG, "instAdrp: %s", instAdrp->toString().c_str());
+    log(DEBUG, "instOff:  %s", instOff->toString().c_str());
+    return ExtractAddress(instAdrp, instOff);
+}
+
+decltype(Instruction::result) ExtractAddressFixed(const int32_t* inst, int idxOfInstWithResultAdr, int idxOfInstWithImmOffset) {
+    auto instWithResultAdr = Instruction(&inst[idxOfInstWithResultAdr]);
+    auto instWithImmOffset = Instruction(&inst[idxOfInstWithImmOffset]);
+    return ExtractAddress(&instWithResultAdr, &instWithImmOffset);
+}
+
+Instruction* EvalSwitch(const uint32_t* switchTable, int switchCaseValue) {
+    auto stOffset = SignExtend<int64_t>(switchTable[switchCaseValue - 1], 32);
+    auto jmpAddr = (int64_t)switchTable + stOffset;
+    log(DEBUG, "jmp offset from switch table: %lX (-%lX); jmp: %lX (offset %llX)",
+        stOffset, -stOffset, jmpAddr, jmpAddr - getRealOffset(0));
+    return new Instruction((const int32_t*)jmpAddr);
+}
+
+Instruction* EvalSwitch(const int32_t* inst, int pcRelN, int offsetN, int switchCaseValue) {
+    auto switchTable = (const uint32_t*)ExtractAddress(inst, pcRelN, offsetN);
+    if (!switchTable) return nullptr;
+    return EvalSwitch(switchTable, switchCaseValue);
 }
 
 static const auto &SP = Register::SP;
@@ -84,16 +131,53 @@ std::string Instruction::toString() const {
     return ss.str();
 }
 
-Instruction* Instruction::FindNthCall(int n) {
-    return this->FindNth(n, std::mem_fn(&Instruction::isCall));
+bool Instruction::isPcRelAdr() {
+    return this->kind[1] == pcRelAddr;
 }
 
-// e.g. B
-Instruction* Instruction::FindNthDirectBranchWithoutLink(int n) {
-    return this->FindNth(n, [](Instruction* inst){return inst->branchType == DIR;});
+bool Instruction::isAddOrSubImm() {
+    return this->kind[1] == addSubImm;
 }
 
-static const char* unalloc = "UNALLOCATED";
+bool Instruction::isLoadOrStore() {
+    return this->kind[0] == ldSt;
+}
+bool Instruction::isLoad() {
+    return isLoadOrStore() && (strncmp(this->kind[2], "LD", 2) == 0);
+}
+bool Instruction::isStore() {
+    return isLoadOrStore() && (strncmp(this->kind[2], "ST", 2) == 0);
+}
+
+bool Instruction::hasImmOffsetOnReg(uint_fast8_t reg) {
+    if (imm == 0xDEADBEEF) return false;
+    if (!(isLoadOrStore() || isAddOrSubImm())) return false;  // the immediate would not be simply "added"
+    if (isStore()) {
+        return (Rd == reg) || (Rd2 == reg);
+    }
+    for (uint_fast8_t i = 0; i < numSourceRegisters; i++) {
+        if (Rs[i] == reg) return true;
+    }
+    return false;
+}
+
+Instruction* Instruction::findNthCall(int n, int rets) {
+    return this->findNth(n, std::mem_fn(&Instruction::isCall), rets);
+}
+
+Instruction* Instruction::findNthDirectBranchWithoutLink(int n, int rets) {
+    return this->findNth(n, [](Instruction* inst){return inst->branchType == DIR;}, rets);
+}
+
+Instruction* Instruction::findNthPcRelAdr(int n, int rets) {
+    return this->findNth(n, std::mem_fn(&Instruction::isPcRelAdr), rets);
+}
+
+Instruction* Instruction::findNthImmOffsetOnReg(int n, uint_fast8_t reg, int rets) {
+    // return this->findNth(n, [reg](Instruction* inst){return inst->hasImmOffsetOnReg(reg);});
+    return this->findNth(n, std::bind(&Instruction::hasImmOffsetOnReg, std::placeholders::_1, reg));
+}
+
 Instruction::Instruction(const int32_t* inst) {
     addr = inst;
     auto pc = (unsigned long long)inst;
@@ -316,7 +400,7 @@ Instruction::Instruction(const int32_t* inst) {
         uint_fast8_t op1 = bits(code, 23, 22);
         if (op0 == 0) {
             // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#pcreladdr
-            kind[parseLevel++] = "PC-rel. addressing";
+            kind[parseLevel++] = pcRelAddr;  // "PC-rel. addressing"
             RdCanBeSP = false;
             numSourceRegisters = 0;
             bool op = sf;
@@ -354,7 +438,7 @@ Instruction::Instruction(const int32_t* inst) {
                 }
             } else {
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#addsub_imm
-                kind[parseLevel++] = "Add/subtract (immediate)";
+                kind[parseLevel++] = addSubImm;
                 RdCanBeSP = !S;
                 auto shift = op1;
                 uint_fast16_t imm12 = bits(code, 21, 10);
@@ -377,6 +461,7 @@ Instruction::Instruction(const int32_t* inst) {
                         }
                     }
                 } else {
+                    imm = -imm;  // the immediate should be subtracted for sub
                     if (S == 0) {
                         kind[parseLevel++] = sf ? "SUB (immediate) — 64-bit" : "SUB (immediate) — 32-bit";
                     } else {
@@ -553,7 +638,7 @@ Instruction::Instruction(const int32_t* inst) {
         }
     } else if ((top0 & 0b101) == 0b100) {  // x1x0
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores
-        kind[parseLevel++] = "Loads and Stores";
+        kind[parseLevel++] = ldSt;
         uint_fast8_t op0 = bits(code, 31, 28);
         bool op1 = bits(code, 26, 26);
         uint_fast8_t op2 = bits(code, 24, 23);
@@ -567,7 +652,7 @@ Instruction::Instruction(const int32_t* inst) {
             uint_fast8_t Rt = bits(code, 4, 0);  // cannot be SP
             uint_fast8_t Rn = bits(code, 9, 5);  // can be SP
 
-            bool isStandardLdrStr = false;
+            bool hasImmOffset = false;
             if ((op2 | 0b1) == 0b11) {  // 1x
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores#ldst_pos
                 kind[parseLevel++] = "Load/store register (unsigned immediate)";
@@ -576,7 +661,7 @@ Instruction::Instruction(const int32_t* inst) {
                 imm = ZeroExtend<int64_t>(imm12, 12) << size;
                 wback = false;
                 postindex = false;
-                isStandardLdrStr = true;
+                hasImmOffset = true;
             } else if ((op3 & 0b100000) == 0) {  // 0xxxxx
                 uint_fast16_t imm9 = bits(code, 20, 12);
                 log(DEBUG, "size: %i; imm9: 0x%lX", size, imm9);
@@ -587,13 +672,13 @@ Instruction::Instruction(const int32_t* inst) {
                     kind[parseLevel++] = "Load/store register (immediate pre-indexed)";
                     wback = true;
                     postindex = false;
-                    isStandardLdrStr = true;
+                    hasImmOffset = true;
                 } else if (op4 == 0b1) {
                     // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores#ldst_immpost
                     kind[parseLevel++] = "Load/store register (immediate post-indexed)";
                     wback = true;
                     postindex = true;
-                    isStandardLdrStr = true;
+                    hasImmOffset = true;
                 } else {
                     log(DEBUG, "op0 = xx11, op2 = 0x, op3 = 0xxxxx, op4: %i", op4);
                 }
@@ -679,7 +764,7 @@ Instruction::Instruction(const int32_t* inst) {
                 }
             }
 
-            if (isStandardLdrStr) {
+            if (hasImmOffset) {
                 numSourceRegisters = 1;
 
                 if (V == 0) {
@@ -794,7 +879,7 @@ Instruction::Instruction(const int32_t* inst) {
         valid = false;
     }
     if (parseLevel != sizeof(kind) / sizeof(kind[0])) {
-        log(ERROR, "Could not complete parsing of 0x%X - need more handling for kind '%s'!", code, kind[parseLevel - 1]);
+        log(ERROR, "Could not complete parsing of 0x%X (offset %llX) - need more handling for kind '%s'!", code, ((long long)addr) - getRealOffset(0), kind[parseLevel - 1]);
     } else {
         parsed = true;
         if (kind[parseLevel - 1] == unalloc) {

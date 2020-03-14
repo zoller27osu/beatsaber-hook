@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <unordered_set>
 
 using namespace std;
