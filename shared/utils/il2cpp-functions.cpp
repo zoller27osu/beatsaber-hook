@@ -1,5 +1,11 @@
 #include "utils.h"
 
+#define SAFE_ABORT() do { \
+    log(ERROR, "Aborting at %s:%i", __FILE__, __LINE__); \
+    usleep(100000000L); \
+    abort(); \
+} while(false)
+
 // copies of the highly-inlinable functions
 const Il2CppTypeDefinition* il2cpp_functions::MetadataCache_GetTypeDefinitionFromIndex(TypeDefinitionIndex index) {
     CheckS_GlobalMetadata();
@@ -498,7 +504,7 @@ void il2cpp_functions::Init() {
     Instruction Array_NewSpecific((const int32_t*)ans.imm);
     log(DEBUG, "Array::NewSpecific offset: %llX", ((long long)Array_NewSpecific.addr) - getRealOffset(0));
     auto j2Cl_I = Array_NewSpecific.findNthCall(1);  // also the 113th call in Runtime::Init
-    if (!j2Cl_I) abort();
+    if (!j2Cl_I) SAFE_ABORT();
     Class_Init = (decltype(Class_Init))j2Cl_I->imm;
     log(DEBUG, "Class::Init found? offset: %llX", ((long long)Class_Init) - getRealOffset(0));
 
@@ -506,7 +512,7 @@ void il2cpp_functions::Init() {
     Instruction caha((const int32_t*)custom_attrs_has_attr);
     Instruction MetadataCache_HasAttribute((const int32_t*)caha.imm);
     auto j2MC_GTIFTI = MetadataCache_HasAttribute.findNthCall(1);
-    if (!j2MC_GTIFTI) abort();
+    if (!j2MC_GTIFTI) SAFE_ABORT();
     MetadataCache_GetTypeInfoFromTypeIndex = (decltype(MetadataCache_GetTypeInfoFromTypeIndex))j2MC_GTIFTI->imm;
     log(DEBUG, "MetadataCache::GetTypeInfoFromTypeIndex found? offset: %llX",
         ((long long)MetadataCache_GetTypeInfoFromTypeIndex) - getRealOffset(0));
@@ -515,7 +521,7 @@ void il2cpp_functions::Init() {
     Instruction tgcoec((const int32_t*)type_get_class_or_element_class);
     Instruction Type_GetClassOrElementClass((const int32_t*)tgcoec.imm);
     auto j2MC_GTIFTDI = Type_GetClassOrElementClass.findNthDirectBranchWithoutLink(5);
-    if (!j2MC_GTIFTDI) abort();
+    if (!j2MC_GTIFTDI) SAFE_ABORT();
     MetadataCache_GetTypeInfoFromTypeDefinitionIndex = (decltype(MetadataCache_GetTypeInfoFromTypeDefinitionIndex))j2MC_GTIFTDI->imm;
     log(DEBUG, "MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %llX",
         ((long long)MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
@@ -529,12 +535,22 @@ void il2cpp_functions::Init() {
     Instruction cfit((const int32_t*)class_from_il2cpp_type);
     Instruction Class_FromIl2CppType((const int32_t*)cfit.imm);
     auto caseStart = EvalSwitch(Class_FromIl2CppType.addr, 1, 1, IL2CPP_TYPE_GENERICINST);
-    if (!caseStart) abort();
+    if (!caseStart) SAFE_ABORT();
     auto j2GC_GC = caseStart->findNthDirectBranchWithoutLink(1);
-    if (!j2GC_GC) abort();
+    if (!j2GC_GC) SAFE_ABORT();
     log(DEBUG, "j2GC_GC: %s", j2GC_GC->toString().c_str());
     GenericClass_GetClass = (decltype(GenericClass_GetClass))j2GC_GC->imm;
     log(DEBUG, "GenericClass::GetClass found? offset: %llX", ((long long)GenericClass_GetClass) - getRealOffset(0));
+
+    Instruction iu16((const int32_t*)init_utf16);
+    auto j2R_I = iu16.findNthCall(3);
+    if (!j2R_I) SAFE_ABORT();
+    Instruction Runtime_Init((const int32_t*)j2R_I->imm);
+    auto ldr = Runtime_Init.findNth(1, std::mem_fn(&Instruction::isLoad));  // the load for the malloc that precedes our adrp
+    if (!ldr) SAFE_ABORT();
+    // alternatively, could just get the 1st ADRP in Runtime::Init with dest reg x20
+    il2cpp_functions::defaults = (decltype(il2cpp_functions::defaults))ExtractAddress(ldr->addr, 1, 1);
+    log(DEBUG, "il2cpp_defaults found? offset: %llX", ((long long)defaults) - getRealOffset(0));
 
     // FIELDS
     // Extract locations of s_GlobalMetadataHeader, s_Il2CppMetadataRegistration, & s_GlobalMetadata

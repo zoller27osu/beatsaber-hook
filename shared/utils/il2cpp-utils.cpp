@@ -136,37 +136,29 @@ namespace il2cpp_utils {
         return true;
     }
 
-    // Gets the type enum of a given type
-    // TODO Remove this method! Replace with default typesystem
-    int GetTypeEnum(std::string_view name_space, std::string_view type_name) {
-        auto klass = GetClassFromName(name_space, type_name);
-        auto typ = il2cpp_functions::class_get_type(klass);
-        return il2cpp_functions::type_get_type(typ);
-    }
-
-    static std::unordered_map<int, const char*> typeMap;
+    static std::unordered_map<Il2CppClass*, const char*> typeMap;
 
     const char* TypeGetSimpleName(const Il2CppType* type) {
         il2cpp_functions::Init();
 
         if (typeMap.empty()) {
-            typeMap[GetTypeEnum("System", "Boolean")] = "bool";
-            typeMap[GetTypeEnum("System", "Byte")] = "byte";
-            typeMap[GetTypeEnum("System", "SByte")] = "sbyte";
-            typeMap[GetTypeEnum("System", "Char")] = "char";
-            typeMap[GetTypeEnum("System", "Single")] = "float";
-            typeMap[GetTypeEnum("System", "Double")] = "double";
-            typeMap[GetTypeEnum("System", "Int16")] = "short";
-            typeMap[GetTypeEnum("System", "UInt16")] = "ushort";
-            typeMap[GetTypeEnum("System", "Int32")] = "int";
-            typeMap[GetTypeEnum("System", "UInt32")] = "uint";
-            typeMap[GetTypeEnum("System", "Int64")] = "long";
-            typeMap[GetTypeEnum("System", "UInt64")] = "ulong";
-            typeMap[GetTypeEnum("System", "Object")] = "object";
-            typeMap[GetTypeEnum("System", "String")] = "string";
-            typeMap[GetTypeEnum("System", "Void")] = "void";
+            typeMap[il2cpp_functions::defaults->boolean_class] = "bool";
+            typeMap[il2cpp_functions::defaults->byte_class] = "byte";
+            typeMap[il2cpp_functions::defaults->sbyte_class] = "sbyte";
+            typeMap[il2cpp_functions::defaults->char_class] = "char";
+            typeMap[il2cpp_functions::defaults->single_class] = "float";
+            typeMap[il2cpp_functions::defaults->double_class] = "double";
+            typeMap[il2cpp_functions::defaults->int16_class] = "short";
+            typeMap[il2cpp_functions::defaults->uint16_class] = "ushort";
+            typeMap[il2cpp_functions::defaults->int32_class] = "int";
+            typeMap[il2cpp_functions::defaults->uint32_class] = "uint";
+            typeMap[il2cpp_functions::defaults->int64_class] = "long";
+            typeMap[il2cpp_functions::defaults->uint64_class] = "ulong";
+            typeMap[il2cpp_functions::defaults->object_class] = "object";
+            typeMap[il2cpp_functions::defaults->string_class] = "string";
+            typeMap[il2cpp_functions::defaults->void_class] = "void";
         }
-        auto p = typeMap.find(il2cpp_functions::type_get_type(type));
+        auto p = typeMap.find(il2cpp_functions::class_from_type(type));
         if (p != typeMap.end()) {
             return p->second;
         } else {
@@ -387,7 +379,7 @@ namespace il2cpp_utils {
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types) {
         il2cpp_functions::Init();
 
-        auto runtimeType = GetClassFromName("System", "RuntimeType");
+        auto runtimeType = il2cpp_functions::defaults->runtimetype_class;
         if (!runtimeType) {
             log(ERROR, "il2cpp_utils: MakeGenericType: Failed to get System.RuntimeType!");
             return nullptr;
@@ -411,7 +403,7 @@ namespace il2cpp_utils {
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args) {
         il2cpp_functions::Init();
 
-        auto typ = GetClassFromName("System", "Type");
+        auto typ = il2cpp_functions::defaults->systemtype_class;
         if (!typ) {
             return nullptr;
         }
