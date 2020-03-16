@@ -278,6 +278,7 @@ class il2cpp_functions {
 
     inline static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataPtr)> s_GlobalMetadata = nullptr;
     inline static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataHeaderPtr)> s_GlobalMetadataHeader = nullptr;
+    inline static const Il2CppDefaults* defaults;
 
     // must be done on-demand because the pointers aren't necessarily correct at the time of il2cpp_functions::Init
     inline static void CheckS_GlobalMetadata() {
@@ -290,6 +291,7 @@ class il2cpp_functions {
             log(DEBUG, "typeDefinitionsOffset: %i", s_GlobalMetadataHeader->typeDefinitionsOffset);
             log(DEBUG, "exportedTypeDefinitionsOffset: %i", s_GlobalMetadataHeader->exportedTypeDefinitionsOffset);
             log(DEBUG, "nestedTypesOffset: %i", s_GlobalMetadataHeader->nestedTypesOffset);
+            // TODO: use il2cpp_functions::defaults to define the il2cpp_defaults variable mentioned in il2cpp-class-internals.h
         }
     }
 

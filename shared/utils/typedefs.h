@@ -13,6 +13,7 @@
 #define __GNUC__
 #endif
 
+#define NET_4_0 true
 #include "il2cpp-config.h"
 #include "il2cpp-api-types.h"
 #include "il2cpp-class-internals.h"

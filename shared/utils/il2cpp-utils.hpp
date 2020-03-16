@@ -71,6 +71,14 @@ namespace il2cpp_utils {
         template<typename T>
         using il2cpp_arg_type = il2cpp_arg_type_<std::decay_t<T>>;
 
+        #define DEFINE_IL2CPP_DEFAULT_TYPE(type, fieldName) \
+        template<> \
+        struct il2cpp_utils::il2cpp_type_check::il2cpp_arg_type_<type> { \
+            static inline Il2CppType const* get(type arg) { \
+                return il2cpp_functions::class_get_type(il2cpp_functions::defaults->fieldName##_class); \
+            } \
+        }
+
         #define DEFINE_IL2CPP_ARG_TYPE(type, nameSpace, className) \
         template<> \
         struct il2cpp_utils::il2cpp_type_check::il2cpp_arg_type_<type> { \
@@ -79,22 +87,22 @@ namespace il2cpp_utils {
             } \
         }
 
-        DEFINE_IL2CPP_ARG_TYPE(int8_t, "System", "SByte");
-        DEFINE_IL2CPP_ARG_TYPE(uint8_t, "System", "Byte");
-        DEFINE_IL2CPP_ARG_TYPE(int16_t, "System", "Int16");  // "short"
-        DEFINE_IL2CPP_ARG_TYPE(uint16_t, "System", "UInt16");  // "ushort"
-        DEFINE_IL2CPP_ARG_TYPE(int32_t, "System", "Int32");  // "int"
-        DEFINE_IL2CPP_ARG_TYPE(uint32_t, "System", "UInt32");  // "uint"
-        DEFINE_IL2CPP_ARG_TYPE(int64_t, "System", "Int64");  // "long"
-        DEFINE_IL2CPP_ARG_TYPE(uint64_t, "System", "UInt64");  // "ulong"
+        DEFINE_IL2CPP_DEFAULT_TYPE(int8_t, sbyte);
+        DEFINE_IL2CPP_DEFAULT_TYPE(uint8_t, byte);
+        DEFINE_IL2CPP_DEFAULT_TYPE(int16_t, int16);  // "short"
+        DEFINE_IL2CPP_DEFAULT_TYPE(uint16_t, uint16);  // "ushort"
+        DEFINE_IL2CPP_DEFAULT_TYPE(int32_t, int32);  // "int"
+        DEFINE_IL2CPP_DEFAULT_TYPE(uint32_t, uint32);  // "uint"
+        DEFINE_IL2CPP_DEFAULT_TYPE(int64_t, int64);  // "long"
+        DEFINE_IL2CPP_DEFAULT_TYPE(uint64_t, uint64);  // "ulong"
 
-        DEFINE_IL2CPP_ARG_TYPE(float, "System", "Single");
-        DEFINE_IL2CPP_ARG_TYPE(double, "System", "Double");
+        DEFINE_IL2CPP_DEFAULT_TYPE(float, single);
+        DEFINE_IL2CPP_DEFAULT_TYPE(double, double);
+
+        DEFINE_IL2CPP_DEFAULT_TYPE(bool, boolean);
+        DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppChar, char);
+
         DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
-
-        DEFINE_IL2CPP_ARG_TYPE(bool, "System", "Boolean");
-        DEFINE_IL2CPP_ARG_TYPE(Il2CppChar, "System", "Char");
-
         DEFINE_IL2CPP_ARG_TYPE(Color, "UnityEngine", "Color");
         DEFINE_IL2CPP_ARG_TYPE(Vector2, "UnityEngine", "Vector2");
         DEFINE_IL2CPP_ARG_TYPE(Vector3, "UnityEngine", "Vector3");
@@ -126,7 +134,7 @@ namespace il2cpp_utils {
         };
 
         // Unlike many Il2CppObject*, this has no real subclasses to worry about
-        DEFINE_IL2CPP_ARG_TYPE(Il2CppString*, "System", "String");
+        DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppString*, string);
 
         DEFINE_MEMBER_CHECKER(obj)
         DEFINE_MEMBER_CHECKER(object)
