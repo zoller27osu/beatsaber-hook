@@ -2,6 +2,8 @@
 #define CUSTOMUI_DEFINED
 
 #include <string.h>
+#include <iostream>
+#include <sstream>
 #include "../utils/typedefs.h"
 
 namespace CustomUI { 
