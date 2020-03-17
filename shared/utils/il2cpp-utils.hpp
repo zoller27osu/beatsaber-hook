@@ -330,8 +330,9 @@ namespace il2cpp_utils {
     // Runs a (static) method with the specified method name, with return type TOut.
     // Checks the types of the parameters against the candidate methods. Returns false if it fails.
     // Created by zoller27osu, modified by Sc2ad
-    bool RunMethod(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
-        static_assert(std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>);
+    // TODO: define these via KlassOrInstance types if possible
+    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
+    RunMethod(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
         il2cpp_functions::Init();
         if (!classOrInstance) {
             log(ERROR, "il2cpp_utils: RunMethod: Null classOrInstance parameter!");
@@ -356,8 +357,8 @@ namespace il2cpp_utils {
     // Runs a (static) method with the specified method name and number of arguments, with return type TOut.
     // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
     // Created by zoller27osu, modified by Sc2ad
-    bool RunMethodUnsafe(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
-        static_assert(std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>);
+    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
+    RunMethodUnsafe(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
         il2cpp_functions::Init();
         if (!classOrInstance) {
             log(ERROR, "il2cpp_utils: RunMethod: Null classOrInstance parameter!");
@@ -372,22 +373,62 @@ namespace il2cpp_utils {
         return RunMethod(out, classOrInstance, method, params...);
     }
 
+    template<class TOut, class... TArgs>
+    // Runs a static method with the specified method name and arguments, on the class
+    //   with the specified namespace and class name, with return type TOut.
+    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
+    bool RunMethod(TOut* out, std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
+        auto klass = GetClassFromName(nameSpace, klassName);
+        if (!klass) return false;
+        return RunMethod(out, klass, methodName, params...);
+    }
+
+    template<class TOut, class... TArgs>
+    // Runs a static method with the specified method name and arguments, on the class
+    //   with the specified namespace and class name, with return type TOut.
+    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
+    bool RunMethodUnsafe(TOut* out, std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
+        auto klass = GetClassFromName(nameSpace, klassName);
+        if (!klass) return false;
+        return RunMethodUnsafe(out, klass, methodName, params...);
+    }
+
+    template<class... TArgs>
+    // Runs a static method with the specified method name and arguments, on the class
+    //   with the specified namespace and class name; best for void return type
+    // Checks the types of the parameters against the candidate methods. Returns false if it fails.
+    bool RunMethod(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
+        void* out = nullptr;
+        return RunMethod(&out, nameSpace, klassName, methodName, params...);
+    }
+
+    template<class... TArgs>
+    // Runs a static method with the specified method name and arguments, on the class
+    //   with the specified namespace and class name; best for void return type
+    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
+    bool RunMethodUnsafe(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
+        void* out = nullptr;
+        return RunMethodUnsafe(&out, nameSpace, klassName, methodName, params...);
+    }
+
     template<class T, class... TArgs>
     // Runs a (static) method with the specified method name; best for void return type
     // Checks the types of the parameters against the candidate methods. Returns false if it fails.
     // Created by zoller27osu
-    bool RunMethod(T* klassOrInstance, std::string_view methodName, TArgs&& ...params) {
+    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
+    RunMethod(T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
         void* out = nullptr;
-        return RunMethod(&out, klassOrInstance, methodName, params...);
+        return RunMethod(&out, classOrInstance, methodName, params...);
     }
 
     template<class T, class... TArgs>
     // Runs a (static) method with the specified method name and number of arguments; best for void return type
     // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
     // Created by zoller27osu
-    bool RunMethodUnsafe(T* klassOrInstance, std::string_view methodName, TArgs&& ...params) {
+    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
+    RunMethodUnsafe(T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
         void* out = nullptr;
-        return RunMethodUnsafe(&out, klassOrInstance, methodName, params...);
+        return RunMethodUnsafe(&out, classOrInstance, methodName, params...);
     }
 
     template<typename TObj = Il2CppObject, typename... TArgs>
