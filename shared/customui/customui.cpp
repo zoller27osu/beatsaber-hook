@@ -201,7 +201,7 @@ namespace CustomUI
                     if (cap != prevCap || prog < prevProg) {
                         log(INFO, "prog is %i / %i", dataLen, cap);
                     }
-                    log(INFO, "wrAsyncOp progress: %f (raw = 0x%llX)", prog, *reinterpret_cast<float**>(&prog));
+                    log(INFO, "wrAsyncOp progress: %f (raw = %p)", prog, *reinterpret_cast<void**>(&prog));
                     prevProg = prog;
                     recvLens.push_back(dataLen);
                     prevCap = cap;

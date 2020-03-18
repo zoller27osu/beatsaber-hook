@@ -146,9 +146,12 @@ namespace il2cpp_utils {
                 //   in libil2cpp via composition instead of inheritance
                 auto constexpr hasObj = has_obj<T, Il2CppObject>::value;
                 auto constexpr hasObject = has_object<T, Il2CppObject>::value;
-                if constexpr (hasObj) {
+                // Double check inheritance here
+                if constexpr(std::is_convertible<T*, Il2CppObject*>::value) {
+                    return il2cpp_arg_type_<Il2CppObject*>::get(arg);
+                } else if constexpr(hasObj) {
                     return il2cpp_arg_type_<Il2CppObject*>::get(&arg->obj);
-                } else if constexpr (hasObject) {
+                } else if constexpr(hasObject) {
                     return il2cpp_arg_type_<Il2CppObject*>::get(&arg->object);
                 } else {
                     static_assert(false_t<T*>, "Turning this kind of pointer into an Il2CppType is not implemented! "
