@@ -162,6 +162,11 @@ typedef struct Quaternion {
     float w;
 } Quaternion;
 
+// UnityEngine.Scene
+typedef struct Scene {
+    int m_Handle;
+} Scene;
+
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif /* __cplusplus */

@@ -107,6 +107,7 @@ namespace il2cpp_utils {
         DEFINE_IL2CPP_ARG_TYPE(Vector2, "UnityEngine", "Vector2");
         DEFINE_IL2CPP_ARG_TYPE(Vector3, "UnityEngine", "Vector3");
         DEFINE_IL2CPP_ARG_TYPE(Quaternion, "UnityEngine", "Quaternion");
+        DEFINE_IL2CPP_ARG_TYPE(Scene, "UnityEngine.SceneManagement", "Scene");
 
         template<>
         struct il2cpp_arg_type_<Il2CppType*> {
@@ -385,8 +386,8 @@ namespace il2cpp_utils {
     }
 
     template<class TOut, class... TArgs>
-    // Runs a static method with the specified method name and arguments, on the class
-    //   with the specified namespace and class name, with return type TOut.
+    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
+    // The method also has return type TOut.
     // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
     bool RunMethod(TOut* out, std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
         auto klass = GetClassFromName(nameSpace, klassName);
@@ -395,8 +396,8 @@ namespace il2cpp_utils {
     }
 
     template<class TOut, class... TArgs>
-    // Runs a static method with the specified method name and arguments, on the class
-    //   with the specified namespace and class name, with return type TOut.
+    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
+    // The method also has return type TOut.
     // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
     bool RunMethodUnsafe(TOut* out, std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
         auto klass = GetClassFromName(nameSpace, klassName);
@@ -405,8 +406,8 @@ namespace il2cpp_utils {
     }
 
     template<class... TArgs>
-    // Runs a static method with the specified method name and arguments, on the class
-    //   with the specified namespace and class name; best for void return type
+    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
+    // Best for void return type.
     // Checks the types of the parameters against the candidate methods. Returns false if it fails.
     bool RunMethod(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
         void* out = nullptr;
@@ -414,8 +415,8 @@ namespace il2cpp_utils {
     }
 
     template<class... TArgs>
-    // Runs a static method with the specified method name and arguments, on the class
-    //   with the specified namespace and class name; best for void return type
+    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
+    // Best for void return type.
     // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
     bool RunMethodUnsafe(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
         void* out = nullptr;
