@@ -288,20 +288,31 @@ namespace il2cpp_utils {
         return base;
     }
 
-    template<class TOut, class... TArgs>
+    template<class TOut, class T, class... TArgs>
     // Runs a MethodInfo with the specified parameters and instance, with return type TOut
     // Assumes a static method if instance == nullptr
     // Returns false if it fails
     // Created by zoller27osu, modified by Sc2ad
-    bool RunMethod(TOut* out, void* instance, const MethodInfo* method, TArgs&& ...params) {
+    bool RunMethod(TOut* out, T* instance, const MethodInfo* method, TArgs&& ...params) {
         il2cpp_functions::Init();
         if (!method) {
             log(ERROR, "il2cpp_utils: RunMethod: Null MethodInfo!");
             return false;
         }
+
+        // runtime_invoke will assume obj is unboxed and box it. We need to counter that for pre-boxed instances.
+        // Note: we could also just call Runtime::Invoke directly, but box non-Il2CppObject instances ourselves as method->klass
+        void* inst = instance;
+        if constexpr (std::is_same_v<T, Il2CppObject>) {
+            if (method->klass->valuetype) {
+                // We assume that if the method is for a ValueType and instance is an Il2CppObject, then it was pre-boxed.
+                inst = il2cpp_functions::object_unbox(instance);
+            }
+        }
+
         Il2CppException* exp = nullptr;
         auto invokeParamsVec = ExtractValues(params...);
-        auto ret = il2cpp_functions::runtime_invoke(method, instance, invokeParamsVec.data(), &exp);
+        auto ret = il2cpp_functions::runtime_invoke(method, inst, invokeParamsVec.data(), &exp);
         if constexpr (std::is_pointer_v<TOut>) {
             *out = reinterpret_cast<TOut>(ret);
         } else {
@@ -316,12 +327,12 @@ namespace il2cpp_utils {
         return true;
     }
 
-    template<class... TArgs>
+    template<class... TArgs, class T>
     // Runs a MethodInfo with the specified parameters and instance; best for void return type
     // Assumes a static method if instance == nullptr
     // Returns false if it fails
     // Created by zoller27osu
-    bool RunMethod(void* instance, const MethodInfo* method, TArgs&& ...params) {
+    bool RunMethod(T* instance, const MethodInfo* method, TArgs&& ...params) {
         void* out = nullptr;
         return RunMethod(&out, instance, method, params...);
     }
@@ -348,7 +359,7 @@ namespace il2cpp_utils {
         if (!method) return false;
 
         if constexpr (std::is_base_of_v<Il2CppClass, T>) {
-            return RunMethod(out, nullptr, method, params...);
+            return RunMethod<TOut, void>(out, nullptr, method, params...);
         }
         return RunMethod(out, classOrInstance, method, params...);
     }
@@ -368,7 +379,7 @@ namespace il2cpp_utils {
         if (!method) return false;
 
         if constexpr (std::is_base_of_v<Il2CppClass, T>) {
-            return RunMethod(out, nullptr, method, params...);
+            return RunMethod<TOut, void>(out, nullptr, method, params...);
         }
         return RunMethod(out, classOrInstance, method, params...);
     }
