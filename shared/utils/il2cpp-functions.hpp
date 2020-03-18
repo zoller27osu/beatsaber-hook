@@ -189,7 +189,9 @@ class il2cpp_functions {
     inline static uint32_t (*object_get_size)(Il2CppObject * obj);
     inline static const MethodInfo* (*object_get_virtual_method)(Il2CppObject * obj, const MethodInfo * method);
     inline static Il2CppObject* (*object_new)(const Il2CppClass * klass);
+    // Always returns (void*)(obj + 1)
     inline static void* (*object_unbox)(Il2CppObject * obj);
+    // If klass is not a ValueType, returns (Il2CppObject*)(*data), else boxes
     inline static Il2CppObject* (*value_box)(Il2CppClass * klass, void* data);
     inline static void (*monitor_enter)(Il2CppObject * obj);
     inline static bool (*monitor_try_enter)(Il2CppObject * obj, uint32_t timeout);
