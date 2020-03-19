@@ -22,7 +22,6 @@
 #include "utils/Il2CppHashMap.h"
 #include "utils/HashUtils.h"
 #include "utils/StringUtils.h"
-#include <dlfcn.h>
 
 #ifdef __cplusplus
 template<class T>

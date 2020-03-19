@@ -3,6 +3,9 @@
 
 #include "../utils/utils.h"
 #include "customui.hpp"
+
+#include <iostream>
+#include <sstream>
 using namespace il2cpp_utils;
 
 int CustomUI::TextObject::counter = 0;
@@ -39,7 +42,7 @@ namespace CustomUI
         Array<Il2CppObject *> *allObjects;
 
         // Find Objects of type TMP_fontAsset
-        if (!RunMethod(&allObjects, nullptr, FindMethod("UnityEngine", "Resources", "FindObjectsOfTypeAll", 1), type_fontasset))
+        if (!RunMethod(&allObjects, "UnityEngine", "Resources", "FindObjectsOfTypeAll", type_fontasset))
         {
             // EXCEPTION
             log(ERROR, "TextObject::create: Failed to Find Objects of type TMP_fontAsset");
@@ -72,7 +75,7 @@ namespace CustomUI
         // Instantiating the font
         log(DEBUG, "TextObject::create: Instantiating the font");
         Il2CppObject *font;
-        if (!RunMethod(&font, nullptr, FindMethod("UnityEngine", "Object", "Instantiate", 1), allObjects->values[match]))
+        if (!RunMethod(&font, "UnityEngine", "Object", "Instantiate", allObjects->values[match]))
         {
             log(ERROR, "TextObject::create: Failed to Instantiate font!");
             return false;
@@ -99,7 +102,7 @@ namespace CustomUI
         if (!RunMethod(rectTransform, "SetParent", parentTransform, false))
         {
             log(ERROR, "TextObject::create: Failed to set parent!");
-            if (parentTransform == nullptr)
+            if (!parentTransform)
             {
                 log(ERROR, "TextObject::create: parentTransform is null! Fix it!");
             }
@@ -175,8 +178,7 @@ namespace CustomUI
 
     static auto findDataSize(Il2CppObject* downloadHandler) {
         Array<uint8_t>* data;
-        auto meth = il2cpp_utils::FindMethod("UnityEngine.Networking", "DownloadHandler", "InternalGetByteArray", 1);
-        if (il2cpp_utils::RunMethod(&data, nullptr, meth, downloadHandler)) {
+        if (il2cpp_utils::RunMethod(&data, "UnityEngine.Networking", "DownloadHandler", "InternalGetByteArray", downloadHandler)) {
             return data->Length();
         }
         return 0;
@@ -208,7 +210,7 @@ namespace CustomUI
                 }
             }
 
-            std::chrono::nanoseconds nanoTime((long)round(500000L));
+            std::chrono::nanoseconds nanoTime((long)round(1000000L));  // 0.001s
             std::this_thread::sleep_for(nanoTime);
         }
         std::stringstream ss;
@@ -222,7 +224,7 @@ namespace CustomUI
         log(INFO, "webRequest isDone.");
         Il2CppString* str;
         if (RunMethod(&str, obj->WWW, "get_error")) {
-            if (str != nullptr) {
+            if (str) {
                 log(ERROR, "webRequest error: %s", to_utf8(csstrtostr(str)).c_str());
             } else {
                 log(DEBUG, "webRequest had no error.");
@@ -257,7 +259,7 @@ namespace CustomUI
                 log(ERROR, "Failed to get rectTransform");
             }
 
-            if (obj->parentTransform == nullptr)
+            if (!obj->parentTransform)
             {
                 log(ERROR, "RawImageObject::textureWebRequestComplete: obj->parentTransform is null! Fix it!");
             }
@@ -306,23 +308,20 @@ namespace CustomUI
             log(ERROR, "Failed to get recievedTexture2D from DownloadHandler!");
             return false;
         }
-        log(INFO, "Callback success!");
+        log(DEBUG, "Callback success!");
         // TODO: if debug, play a sound?
         return true;
     }
 
     bool RawImageObject::create()
     {
-        auto getTextureMethod = FindMethod("UnityEngine.Networking", "UnityWebRequestTexture", "GetTexture", "System", "String");
-        if (!getTextureMethod) return false;
-
-        if (!RunMethod(&WWW, nullptr, getTextureMethod, createcsstr(url))) {
+        if (!RunMethod(&WWW, "UnityEngine.Networking", "UnityWebRequestTexture", "GetTexture", createcsstr(url))) {
             log(ERROR, "Failed to run UnityWebRequestTexture.GetTexture!");
             return false;
         }
 
         // If only we could use UnityEngine.WWW and its WaitUntilDoneIfPossible() :(
-        auto method = il2cpp_utils::FindMethod("UnityEngine.Networking", "UnityWebRequestAsyncOperation", "add_completed", 1);
+        auto method = il2cpp_utils::FindMethodUnsafe("UnityEngine.Networking", "UnityWebRequestAsyncOperation", "add_completed", 1);
         if (!method) return false;
         auto fieldType = il2cpp_functions::method_get_param(method, 0);
 
@@ -332,7 +331,7 @@ namespace CustomUI
         }
 
         auto action = il2cpp_utils::MakeAction(this, textureWebRequestComplete, fieldType);
-        if (action == nullptr) {
+        if (!action) {
             log(ERROR, "Couldn't make textureWebRequestComplete Action");
             return false;
         }

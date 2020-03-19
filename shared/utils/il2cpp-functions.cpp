@@ -1,11 +1,5 @@
 #include "utils.h"
 
-#define SAFE_ABORT() do { \
-    log(ERROR, "Aborting at %s:%i", __FILE__, __LINE__); \
-    usleep(100000000L); \
-    abort(); \
-} while(false)
-
 // copies of the highly-inlinable functions
 const Il2CppTypeDefinition* il2cpp_functions::MetadataCache_GetTypeDefinitionFromIndex(TypeDefinitionIndex index) {
     CheckS_GlobalMetadata();
@@ -497,6 +491,7 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_class_get_type CONST VERSION!");
     *(void**)(&il2cpp_functions::class_get_name_const) = dlsym(imagehandle, "il2cpp_class_get_name");
     log(INFO, "Loaded: il2cpp_class_get_name CONST VERSION!");
+    usleep(5000L);  // 0.005s
 
     // XREF TRACES
     // Class::Init. 0x846A68 in 1.5, 0x9EC0A4 in 1.7.0, 0xA6D1B8 in 1.8.0b1
@@ -564,6 +559,6 @@ void il2cpp_functions::Init() {
 
     dlclose(imagehandle);
     initialized = true;
+    usleep(5000L);  // 0.005s
     log(INFO, "il2cpp_functions: Init: Successfully loaded all il2cpp functions!");
-    usleep(100000L);
 }

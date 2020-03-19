@@ -23,6 +23,14 @@ template <typename Container> struct is_vector : std::false_type { };
 template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type { };
 // TODO: figure out how to write an is_vector_v that compiles properly?
 
+#define MACRO_WRAP(x) do { \
+    x; \
+} while(0)
+
+#define CRASH_IF_NOT(arg) MACRO_WRAP( \
+    if (!(arg)) SAFE_ABORT(); \
+)
+
 // Produces a has_[member]<T, U> type trait whose ::value tells you whether T has a member named [member] with type U.
 #define DEFINE_MEMBER_CHECKER(member) \
     template<typename T, typename U, typename Enable = void> \
@@ -54,6 +62,11 @@ static void StartCoroutine(Function&& fun, Args&&... args) {
 
 extern "C" {
 #endif /* __cplusplus */
+
+// logs the file and line, sleeps 0.2s to allow logs to flush, then terminates program
+void safeAbort(const char* file, int line);
+// sets "file" and "line" to the file and line you call this macro from
+#define SAFE_ABORT() safeAbort(__FILE__, __LINE__)
 
 // Restores an existing stringstream to a newly created state.
 void resetSS(std::stringstream& ss);
@@ -96,63 +109,75 @@ retval hook_ ## name(__VA_ARGS__)
 
 #ifdef __aarch64__
 
-#define INSTALL_HOOK(name) \
+#define INSTALL_HOOK(name) MACRO_WRAP( \
 log(INFO, "Installing 64 bit hook: %s", #name); \
 A64HookFunction((void*)getRealOffset(addr_ ## name),(void*) hook_ ## name, (void**)&name); \
+)
 
-#define INSTALL_HOOK_OFFSETLESS(name, methodInfo) \
+#define INSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
 log(INFO, "Installing 64 bit offsetless hook: %s", #name); \
 A64HookFunction((void*)methodInfo->methodPointer,(void*) hook_ ## name, (void**)&name); \
+)
 
-#define INSTALL_HOOK_NAT(name) \
+#define INSTALL_HOOK_NAT(name) MACRO_WRAP( \
 log(INFO, "Installing 64 bit native hook: %s", #name); \
 A64HookFunction((void*)(addr_ ## name),(void*) hook_ ## name, (void**)&name); \
+)
 
-#define INSTALL_HOOK_DIRECT(name, addr) \
+#define INSTALL_HOOK_DIRECT(name, addr) MACRO_WRAP( \
 log(INFO, "Installing 64 bit direct hook: %s", #name); \
 A64HookFunction((void*)addr, (void*) hook_ ## name, (void**)&name); \
+)
 
 // Uninstalls currently just creates a hook at the hooked address
 // and sets the hook to call the original function
 // No original trampoline is created when uninstalling a hook, hence the nullptr
 
-#define UNINSTALL_HOOK(name) \
+#define UNINSTALL_HOOK(name) MACRO_WRAP( \
 log(INFO, "Uninstalling 64 bit hook: %s", #name); \
 A64HookFunction((void*)getRealOffset(addr_ ## name),(void*)&name, (void**)nullptr); \
+)
 
-#define UNINSTALL_HOOK_OFFSETLESS(name, methodInfo) \
+#define UNINSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
 log(INFO, "Uninstalling 64 bit offsetless hook: %s", #name); \
 A64HookFunction((void*)methodInfo->methodPointer,(void*)&name, (void**)nullptr); \
+)
 
-#define UNINSTALL_HOOK_NAT(name) \
+#define UNINSTALL_HOOK_NAT(name) MACRO_WRAP( \
 log(INFO, "Uninstalling 64 bit native hook: %s", #name); \
 A64HookFunction((void*)(addr_ ## name),(void*)&name, (void**)nullptr); \
+)
 
-#define UNINSTALL_HOOK_DIRECT(name, addr) \
+#define UNINSTALL_HOOK_DIRECT(name, addr) MACRO_WRAP( \
 log(INFO, "Uninstalling 64 bit direct hook: %s", #name); \
 A64HookFunction((void*)addr, (void*)&name, (void**)nullptr); \
+)
 
 #else
 
 #define INSTALL_HOOK(name) \
-log(INFO, "Installing 32 bit hook!"); \
+log(INFO, "Installing 32 bit hook!"); MACRO_WRAP( \
 registerInlineHook((uint32_t)getRealOffset(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name); \
 inlineHook((uint32_t)getRealOffset(addr_ ## name)); \
+)
 
-#define INSTALL_HOOK_OFFSETLESS(name, methodInfo) \
+#define INSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
 log(INFO, "Installing 32 bit offsetless hook!"); \
 registerInlineHook((uint32_t)methodInfo->methodPointer, (uint32_t)hook_ ## name, (uint32_t **)&name); \
 inlineHook((uint32_t)methodInfo->methodPointer); \
+)
 
-#define INSTALL_HOOK_NAT(name) \
+#define INSTALL_HOOK_NAT(name) MACRO_WRAP( \
 log(INFO, "Installing 32 bit native hook!"); \
 registerInlineHook((uint32_t)(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name); \
 inlineHook((uint32_t)(addr_ ## name)); \
+)
 
-#define INSTALL_HOOK_DIRECT(name, addr) \
+#define INSTALL_HOOK_DIRECT(name, addr) MACRO_WRAP( \
 log(INFO, "Installing 32 bit offsetless hook!"); \
 registerInlineHook((uint32_t)addr, (uint32_t)hook_ ## name, (uint32_t **)&name); \
 inlineHook((uint32_t)addr); \
+)
 
 #endif
 

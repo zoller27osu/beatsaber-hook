@@ -207,7 +207,7 @@ namespace il2cpp_utils {
         return nullptr;
     }
 
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, int argsCount) {
+    const MethodInfo* FindMethodUnsafe(Il2CppClass* klass, std::string_view methodName, int argsCount) {
         il2cpp_functions::Init();
 
         if (!klass) return nullptr;
@@ -221,12 +221,20 @@ namespace il2cpp_utils {
         // Recurses through klass's parents
         auto methodInfo = il2cpp_functions::class_get_method_from_name(klass, methodName.data(), argsCount);
         if (!methodInfo) {
-            log(ERROR, "could not find method %s with %i parameters in class %s (namespace '%s')!", methodName.data(),
-                argsCount, il2cpp_functions::class_get_name(klass), il2cpp_functions::class_get_namespace(klass));
+            log(ERROR, "could not find method %s with %i parameters in class '%s'!", methodName.data(), argsCount,
+                ClassStandardName(klass).c_str());
             LogMethods(klass, true);
         }
         classesNamesToMethodsCache.insert({key, methodInfo});
         return methodInfo;
+    }
+
+    const MethodInfo* FindMethodUnsafe(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount) {
+        return FindMethodUnsafe(GetClassFromName(nameSpace, className), methodName, argsCount);
+    }
+
+    const MethodInfo* FindMethodUnsafe(Il2CppObject* instance, std::string_view methodName, int argsCount) {
+        return FindMethodUnsafe(GetClassOfObject(instance, "FindMethod"), methodName, argsCount);
     }
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes) {
@@ -263,7 +271,7 @@ namespace il2cpp_utils {
                 first = false;
                 ss << TypeGetSimpleName(t);
             }
-            ss << ") in class " << il2cpp_functions::class_get_name(klass) << " (namespace '" << il2cpp_functions::class_get_namespace(klass) << "')!";
+            ss << ") in class '" << ClassStandardName(klass) << "'!";
             log(ERROR, "%s", ss.str().c_str());
             LogMethods(klass);
         }
@@ -297,8 +305,7 @@ namespace il2cpp_utils {
         }
         auto field = il2cpp_functions::class_get_field_from_name(klass, fieldName.data());
         if (!field) {
-            log(ERROR, "could not find field %s in class %s (namespace '%s')!", fieldName.data(),
-                il2cpp_functions::class_get_name(klass), il2cpp_functions::class_get_namespace(klass));
+            log(ERROR, "could not find field %s in class '%s'!", fieldName.data(), ClassStandardName(klass).c_str());
             LogFields(klass, true);
             if (klass->parent != klass) field = FindField(klass->parent, fieldName);
         }
@@ -443,7 +450,7 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get class from Il2CppReflectionType!");
             return nullptr;
         }
-        log(DEBUG, "il2cpp_utils: MakeGeneric: returning %s", il2cpp_functions::class_get_name(ret));
+        log(DEBUG, "il2cpp_utils: MakeGeneric: returning '%s'", ClassStandardName(ret).c_str());
         return ret;
     }
 
@@ -625,7 +632,7 @@ namespace il2cpp_utils {
 
         bool methodInit = false;
         if (klass->name) {
-            // note: unless vm/Class.cpp is wrong, Class::Init always returns true
+            // Note: unless vm/Class.cpp is wrong, Class::Init always returns true
             il2cpp_functions::Class_Init(klass);
             if (klass->initialized_and_no_error) {
                 methodInit = true;
@@ -697,41 +704,6 @@ namespace il2cpp_utils {
         }
 
         auto typDef = klass->typeDefinition;
-        // TODO: investigate MetadataCache::GetRGCTXs as a replacement for this?
-        /*
-        if (typDef) {
-            Il2CppClass* childClass;
-            log(DEBUG, "rgctxCount: %i, startIndex: %i", typDef->rgctxCount, typDef->rgctxStartIndex);
-            for (int i = 0; i < typDef->rgctxCount; i++) {
-                auto idx = typDef->rgctxStartIndex + i;
-                auto def = il2cpp_functions::MetadataCache_GetRGCTXDefinitionFromIndex(idx);
-                Il2CppRGCTXData rgctxData = klass->rgctx_data[i];
-                log(INFO, "-- RGCTX child %i is type %i:", i, def->type);
-                switch(def->type) {
-                    case IL2CPP_RGCTX_DATA_METHOD:
-                        // TODO: compare rgctxData.method with def->data.methodIndex?
-                        LogMethod(rgctxData.method);
-                        break;
-                    case IL2CPP_RGCTX_DATA_TYPE:
-                    case IL2CPP_RGCTX_DATA_CLASS:
-                    case IL2CPP_RGCTX_DATA_ARRAY:
-                        childClass = il2cpp_functions::MetadataCache_GetTypeInfoFromTypeIndex(def->data.typeIndex);
-                        log(INFO, "---- %s (from typeIndex)", ClassStandardName(childClass).c_str());
-                        if (def->type == IL2CPP_RGCTX_DATA_TYPE) {
-                            if (rgctxData.type) log(INFO, "---- %s (rgctxData.type)", il2cpp_functions::Type_GetName(rgctxData.type, IL2CPP_TYPE_NAME_FORMAT_REFLECTION));
-                        } else {
-                            log(INFO, "rgctxData.klass: %p (self = %p)", rgctxData.klass, klass);
-                            log(INFO, "childClass %p, rgctxData.klass == childClass: %i,", childClass, rgctxData.klass == childClass);
-                            if (rgctxData.klass && rgctxData.klass != klass) log(INFO, "---- %s (rgctxData.klass)", ClassStandardName(childClass).c_str());
-                        }
-                        break;
-                    default:
-                        log(WARNING, "Don't know how to handle Il2CppRGCTXDataType %i", def->type);
-                        break;
-                }
-            }
-        }
-        */
 
         log(DEBUG, "%i =========METHODS=========", indent);
         LogMethods(klass);
@@ -820,8 +792,8 @@ namespace il2cpp_utils {
             }
             auto length = img->nameToClassHashTable->size();
             for (auto itr = img->nameToClassHashTable->begin(); itr != img->nameToClassHashTable->end(); ++itr) {
-                // First is a KeyWrapper(pair(namespaceName, className))
-                // Second is TypeDefinitionIndex
+                // ->first is a KeyWrapper(pair(namespaceName, className))
+                // ->second is TypeDefinitionIndex
                 if (strncmp(classPrefix.data(), itr->first.key.second, classPrefix.length()) == 0) {
                     // Starts with!
                     // Convert TypeDefinitionIndex --> class
@@ -884,11 +856,11 @@ namespace il2cpp_utils {
         return (source->klass == klass);
     }
 
-    bool AssertMatch(const Il2CppObject* source, const Il2CppClass* klass) {
+    bool AssertMatch(const Il2CppObject* source, Il2CppClass* klass) {
         il2cpp_functions::Init();
         if (!Match(source, klass)) {
-            log(CRITICAL, "il2cpp_utils: AssertMatch: Unhandled subtype: namespace %s, class %s",
-                il2cpp_functions::class_get_namespace(source->klass), il2cpp_functions::class_get_name(source->klass));
+            log(CRITICAL, "il2cpp_utils: AssertMatch: source with class '%s' does not match class '%s'!",
+                ClassStandardName(source->klass).c_str(), ClassStandardName(klass).c_str());
             std::terminate();
         }
         return true;
