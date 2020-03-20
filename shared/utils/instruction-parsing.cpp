@@ -44,9 +44,9 @@ decltype(Instruction::result) ExtractAddress(Instruction* instWithResultAdr, Ins
 decltype(Instruction::result) ExtractAddress(const int32_t* addr, int pcRelN, int offsetN) {
     Instruction funcInst(addr);
     auto instAdrp = funcInst.findNthPcRelAdr(pcRelN);
-    if (!instAdrp) return 0;
+    RET_0_UNLESS(instAdrp);
     auto instOff = instAdrp->findNthImmOffsetOnReg(offsetN, instAdrp->Rd);
-    if (!instOff) return 0;
+    RET_0_UNLESS(instOff);
     log(DEBUG, "adrp idx: %lu, offset instruction idx: %lu", instAdrp->addr - funcInst.addr, instOff->addr - funcInst.addr);
     log(DEBUG, "instAdrp: %s", instAdrp->toString().c_str());
     log(DEBUG, "instOff:  %s", instOff->toString().c_str());
@@ -69,7 +69,7 @@ Instruction* EvalSwitch(const uint32_t* switchTable, int switchCaseValue) {
 
 Instruction* EvalSwitch(const int32_t* inst, int pcRelN, int offsetN, int switchCaseValue) {
     auto switchTable = (const uint32_t*)ExtractAddress(inst, pcRelN, offsetN);
-    if (!switchTable) return nullptr;
+    RET_0_UNLESS(switchTable);
     return EvalSwitch(switchTable, switchCaseValue);
 }
 
@@ -174,8 +174,7 @@ Instruction* Instruction::findNthPcRelAdr(int n, int rets) {
 }
 
 Instruction* Instruction::findNthImmOffsetOnReg(int n, uint_fast8_t reg, int rets) {
-    // return this->findNth(n, [reg](Instruction* inst){return inst->hasImmOffsetOnReg(reg);});
-    return this->findNth(n, std::bind(&Instruction::hasImmOffsetOnReg, std::placeholders::_1, reg));
+    return this->findNth(n, [reg](Instruction* inst){return inst->hasImmOffsetOnReg(reg);}, rets);
 }
 
 Instruction::Instruction(const int32_t* inst) {
@@ -876,10 +875,11 @@ Instruction::Instruction(const int32_t* inst) {
         }
     } else {
         kind[parseLevel++] = "ERROR: Our top-level bit patterns have a gap!";
+        log(ERROR, "Our top-level bit patterns have a gap!");
         valid = false;
     }
     if (parseLevel != sizeof(kind) / sizeof(kind[0])) {
-        log(ERROR, "Could not complete parsing of 0x%X (offset %llX) - need more handling for kind '%s'!", code, ((long long)addr) - getRealOffset(0), kind[parseLevel - 1]);
+        log(WARNING, "Could not complete parsing of 0x%X (offset %llX) - need more handling for kind '%s'!", code, ((long long)addr) - getRealOffset(0), kind[parseLevel - 1]);
     } else {
         parsed = true;
         if (kind[parseLevel - 1] == unalloc) {
@@ -913,9 +913,9 @@ void ProcessRegisterDependencies(Instruction* inst, uint_fast8_t Rd, decltype(Pa
     for (uint_fast8_t i = 0; i < inst->numSourceRegisters; i++) {
         auto Rs = inst->Rs[i];
         if ((Rs < 0) || (Rs >= depMap.max_size())) {
-            log(ERROR, "Instruction is wrong! numSourceRegisters = %i but Rs[%i] = %i", inst->numSourceRegisters, i, Rs);
-            abort();
-            continue;
+            log(CRITICAL, "Instruction is wrong! numSourceRegisters = %i but Rs[%i] = %i\n%s", inst->numSourceRegisters, i, Rs,
+                inst->toString().c_str());
+            SAFE_ABORT();
         }
         newDeps |= depMap[Rs];
     }
@@ -1003,7 +1003,7 @@ InstructionTree::InstructionTree(const int32_t* pc): Instruction(pc) {
 
 std::ostream& operator<<(std::ostream& os, const AssemblyFunction& func) {
     os << std::showbase;
-
+    // TODO: print fields
     return os << std::noshowbase;
 }
 
@@ -1024,6 +1024,7 @@ AssemblyFunction::AssemblyFunction(const int32_t* pc): parseState() {
         parseState.dependencyMap = std::move(p.second);
         p.first->PopulateChildren(parseState);
     }
+    usleep(10000L);  // 0.01s
 
     log(INFO, "Function candidates: ");
     for (auto p : parseState.functionCandidates) {

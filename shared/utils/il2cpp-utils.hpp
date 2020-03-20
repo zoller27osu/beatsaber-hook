@@ -235,11 +235,7 @@ namespace il2cpp_utils {
 
     // Returns the MethodInfo for the method on the given class with the given name and number of arguments
     // Created by zoller27osu
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, int argsCount);
-    // TODO: instead of this 1 additional resolution, direct all integer-only or non-pointer/string params to the argsCount overload
-    inline const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, size_t argsCount) {
-        return FindMethod(klass, methodName, static_cast<int>(argsCount));
-    }
+    const MethodInfo* FindMethodUnsafe(Il2CppClass* klass, std::string_view methodName, int argsCount);
 
     // Returns the MethodInfo for the method on the given class with the given name and types of arguments
     // Created by zoller27osu
@@ -249,7 +245,12 @@ namespace il2cpp_utils {
     // Varargs to vector helper
     template <typename... TArgs, std::enable_if_t<(... && !is_vector<TArgs>::value), int> = 0>  // prevents template recursion
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, TArgs&&... args) {
-        return FindMethod(klass, methodName, {args...});
+        if constexpr (sizeof...(TArgs) == 1 && (std::is_integral_v<std::decay_t<TArgs>> && ...)) {
+            static_assert(false_t<TArgs...>,
+                "FindMethod using argCount is invalid! If argCount is 0 then remove it; otherwise use FindMethodUnsafe!");
+        } else {
+            return FindMethod(klass, methodName, {args...});
+        }
     }
 
     // Returns the MethodInfo for the method on class found via namespace and name with the given other arguments
@@ -257,12 +258,14 @@ namespace il2cpp_utils {
     const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
         return FindMethod(GetClassFromName(nameSpace, className), params...);
     }
+    const MethodInfo* FindMethodUnsafe(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount);
 
     // Returns the MethodInfo for the method on the given instance
     template<class... TArgs>
     const MethodInfo* FindMethod(Il2CppObject* instance, TArgs&&... params) {
         return FindMethod(GetClassOfObject(instance, "FindMethod"), params...);
     }
+    const MethodInfo* FindMethodUnsafe(Il2CppObject* instance, std::string_view methodName, int argsCount);
 
     inline auto ExtractValues() {
         return std::vector<void*>();
@@ -379,7 +382,7 @@ namespace il2cpp_utils {
             log(ERROR, "il2cpp_utils: RunMethod: Null classOrInstance parameter!");
             return false;
         }
-        auto method = FindMethod(classOrInstance, methodName, sizeof...(TArgs));
+        auto method = FindMethodUnsafe(classOrInstance, methodName, sizeof...(TArgs));
         if (!method) return false;
 
         if constexpr (std::is_base_of_v<Il2CppClass, T>) {
