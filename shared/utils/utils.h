@@ -23,13 +23,22 @@ template <typename Container> struct is_vector : std::false_type { };
 template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type { };
 // TODO: figure out how to write an is_vector_v that compiles properly?
 
-#define MACRO_WRAP(x) do { \
-    x; \
+#define MACRO_WRAP(expr) do { \
+    expr; \
 } while(0)
 
-#define CRASH_IF_NOT(arg) MACRO_WRAP( \
-    if (!(arg)) SAFE_ABORT(); \
-)
+// Logs error and RETURNS argument 1 IFF argument 2 boolean evaluates as false; else EVALUATES to argument 2
+// thank god for this GCC ({}) extension which "evaluates to the last statement"
+#define RET_UNLESS(retval, expr) ({ \
+    const auto& __temp__ = expr; \
+    if (!__temp__) { \
+        log(ERROR, "%s (at %s:%i) returned false!", #expr, __FILE__, __LINE__); \
+        return retval; \
+    } \
+    __temp__; \
+})
+#define RET_V_UNLESS(expr) RET_UNLESS(, expr)
+#define RET_0_UNLESS(expr) RET_UNLESS(0, expr)
 
 // Produces a has_[member]<T, U> type trait whose ::value tells you whether T has a member named [member] with type U.
 #define DEFINE_MEMBER_CHECKER(member) \
@@ -60,13 +69,20 @@ static void StartCoroutine(Function&& fun, Args&&... args) {
     t->detach();
 }
 
-extern "C" {
-#endif /* __cplusplus */
-
-// logs the file and line, sleeps 0.2s to allow logs to flush, then terminates program
+// logs the file and line, sleeps to allow logs to flush, then terminates program
 void safeAbort(const char* file, int line);
 // sets "file" and "line" to the file and line you call this macro from
 #define SAFE_ABORT() safeAbort(__FILE__, __LINE__)
+
+template<class T>
+auto crashUnless(T&& arg, const char* file, int line) {
+    if (!arg) safeAbort(file, line);
+    return std::forward<T>(arg);
+}
+#define CRASH_UNLESS(expr) crashUnless(expr, __FILE__, __LINE__)
+
+extern "C" {
+#endif /* __cplusplus */
 
 // Restores an existing stringstream to a newly created state.
 void resetSS(std::stringstream& ss);

@@ -44,9 +44,9 @@ decltype(Instruction::result) ExtractAddress(Instruction* instWithResultAdr, Ins
 decltype(Instruction::result) ExtractAddress(const int32_t* addr, int pcRelN, int offsetN) {
     Instruction funcInst(addr);
     auto instAdrp = funcInst.findNthPcRelAdr(pcRelN);
-    if (!instAdrp) return 0;
+    RET_0_UNLESS(instAdrp);
     auto instOff = instAdrp->findNthImmOffsetOnReg(offsetN, instAdrp->Rd);
-    if (!instOff) return 0;
+    RET_0_UNLESS(instOff);
     log(DEBUG, "adrp idx: %lu, offset instruction idx: %lu", instAdrp->addr - funcInst.addr, instOff->addr - funcInst.addr);
     log(DEBUG, "instAdrp: %s", instAdrp->toString().c_str());
     log(DEBUG, "instOff:  %s", instOff->toString().c_str());
@@ -69,7 +69,7 @@ Instruction* EvalSwitch(const uint32_t* switchTable, int switchCaseValue) {
 
 Instruction* EvalSwitch(const int32_t* inst, int pcRelN, int offsetN, int switchCaseValue) {
     auto switchTable = (const uint32_t*)ExtractAddress(inst, pcRelN, offsetN);
-    if (!switchTable) return nullptr;
+    RET_0_UNLESS(switchTable);
     return EvalSwitch(switchTable, switchCaseValue);
 }
 
@@ -174,8 +174,7 @@ Instruction* Instruction::findNthPcRelAdr(int n, int rets) {
 }
 
 Instruction* Instruction::findNthImmOffsetOnReg(int n, uint_fast8_t reg, int rets) {
-    // return this->findNth(n, [reg](Instruction* inst){return inst->hasImmOffsetOnReg(reg);});
-    return this->findNth(n, std::bind(&Instruction::hasImmOffsetOnReg, std::placeholders::_1, reg));
+    return this->findNth(n, [reg](Instruction* inst){return inst->hasImmOffsetOnReg(reg);}, rets);
 }
 
 Instruction::Instruction(const int32_t* inst) {
@@ -876,6 +875,7 @@ Instruction::Instruction(const int32_t* inst) {
         }
     } else {
         kind[parseLevel++] = "ERROR: Our top-level bit patterns have a gap!";
+        log(ERROR, "Our top-level bit patterns have a gap!");
         valid = false;
     }
     if (parseLevel != sizeof(kind) / sizeof(kind[0])) {
@@ -1003,7 +1003,7 @@ InstructionTree::InstructionTree(const int32_t* pc): Instruction(pc) {
 
 std::ostream& operator<<(std::ostream& os, const AssemblyFunction& func) {
     os << std::showbase;
-
+    // TODO: print fields
     return os << std::noshowbase;
 }
 

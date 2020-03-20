@@ -13,24 +13,19 @@ namespace CustomUI {
     bool TextObject::create() {
         // gameobj = new GameObject("CustomTextUI");
         log(DEBUG, "TextObject::create: Creating gameObject: %s (object number: %i)", name.data(), counter);
-        gameObj = New(GetClassFromName("UnityEngine", "GameObject"), createcsstr(name.data()));
+        gameObj = New(GetClassFromName("UnityEngine", "GameObject"), createcsstr(name));
 
         // gameObj.SetActive(false);
         log(DEBUG, "TextObject::create: Setting gameObject.active to false");
-        if (!RunMethod(gameObj, "SetActive", false)) {
-            log(ERROR, "TextObject::create: Failed to set active to false");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(gameObj, "SetActive", false));
 
         // gameObj.AddComponent<TextMeshProUGUI>();
         log(DEBUG, "TextObject::create: Getting type of TMPro.TextMeshProUGUI");
         Il2CppObject *type_tmpugui = GetSystemType("TMPro", "TextMeshProUGUI");
 
         log(DEBUG, "TextObject::create: Adding component TMPro.TextMeshProUGUI");
-        if (!RunMethod(&textMesh, gameObj, "AddComponent", type_tmpugui)) {
-            log(ERROR, "TextObject::create: Failed to add Component TMPro.TextMeshProUGUI");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(&textMesh, gameObj, "AddComponent", type_tmpugui));
+
         // textMesh.font = GameObject.Instantiate(Resources.FindObjectsOfTypeAll<TMP_FontAsset>().First(t => t.name == "Teko-Medium SDF No Glow"));
         log(DEBUG, "TextObject::create: Getting type of TMPro.TMP_FontAsset");
         Il2CppObject *type_fontasset = GetSystemType("TMPro", "TMP_FontAsset");
@@ -38,117 +33,70 @@ namespace CustomUI {
         Array<Il2CppObject *> *allObjects;
 
         // Find Objects of type TMP_fontAsset
-        if (!RunMethod(&allObjects, "UnityEngine", "Resources", "FindObjectsOfTypeAll", type_fontasset)) {
-            // EXCEPTION
-            log(ERROR, "TextObject::create: Failed to Find Objects of type TMP_fontAsset");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(&allObjects, "UnityEngine", "Resources", "FindObjectsOfTypeAll", type_fontasset));
         int match = -1;
         for (int i = 0; i < allObjects->Length(); i++) {
             // Treat it as a UnityEngine.Object (which it is) and call the name getter
             Il2CppString *assetName;
-            if (!RunMethod(&assetName, allObjects->values[i], "get_name")) {
-                // EXCEPTION
-                log(ERROR, "TextObject::create: Failed to run get_name of assetName");
-                return false;
-            }
-            if (strcmp(to_utf8(csstrtostr(assetName)).c_str(), "Teko-Medium SDF No Glow") == 0) {
+            RET_0_UNLESS(RunMethod(&assetName, allObjects->values[i], "get_name"));
+            if (to_utf8(csstrtostr(assetName)) == "Teko-Medium SDF No Glow") {
                 // Found matching asset
                 match = i;
                 break;
             }
         }
-        if (match == -1) {
-            log(ERROR, "TextObject::create: Could not find matching TMP_FontAsset!");
-            return false;
-        }
+        RET_0_UNLESS(match != -1);
 
-        // Instantiating the font
         log(DEBUG, "TextObject::create: Instantiating the font");
         Il2CppObject *font;
-        if (!RunMethod(&font, "UnityEngine", "Object", "Instantiate", allObjects->values[match])) {
-            log(ERROR, "TextObject::create: Failed to Instantiate font!");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(&font, "UnityEngine", "Object", "Instantiate", allObjects->values[match]));
 
-        // Setting the font
         log(DEBUG, "TextObject::create: Setting the font");
-        if (!RunMethod(textMesh, "set_font", font)) {
-            log(ERROR, "TextObject::create: Failed to set font!");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(textMesh, "set_font", font));
 
         // textMesh.rectTransform.SetParent(parent, false);
         log(DEBUG, "TextObject::create: Getting rectTransform");
         Il2CppObject *rectTransform;
-        if (!RunMethod(&rectTransform, textMesh, "get_rectTransform")) {
-            log(ERROR, "TextObject::create: Failed to get rectTransform");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(&rectTransform, textMesh, "get_rectTransform"));
 
         log(DEBUG, "TextObject::create: Setting Parent");
-        if (!RunMethod(rectTransform, "SetParent", parentTransform, false)) {
-            log(ERROR, "TextObject::create: Failed to set parent!");
-            if (!parentTransform) {
-                log(ERROR, "TextObject::create: parentTransform is null! Fix it!");
-            }
-            return false;
+        if (!parentTransform) {
+            log(ERROR, "TextObject::create: parentTransform is null! Fix it!");
         }
+        RET_0_UNLESS(RunMethodUnsafe(rectTransform, "SetParent", parentTransform, false));
+
         // textMesh.text = text;
         log(DEBUG, "TextObject::create: Setting Text");
-        if (!RunMethod(textMesh, "set_text", createcsstr(text.data()))) {
-            log(ERROR, "TextObject::create: Failed to set text!");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(textMesh, "set_text", createcsstr(text.data())));
 
         // textmesh.fontSize = fontSize;
         log(DEBUG, "TextObject::create: Setting fontSize");
-        if (!RunMethod(textMesh, "set_fontSize", fontSize)) {
-            log(ERROR, "TextObject::create: Failed to set fontSize!");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(textMesh, "set_fontSize", fontSize));
 
         // textMesh.color = Color.white;
         log(DEBUG, "TextObject::create: Setting color");
-        if (!RunMethod(textMesh, "set_color", color)) {
-            log(ERROR, "TextObject::create: Failed to set color!");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(textMesh, "set_color", color));
 
         // textMesh.rectTransform.anchorMin = anchorMin
         log(DEBUG, "TextObject::create: Setting anchorMin");
-        if (!RunMethod(rectTransform, "set_anchorMin", anchorMin)) {
-            log(ERROR, "TextObject::create: Failed to set anchorMin");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(rectTransform, "set_anchorMin", anchorMin));
 
         // textMesh.rectTransform.anchorMax = anchorMax
         log(DEBUG, "TextObject::create: Setting anchorMax");
-        if (!RunMethod(rectTransform, "set_anchorMax", anchorMax)) {
-            log(ERROR, "TextObject::create: Failed to set anchorMax");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(rectTransform, "set_anchorMax", anchorMax));
 
         // textMesh.rectTransform.sizeDelta = sizeDelta
         log(DEBUG, "TextObject::create: Setting sizeDelta");
-        if (!RunMethod(rectTransform, "set_sizeDelta", sizeDelta)) {
-            log(ERROR, "TextObject::create: Failed to set sizeDelta");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(rectTransform, "set_sizeDelta", sizeDelta));
 
         // textMesh.rectTransform.anchoredPosition = anchoredPosition
         log(DEBUG, "TextObject::create: Setting anchoredPosition");
-        if (!RunMethod(rectTransform, "set_anchoredPosition", anchoredPosition)) {
-            log(ERROR, "TextObject::create: failed to set anchoredPosition");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(rectTransform, "set_anchoredPosition", anchoredPosition));
 
         // gameObj.SetActive(true);
         log(DEBUG, "TextObject::create: Setting gameObject active to true");
-        if (!RunMethod(gameObj, "SetActive", true)) {
-            log(ERROR, "TextObject::create: Failed to set active to true");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(gameObj, "SetActive", true));
+
         log(DEBUG, "TextObject::create: Succesfully created gameObj: %s", name.c_str());
         counter++;
         return true;
@@ -214,95 +162,53 @@ namespace CustomUI {
         // Notes: The field named "<webRequest>k__BackingField" on asyncOp is a pointer that should match obj->WWW
         log(DEBUG, "Entering textureWebRequestComplete!");
 
+        RET_0_UNLESS(RunMethod(&obj->recievedTexture2D, "UnityEngine.Networking", "DownloadHandlerTexture", "GetContent", obj->WWW));
+
+        obj->gameObj = New(GetClassFromName("UnityEngine", "GameObject"), createcsstr("RandomImage"));
+        RET_0_UNLESS(RunMethod(obj->gameObj, "SetActive", false));
+        RET_0_UNLESS(RunMethod(&obj->rawImage, obj->gameObj, "AddComponent", GetSystemType("UnityEngine.UI", "RawImage")));
+        RET_0_UNLESS(RunMethod(obj->rawImage, "set_texture", obj->recievedTexture2D));
+
         Il2CppObject *rawImageRectTransform;
-
-        if (RunMethod(&obj->recievedTexture2D, il2cpp_utils::GetClassFromName("UnityEngine.Networking", "DownloadHandlerTexture"), "GetContent", obj->WWW)) {
-            obj->gameObj = New(GetClassFromName("UnityEngine", "GameObject"), createcsstr("RandomImage"));
-            if (!RunMethod(obj->gameObj, "SetActive", false)) {
-                log(ERROR, "Failed to set gameObj active to false");
-            }
-            if (!RunMethod(&obj->rawImage, obj->gameObj, "AddComponent", GetSystemType("UnityEngine.UI", "RawImage"))) {
-                log(ERROR, "Failed to AddComponent rawImage");
-            }
-            else if (!RunMethod(obj->rawImage, "set_texture", obj->recievedTexture2D)) {
-                log(ERROR, "Failed to set recievedTexture2D");
-            }
-            if (!RunMethod(&rawImageRectTransform, obj->rawImage, "get_rectTransform")) {
-                log(ERROR, "Failed to get rectTransform");
-            }
-
-            if (!obj->parentTransform) {
-                log(ERROR, "RawImageObject::textureWebRequestComplete: obj->parentTransform is null! Fix it!");
-            }
-            else if (!RunMethod(rawImageRectTransform, "SetParent", obj->parentTransform, false)) {
-                log(ERROR, "Failed to set Parent");
-            }
-
-            // textMesh.rectTransform.anchorMin = anchorMin
-            log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchorMin");
-            if (!RunMethod(rawImageRectTransform, "set_anchorMin", obj->anchorMin)) {
-                log(ERROR, "RawImageObject::textureWebRequestComplete: Failed to set anchorMin");
-                return false;
-            }
-
-            // textMesh.rectTransform.anchorMax = anchorMax
-            log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchorMax");
-            if (!RunMethod(rawImageRectTransform, "set_anchorMax", obj->anchorMax)) {
-                log(ERROR, "RawImageObject::textureWebRequestComplete: Failed to set anchorMax");
-                return false;
-            }
-
-            // textMesh.rectTransform.sizeDelta = sizeDelta
-            log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting sizeDelta");
-            if (!RunMethod(rawImageRectTransform, "set_sizeDelta", obj->sizeDelta)) {
-                log(ERROR, "RawImageObject::textureWebRequestComplete: Failed to set sizeDelta");
-                return false;
-            }
-
-            // textMesh.rectTransform.anchoredPosition = anchoredPosition
-            log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchoredPosition");
-            if (!RunMethod(rawImageRectTransform, "set_anchoredPosition", obj->anchoredPosition)) {
-                log(ERROR, "RawImageObject::textureWebRequestComplete: failed to set anchoredPosition");
-                return false;
-            }
-            if (!RunMethod(obj->gameObj, "SetActive", true)) {
-                log(ERROR, "Failed to set gameObj active to true");
-                return false;
-            }
-        } else {
-            log(ERROR, "Failed to get recievedTexture2D from DownloadHandler!");
-            return false;
+        RET_0_UNLESS(RunMethod(&rawImageRectTransform, obj->rawImage, "get_rectTransform"));
+        if (!obj->parentTransform) {
+            log(ERROR, "RawImageObject::textureWebRequestComplete: obj->parentTransform is null! Fix it!");
         }
+        RET_0_UNLESS(RunMethodUnsafe(rawImageRectTransform, "SetParent", obj->parentTransform, false));
+
+        // textMesh.rectTransform.anchorMin = anchorMin
+        log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchorMin");
+        RET_0_UNLESS(RunMethod(rawImageRectTransform, "set_anchorMin", obj->anchorMin));
+
+        // textMesh.rectTransform.anchorMax = anchorMax
+        log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchorMax");
+        RET_0_UNLESS(RunMethod(rawImageRectTransform, "set_anchorMax", obj->anchorMax));
+
+        // textMesh.rectTransform.sizeDelta = sizeDelta
+        log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting sizeDelta");
+        RET_0_UNLESS(RunMethod(rawImageRectTransform, "set_sizeDelta", obj->sizeDelta));
+
+        // textMesh.rectTransform.anchoredPosition = anchoredPosition
+        log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchoredPosition");
+        RET_0_UNLESS(RunMethod(rawImageRectTransform, "set_anchoredPosition", obj->anchoredPosition));
+        RET_0_UNLESS(RunMethod(obj->gameObj, "SetActive", true));
+
         log(DEBUG, "Callback success!");
         // TODO: if debug, play a sound?
         return true;
     }
 
     bool RawImageObject::create() {
-        if (!RunMethod(&WWW, "UnityEngine.Networking", "UnityWebRequestTexture", "GetTexture", createcsstr(url))) {
-            log(ERROR, "Failed to run UnityWebRequestTexture.GetTexture!");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(&WWW, "UnityEngine.Networking", "UnityWebRequestTexture", "GetTexture", createcsstr(url)));
 
         // If only we could use UnityEngine.WWW and its WaitUntilDoneIfPossible() :(
-        auto method = il2cpp_utils::FindMethodUnsafe("UnityEngine.Networking", "UnityWebRequestAsyncOperation", "add_completed", 1);
-        if (!method) return false;
+        auto method = RET_0_UNLESS(FindMethodUnsafe("UnityEngine.Networking", "UnityWebRequestAsyncOperation", "add_completed", 1));
         auto fieldType = il2cpp_functions::method_get_param(method, 0);
 
-        if (!RunMethod(&sendWebRequestObj, WWW, "SendWebRequest")) {
-            log(ERROR, "Failed to SendWebRequest");
-            return false;
-        }
+        RET_0_UNLESS(RunMethod(&sendWebRequestObj, WWW, "SendWebRequest"));
 
-        auto action = il2cpp_utils::MakeAction(this, textureWebRequestComplete, fieldType);
-        if (!action) {
-            log(ERROR, "Couldn't make textureWebRequestComplete Action");
-            return false;
-        }
-        if (!il2cpp_utils::RunMethod(sendWebRequestObj, method, action)) {
-            log(ERROR, "Couldn't set textureWebRequestComplete Action");
-            return false;
-        }
+        auto action = RET_0_UNLESS(MakeAction(this, textureWebRequestComplete, fieldType));
+        RET_0_UNLESS(RunMethod(sendWebRequestObj, method, action));
 
         // Uncomment this to watch the progress for debugging purposes (backtracks a lot):
         // StartCoroutine(monitorProgress, this);
