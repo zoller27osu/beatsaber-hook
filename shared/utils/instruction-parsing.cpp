@@ -38,7 +38,7 @@ decltype(Instruction::result) ExtractAddress(Instruction* instWithResultAdr, Ins
     auto offset = *(instWithImmOffset->imm);
 
     auto jmp = jmpOff + offset;
-    log(DEBUG, "offset: %lX, jmp: %lX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
+    log(DEBUG, "offset: %lX, jmp: %lX (offset %lX)", offset, jmp, jmp - getRealOffset(0));
     return jmp;
 }
 
@@ -1003,7 +1003,7 @@ Instruction::Instruction(const int32_t* inst) {
         valid = false;
     }
     if (parseLevel != sizeof(kind) / sizeof(kind[0])) {
-        log(WARNING, "Could not complete parsing of 0x%X (offset %llX) - need more handling for kind '%s'!", code, ((long long)addr) - getRealOffset(0), kind[parseLevel - 1]);
+        log(WARNING, "Could not complete parsing of 0x%X (offset %lX) - need more handling for kind '%s'!", code, ((intptr_t)addr) - getRealOffset(0), kind[parseLevel - 1]);
     } else {
         parsed = true;
         if (kind[parseLevel - 1] == unalloc) {
@@ -1021,10 +1021,10 @@ void InstructionTree::Eval(ProgramState* state) {
 InstructionTree* FindOrCreateInstruction(const int32_t* pc, ParseState& parseState, const char* msg) {
     auto p = parseState.codeToInstTree.find(pc);
     if (p != parseState.codeToInstTree.end()) {
-        log(DEBUG, "not recursing: InstructionTree for %p (offset %llX) already exists", pc, ((long long)pc) - getRealOffset(0));
+        log(DEBUG, "not recursing: InstructionTree for %p (offset %lX) already exists", pc, ((intptr_t)pc) - getRealOffset(0));
         return p->second;
     } else {
-        log(DEBUG, "%s (pc %p, offset %llX)", msg, pc, ((long long)pc) - getRealOffset(0));
+        log(DEBUG, "%s (pc %p, offset %lX)", msg, pc, ((intptr_t)pc) - getRealOffset(0));
         auto inst = new (std::nothrow) InstructionTree(pc);
         parseState.frontier.push({inst, parseState.dependencyMap});  // the inserted depMap is a copy
         parseState.codeToInstTree[pc] = inst;
@@ -1153,6 +1153,6 @@ AssemblyFunction::AssemblyFunction(const int32_t* pc): parseState() {
 
     log(INFO, "Function candidates: ");
     for (auto p : parseState.functionCandidates) {
-        log(INFO, "%p (offset %llX): depMap %s", p.first, ((long long)p.first) - getRealOffset(0), DepMapToString(p.second).c_str());
+        log(INFO, "%p (offset %lX): depMap %s", p.first, ((intptr_t)p.first) - getRealOffset(0), DepMapToString(p.second).c_str());
     }
 }

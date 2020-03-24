@@ -121,7 +121,7 @@ public:
                 if (matches == n) return inst;
             } else if ((rets >= 0) && inst->isReturn()) {
                 if (rets == 0) {
-                    log(DEBUG, "Breaking on offset %llX", ((long long)inst->addr) - getRealOffset(0));
+                    log(DEBUG, "Breaking on offset %lX", ((intptr_t)inst->addr) - getRealOffset(0));
                     break;
                 }
                 rets--;

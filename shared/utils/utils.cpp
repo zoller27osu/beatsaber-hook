@@ -42,7 +42,7 @@ void print(std::stringstream& ss, LOG_VERBOSE_TYPE lvl) {
 
 static std::unordered_set<const void*> analyzed;
 void analyzeBytes(std::stringstream& ss, const void* ptr, int indent) {
-    if (!ptr || ((const unsigned long long)ptr) > 0x7fffffffffll) return;
+    if (!ptr || ((const uintptr_t)ptr) > 0x7fffffffffll) return;
 
     tabs(ss, indent);
     if (analyzed.count(ptr)) {
@@ -52,8 +52,8 @@ void analyzeBytes(std::stringstream& ss, const void* ptr, int indent) {
     }
     analyzed.insert(ptr);
 
-    auto asUInts = reinterpret_cast<const unsigned long long*>(ptr);
-    auto asInts = reinterpret_cast<const long long*>(ptr);
+    auto asUInts = reinterpret_cast<const uintptr_t*>(ptr);
+    auto asInts = reinterpret_cast<const intptr_t*>(ptr);
     auto asChars = reinterpret_cast<const char*>(ptr);
     if (asUInts[0] >= 0x1000000000000ll && isprint(asChars[0])) {
         ss << "chars: \"" << asChars << "\"";
@@ -75,10 +75,10 @@ void analyzeBytes(std::stringstream& ss, const void* ptr, int indent) {
         else {
             Dl_info inf;
             if (dladdr((void*)asUInts[i], &inf)) {
-                ss << " (dli_fname: " << inf.dli_fname << ", dli_fbase: " << std::hex << std::setw(16) << (long long)inf.dli_fbase;
-                ss << ", offset = 0x" << std::hex << std::setw(8) << (asUInts[i] - (unsigned long long)inf.dli_fbase);
+                ss << " (dli_fname: " << inf.dli_fname << ", dli_fbase: " << std::hex << std::setw(16) << (intptr_t)inf.dli_fbase;
+                ss << ", offset = 0x" << std::hex << std::setw(8) << (asUInts[i] - (uintptr_t)inf.dli_fbase);
                 if (inf.dli_sname) {
-                    ss << ", dli_sname: " << inf.dli_sname << ", dli_saddr: " << std::hex << std::setw(16) << (long long)inf.dli_saddr;
+                    ss << ", dli_sname: " << inf.dli_sname << ", dli_saddr: " << std::hex << std::setw(16) << (intptr_t)inf.dli_saddr;
                 }
                 ss << ")";
             }
@@ -94,18 +94,18 @@ void analyzeBytes(const void* ptr) {
     analyzed.clear();
     std::stringstream ss;
     ss << std::setfill('0');
-    ss << "ptr: " << std::hex << std::setw(16) << (unsigned long long) ptr;
+    ss << "ptr: " << std::hex << std::setw(16) << (uintptr_t) ptr;
     print(ss);
     analyzeBytes(ss, ptr, 0);
 }
 
-long long baseAddr(const char *soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
+intptr_t baseAddr(const char *soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
 {
     void *imagehandle = dlopen(soname, RTLD_LOCAL | RTLD_LAZY);
     if (soname == NULL)
-        return (long long)NULL;
+        return (intptr_t)NULL;
     if (imagehandle == NULL){
-        return (long long)NULL;
+        return (intptr_t)NULL;
     }
     uintptr_t * irc = NULL;
     FILE *f = NULL;
@@ -114,7 +114,7 @@ long long baseAddr(const char *soname)  // credits to https://github.com/ikoz/An
     char *tok = NULL;
     char * baseAddr = NULL;
     if ((f = fopen("/proc/self/maps", "r")) == NULL)
-        return (long long)NULL;
+        return (intptr_t)NULL;
     while (fgets(line, 199, f) != NULL)
     {
         tok = strtok_r(line, "-", &state);
@@ -139,45 +139,45 @@ long long baseAddr(const char *soname)  // credits to https://github.com/ikoz/An
                 if (toklen > 0) {
                     if (toklen >= solen && strcmp(tok + (toklen - solen), soname) == 0) {
                         fclose(f);
-                        return (long long)strtoll(baseAddr,NULL,16);
+                        return (intptr_t)strtoll(baseAddr,NULL,16);
                     }
                 }
             }
         }
     }
     fclose(f);
-    return (long long)NULL;
+    return (intptr_t)NULL;
 }
 
-long long location; // save lib.so base address so we do not have to recalculate every time causing lag.
+intptr_t location; // save lib.so base address so we do not have to recalculate every time causing lag.
 
-long long getRealOffset(const void* offset) // calculate dump.cs address + lib.so base address.
+intptr_t getRealOffset(const void* offset) // calculate dump.cs address + lib.so base address.
 {
     if (location == 0)
     {
         //arm
         location = baseAddr(IL2CPP_SO_PATH); // replace the com.package.name with the package name of the app you are modding.
     }
-    return location + (long long)offset;
+    return location + (intptr_t)offset;
 }
 
-long long findPattern(long long dwAddress, const char* pattern, long long dwSearchRangeLen) {
+intptr_t findPattern(intptr_t dwAddress, const char* pattern, intptr_t dwSearchRangeLen) {
     #define in_range(x, a, b) (x >= a && x <= b)
     #define get_bits(x) (in_range((x & (~0x20)), 'A', 'F') ? ((x & (~0x20)) - 'A' + 0xA): (in_range(x, '0', '9') ? x - '0': 0))
     #define get_byte(x) (get_bits(x[0]) << 4 | get_bits(x[1]))
 
     // To avoid a lot of bad match candidates, pre-process wildcards at the front of the pattern
-    long long skippedStartBytes = 0;
+    intptr_t skippedStartBytes = 0;
     while(pattern[0] == '\?') {
         // see comments below for insight on these numbers
         pattern += (pattern[1] == '\?') ? 3 : 2;
         skippedStartBytes++;
     }
-    long long match = 0;  // current match candidate
+    intptr_t match = 0;  // current match candidate
     const char* pat = pattern;  // current spot in the pattern
 
     // TODO: align dwAddress to word boundary first, then iterate by 4?
-    for (long long pCur = dwAddress + skippedStartBytes; pCur < dwAddress + dwSearchRangeLen; pCur++) {
+    for (intptr_t pCur = dwAddress + skippedStartBytes; pCur < dwAddress + dwSearchRangeLen; pCur++) {
         if (!pat[0]) return match;  // end of pattern means match is complete!
         if (pat[0] == '\?' || *(char *)pCur == get_byte(pat)) {  // does this pCur match this pat?
             if (!match) match = pCur - skippedStartBytes;  // start match
@@ -198,15 +198,15 @@ long long findPattern(long long dwAddress, const char* pattern, long long dwSear
     return 0;
 }
 
-long long findUniquePattern(bool& multiple, long long dwAddress, const char* pattern, const char* label, long long dwSearchRangeLen) {
-    long long firstMatchAddr = 0, newMatchAddr, start = dwAddress, dwEnd = dwAddress + dwSearchRangeLen;
+intptr_t findUniquePattern(bool& multiple, intptr_t dwAddress, const char* pattern, const char* label, intptr_t dwSearchRangeLen) {
+    intptr_t firstMatchAddr = 0, newMatchAddr, start = dwAddress, dwEnd = dwAddress + dwSearchRangeLen;
     int matches = 0;
     while (start > 0 && start < dwEnd && (newMatchAddr = findPattern(start, pattern, dwEnd - start))) {
         if (!firstMatchAddr) firstMatchAddr = newMatchAddr;
         matches++;
-        if (label) log(DEBUG, "Sigscan found possible \"%s\": offset 0x%llX, pointer 0x%llX", label, newMatchAddr - dwAddress, newMatchAddr);
+        if (label) log(DEBUG, "Sigscan found possible \"%s\": offset 0x%lX, pointer 0x%lX", label, newMatchAddr - dwAddress, newMatchAddr);
         start = newMatchAddr + 1;
-        log(DEBUG, "start = 0x%llX, end = 0x%llX", start, dwEnd);
+        log(DEBUG, "start = 0x%lX, end = 0x%lX", start, dwEnd);
         usleep(1000);
     }
     if (matches > 1) {
