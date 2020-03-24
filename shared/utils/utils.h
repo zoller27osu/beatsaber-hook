@@ -81,6 +81,20 @@ auto crashUnless(T&& arg, const char* file, int line) {
 }
 #define CRASH_UNLESS(expr) crashUnless(expr, __FILE__, __LINE__)
 
+template<class T>
+intptr_t getBase(T pc) {
+    static_assert(sizeof(T) >= sizeof(void*));
+    Dl_info info;
+    RET_0_UNLESS(dladdr((void*)pc, &info));
+    return (intptr_t)info.dli_fbase;
+}
+
+template<class T>
+ptrdiff_t asOffset(T pc) {
+    auto base = getBase(pc);
+    return (ptrdiff_t)(((intptr_t)pc) - base);
+}
+
 extern "C" {
 #endif /* __cplusplus */
 
