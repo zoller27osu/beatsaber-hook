@@ -33,8 +33,9 @@ uint64_t DecodeBitMasks(unsigned N, unsigned imms, unsigned immr, unsigned regSi
 }
 
 decltype(Instruction::result) ExtractAddress(Instruction* instWithResultAdr, Instruction* instWithImmOffset) {
+    RET_0_UNLESS(instWithImmOffset->imm);
     auto jmpOff = instWithResultAdr->result;
-    auto offset = instWithImmOffset->imm;
+    auto offset = *(instWithImmOffset->imm);
 
     auto jmp = jmpOff + offset;
     log(DEBUG, "offset: %lX, jmp: %lX (offset %llX)", offset, jmp, jmp - getRealOffset(0));
@@ -106,7 +107,7 @@ std::ostream& operator<<(std::ostream& os, const Instruction& inst) {
     if (inst.parseLevel <= 0) return os << "Unparsable";
     os << '"' << inst.kind[inst.parseLevel - 1] << '"';
     if (inst.valid) {
-        if (inst.imm) os << ", imm: " << std::hex << inst.imm;
+        if (inst.imm) os << ", imm: " << std::hex << *inst.imm;
         if (inst.Rd >= 0) os << ", destination register: " << Register(inst.Rd, inst.RdCanBeSP);
         if (inst.Rd2 >= 0) os << ", destination register 2: " << Register(inst.Rd2, inst.RdCanBeSP);
         if (inst.numSourceRegisters == 0) {
@@ -150,7 +151,7 @@ bool Instruction::isStore() {
 }
 
 bool Instruction::hasImmOffsetOnReg(uint_fast8_t reg) {
-    if (imm == 0xDEADBEEF) return false;
+    if (!imm) return false;
     if (!(isLoadOrStore() || isAddOrSubImm())) return false;  // the immediate would not be simply "added"
     if (isStore()) {
         return (Rd == reg) || (Rd2 == reg);
@@ -249,7 +250,7 @@ Instruction::Instruction(const int32_t* inst) {
                     imm = bits(code, 15, 10);  // "imm6"
                     shiftType = static_cast<ShiftType>(bits(code, 23, 22));  // "shift"
 
-                    if ((shiftType == ROR) || ((sf == 0) && ((imm & 0b100000) != 0))) {
+                    if ((shiftType == ROR) || ((sf == 0) && ((*imm & 0b100000) != 0))) {
                         kind[parseLevel++] = unalloc;
                     } else {
                         // TODO: if sf == 0, all regs are 32-bit views
@@ -383,8 +384,76 @@ Instruction::Instruction(const int32_t* inst) {
                         kind[parseLevel++] = sf ? "CSNEG — 64-bit" : "CSNEG — 32-bit";
                     }
                 }
+            } else if ((op2 & 0b1000) == 0b1000) {  // 1xxx
+                // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-register#dp_3src
+                kind[parseLevel++] = "Data-processing (3 source)";
+                RdCanBeSP = Rs0CanBeSP = false;
+                numSourceRegisters = 3;
+                Rd = bits(code, 4, 0);
+                auto Rn = Rs[0] = bits(code, 9, 5);
+                auto Rm = Rs[1] = bits(code, 20, 16);
+                auto Ra = Rs[2] = bits(code, 14, 10);
+                if (Ra == RZR) {
+                    numSourceRegisters = 2;
+                }
+
+                bool o0 = bits(code, 15, 15);
+                auto op31 = bits(code, 23, 21);
+                auto op54 = bits(code, 30, 29);
+                if ((op54 != 0) || (op31 == 0b11) || (op31 == 0b100) || (op31 == 0b111) ||
+                    ((o0 == 1) && ((op31 == 0b10) || (op31 == 0b110)) ) ||
+                    ((sf == 0) && (op31 != 0))) {
+                    kind[parseLevel++] = unalloc;
+                } else if (op31 == 0) {
+                    // TODO: All registers are viewed as 32-bit if sf == 0, otherwise 64-bit
+                    if (o0 == 0) {
+                        if (Ra == RZR) {
+                            // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/mul-multiply-an-alias-of-madd
+                            kind[parseLevel++] = "MUL";  // preferred alias
+                        } else {
+                            kind[parseLevel++] = sf ? "MADD — 64-bit" : "MADD — 32-bit";
+                        }
+                    } else {
+                        if (Ra == RZR) {
+                            // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/mneg-multiply-negate-an-alias-of-msub
+                            kind[parseLevel++] = "MNEG";  // preferred alias
+                        } else {
+                            kind[parseLevel++] = sf ? "MSUB — 64-bit" : "MSUB — 32-bit";
+                        }
+                    }
+                } else {
+                    bool U = bits(code, 23, 23);
+                    if ((op31 & 0b11) == 0b1) {  // 001, 101
+                        // TODO: Rm and Rn are viewed as 32-bit (all others as 64-bit)
+                        if (o0 == 0) {
+                            if (Ra == RZR) {
+                                // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/smull-signed-multiply-long-an-alias-of-smaddl
+                                // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/umull-unsigned-multiply-long-an-alias-of-umaddl
+                                kind[parseLevel++] = U ? "UMULL" : "SMULL";  // preferred alias
+                            } else {
+                                kind[parseLevel++] = U ? "UMADDL" : "SMADDL";
+                            }
+                        } else {
+                            if (Ra == RZR) {
+                                // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/smnegl-signed-multiply-negate-long-an-alias-of-smsubl
+                                // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/umnegl-unsigned-multiply-negate-long-an-alias-of-umsubl
+                                kind[parseLevel++] = U ? "UMNEGL" : "SMNEGL";  // preferred alias
+                            } else {
+                                kind[parseLevel++] = U ? "UMSUBL" : "SMSUBL";
+                            }
+                        }
+                    } else {  // 010, 110
+                        assert((op31 & 0b11) == 0b10);
+                        // All registers are viewed as 64-bit
+                        if (Ra == RZR) {
+                            kind[parseLevel++] = U ? "UMULH" : "SMULH";  // the only name
+                        } else {
+                            kind[parseLevel++] = unalloc;
+                        }
+                    }
+                }
             } else {
-                log(DEBUG, "op1 = 1, op0: %i, op2: %i, op3: %i", op0, op2, op3);
+                log(DEBUG, "op1 = 1, op0: %i, op2: %i (0xxx), op3: %i", op0, op2, op3);
             }
         }
     } else if ((top0 & 0b111) == 0b111) {  // x111
@@ -420,8 +489,8 @@ Instruction::Instruction(const int32_t* inst) {
             }
             log(DEBUG, "imm initial: 0x%X (%i); immNumBits: %i", immI, immI, immINumBits);
             imm = SignExtend<int64_t>(immI, immINumBits);
-            result = pc + imm;
-            log(DEBUG, "imm: 0x%lX; result: 0x%lX (offset 0x%llX)", imm, result, result - getRealOffset(0));
+            result = pc + *imm;
+            log(DEBUG, "imm: 0x%lX; result: 0x%lX (offset 0x%llX)", *imm, result, result - getRealOffset(0));
         } else if (op0 == 0b1) {
             numSourceRegisters = 1;
             Rs0CanBeSP = true;
@@ -460,7 +529,7 @@ Instruction::Instruction(const int32_t* inst) {
                         }
                     }
                 } else {
-                    imm = -imm;  // the immediate should be subtracted for sub
+                    imm = -*imm;  // the immediate should be subtracted for sub
                     if (S == 0) {
                         kind[parseLevel++] = sf ? "SUB (immediate) — 64-bit" : "SUB (immediate) — 32-bit";
                     } else {
@@ -486,7 +555,7 @@ Instruction::Instruction(const int32_t* inst) {
                 uint_fast8_t imms = bits(code, 15, 10);
                 uint_fast8_t Rn = bits(code, 9, 5);
                 imm = DecodeBitMasks(N, imms, immr, sf ? 64 : 32);
-                log(DEBUG, "N: %i, immr: 0x%X, imms: 0x%X, decoded imm: 0x%lX", N, immr, imms, imm);
+                log(DEBUG, "N: %i, immr: 0x%X, imms: 0x%X, decoded imm: 0x%lX", N, immr, imms, *imm);
                 if (imm == -1) valid = false;
 
                 if (Rn == RZR) {
@@ -506,14 +575,14 @@ Instruction::Instruction(const int32_t* inst) {
                         kind[parseLevel++] = "AND (immediate) — 64-bit";
                     }
                 } else if (opc == 0b1) {
-                    if (Rn == RZR) result = imm;
+                    if (Rn == RZR) result = *imm;
                     if (sf == 0) {
                         kind[parseLevel++] = "ORR (immediate) — 32-bit";
                     } else {
                         kind[parseLevel++] = "ORR (immediate) — 64-bit";
                     }
                 } else if (opc == 0b10) {
-                    if (Rn == RZR) result = imm;
+                    if (Rn == RZR) result = *imm;
                     if (sf == 0) {
                         kind[parseLevel++] = "EOR (immediate) — 32-bit";
                     } else {
@@ -552,7 +621,7 @@ Instruction::Instruction(const int32_t* inst) {
                 } else {
                     kind[parseLevel++] = "B.cond";
                     imm = pc + (SignExtend<int64_t>(imm19, 19) << 2);
-                    log(DEBUG, "imm's offset: %llX", imm - getRealOffset(0));
+                    log(DEBUG, "imm's offset: %llX", *imm - getRealOffset(0));
                     branchType = DIR;
                 }
             }
@@ -618,7 +687,7 @@ Instruction::Instruction(const int32_t* inst) {
             auto offset = SignExtend<int64_t>(imm26, 26) << 2;
             imm = pc + offset;
 
-            auto off = imm - getRealOffset(0);
+            auto off = *imm - getRealOffset(0);
             log(DEBUG, "imm's offset: %llX", off);
             if (off >= 0x03000000) {
                 log(ERROR, "0x%llX is probably not a valid offset! Please investigate!", off);
@@ -985,11 +1054,15 @@ void InstructionTree::PopulateChildren(ParseState& parseState) {
 
     // if instruction is direct branch, branch's addr is imm
     if (isDirectBranch()) {
-        auto immAsAddr = (const int32_t*)imm;
-        // Note: these do not edit the dependency map so there is no need to take a backup of it ourselves
-        branch = FindOrCreateInstruction(immAsAddr, parseState, "InstructionTree: recursing to branch location");
-        if (isCall()) {
-            parseState.functionCandidates.insert({immAsAddr, parseState.dependencyMap});  // the inserted depMap is a copy
+        if (imm) {
+            auto immAsAddr = (const int32_t*)*imm;
+            // Note: these do not edit the dependency map so there is no need to take a backup of it ourselves
+            branch = FindOrCreateInstruction(immAsAddr, parseState, "InstructionTree: recursing to branch location");
+            if (isCall()) {
+                parseState.functionCandidates.insert({immAsAddr, parseState.dependencyMap});  // the inserted depMap is a copy
+            }
+        } else {
+            log(ERROR, "Direct branch instruction had no immediate!");
         }
     }
     // unless instruction is unconditional branch, populate noBranch with next instruction in memory
