@@ -271,6 +271,8 @@ namespace il2cpp_utils {
         if constexpr (sizeof...(TArgs) == 1 && (std::is_integral_v<std::decay_t<TArgs>> && ...)) {
             static_assert(false_t<TArgs...>,
                 "FindMethod using argCount is invalid! If argCount is 0 then remove it; otherwise use FindMethodUnsafe!");
+        } else if constexpr (sizeof...(TArgs) == 0) {
+            return FindMethodUnsafe(klass, methodName, 0);
         } else {
             return FindMethod(klass, methodName, {args...});
         }
@@ -278,8 +280,8 @@ namespace il2cpp_utils {
 
     // Returns the MethodInfo for the method on class found via namespace and name with the given other arguments
     template<class... TArgs>
-    const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
-        return FindMethod(GetClassFromName(nameSpace, className), params...);
+    const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, std::string_view methodName, TArgs&&... params) {
+        return FindMethod(GetClassFromName(nameSpace, className), methodName, params...);
     }
     const MethodInfo* FindMethodUnsafe(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount);
 
