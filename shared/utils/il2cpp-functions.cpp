@@ -141,6 +141,10 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_array_element_size");
     *(void**)(&assembly_get_image) = dlsym(imagehandle, "il2cpp_assembly_get_image");
     log(INFO, "Loaded: il2cpp_assembly_get_image");
+    #ifdef UNITY_2019
+    *(void**)(&class_for_each) = dlsym(imagehandle, "il2cpp_class_for_each");
+    log(INFO, "Loaded: il2cpp_class_for_each");
+    #endif
     *(void**)(&class_enum_basetype) = dlsym(imagehandle, "il2cpp_class_enum_basetype");
     log(INFO, "Loaded: il2cpp_class_enum_basetype");
     *(void**)(&class_is_generic) = dlsym(imagehandle, "il2cpp_class_is_generic");
@@ -181,6 +185,10 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_class_get_method_from_name");
     *(void**)(&class_get_name) = dlsym(imagehandle, "il2cpp_class_get_name");
     log(INFO, "Loaded: il2cpp_class_get_name");
+    #ifdef UNITY_2019
+    *(void**)(&type_get_name_chunked) = dlsym(imagehandle, "il2cpp_type_get_name_chunked");
+    log(INFO, "Loaded: il2cpp_type_get_name_chunked");
+    #endif
     *(void**)(&class_get_namespace) = dlsym(imagehandle, "il2cpp_class_get_namespace");
     log(INFO, "Loaded: il2cpp_class_get_namespace");
     *(void**)(&class_get_parent) = dlsym(imagehandle, "il2cpp_class_get_parent");
@@ -223,6 +231,12 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_class_get_assemblyname");
     *(void**)(&class_get_rank) = dlsym(imagehandle, "il2cpp_class_get_rank");
     log(INFO, "Loaded: il2cpp_class_get_rank");
+    #ifdef UNITY_2019
+    *(void**)(&class_get_data_size) = dlsym(imagehandle, "il2cpp_class_get_data_size");
+    log(INFO, "Loaded: il2cpp_class_get_data_size");
+    *(void**)(&class_get_static_field_data) = dlsym(imagehandle, "il2cpp_class_get_static_field_data");
+    log(INFO, "Loaded: il2cpp_class_get_static_field_data");
+    #endif
     *(void**)(&class_get_bitmap_size) = dlsym(imagehandle, "il2cpp_class_get_bitmap_size");
     log(INFO, "Loaded: il2cpp_class_get_bitmap_size");
     *(void**)(&class_get_bitmap) = dlsym(imagehandle, "il2cpp_class_get_bitmap");
@@ -237,6 +251,10 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_domain_assembly_open");
     *(void**)(&domain_get_assemblies) = dlsym(imagehandle, "il2cpp_domain_get_assemblies");
     log(INFO, "Loaded: il2cpp_domain_get_assemblies");
+    #ifdef UNITY_2019
+    *(void**)(&raise_exception) = dlsym(imagehandle, "il2cpp_raise_exception");
+    log(INFO, "Loaded: il2cpp_raise_exception");
+    #endif
     *(void**)(&exception_from_name_msg) = dlsym(imagehandle, "il2cpp_exception_from_name_msg");
     log(INFO, "Loaded: il2cpp_exception_from_name_msg");
     *(void**)(&get_exception_argument_null) = dlsym(imagehandle, "il2cpp_get_exception_argument_null");
@@ -271,6 +289,10 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_field_static_set_value");
     *(void**)(&field_set_value_object) = dlsym(imagehandle, "il2cpp_field_set_value_object");
     log(INFO, "Loaded: il2cpp_field_set_value_object");
+    #ifdef UNITY_2019
+    *(void**)(&field_is_literal) = dlsym(imagehandle, "il2cpp_field_is_literal");
+    log(INFO, "Loaded: il2cpp_field_is_literal");
+    #endif
     *(void**)(&gc_collect) = dlsym(imagehandle, "il2cpp_gc_collect");
     log(INFO, "Loaded: il2cpp_gc_collect");
     *(void**)(&gc_collect_a_little) = dlsym(imagehandle, "il2cpp_gc_collect_a_little");
@@ -281,12 +303,34 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_gc_enable");
     *(void**)(&gc_is_disabled) = dlsym(imagehandle, "il2cpp_gc_is_disabled");
     log(INFO, "Loaded: il2cpp_gc_is_disabled");
+    #ifdef UNITY_2019
+    *(void**)(&gc_get_max_time_slice_ns) = dlsym(imagehandle, "il2cpp_gc_get_max_time_slice_ns");
+    log(INFO, "Loaded: il2cpp_gc_get_max_time_slice_ns");
+    *(void**)(&gc_set_max_time_slice_ns) = dlsym(imagehandle, "il2cpp_gc_set_max_time_slice_ns");
+    log(INFO, "Loaded: il2cpp_gc_set_max_time_slice_ns");
+    *(void**)(&gc_is_incremental) = dlsym(imagehandle, "il2cpp_gc_is_incremental");
+    log(INFO, "Loaded: il2cpp_gc_is_incremental");
+    #endif
     *(void**)(&gc_get_used_size) = dlsym(imagehandle, "il2cpp_gc_get_used_size");
     log(INFO, "Loaded: il2cpp_gc_get_used_size");
     *(void**)(&gc_get_heap_size) = dlsym(imagehandle, "il2cpp_gc_get_heap_size");
     log(INFO, "Loaded: il2cpp_gc_get_heap_size");
     *(void**)(&gc_wbarrier_set_field) = dlsym(imagehandle, "il2cpp_gc_wbarrier_set_field");
     log(INFO, "Loaded: il2cpp_gc_wbarrier_set_field");
+    #ifdef UNITY_2019
+    *(void**)(&gc_has_strict_wbarriers) = dlsym(imagehandle, "il2cpp_gc_has_strict_wbarriers");
+    log(INFO, "Loaded: il2cpp_gc_has_strict_wbarriers");
+    *(void**)(&gc_set_external_allocation_tracker) = dlsym(imagehandle, "il2cpp_gc_set_external_allocation_tracker");
+    log(INFO, "Loaded: il2cpp_gc_set_external_allocation_tracker");
+    *(void**)(&gc_set_external_wbarrier_tracker) = dlsym(imagehandle, "il2cpp_gc_set_external_wbarrier_tracker");
+    log(INFO, "Loaded: il2cpp_gc_set_external_wbarrier_tracker");
+    *(void**)(&gc_foreach_heap) = dlsym(imagehandle, "il2cpp_gc_foreach_heap");
+    log(INFO, "Loaded: il2cpp_gc_foreach_heap");
+    *(void**)(&stop_gc_world) = dlsym(imagehandle, "il2cpp_stop_gc_world");
+    log(INFO, "Loaded: il2cpp_stop_gc_world");
+    *(void**)(&start_gc_world) = dlsym(imagehandle, "il2cpp_start_gc_world");
+    log(INFO, "Loaded: il2cpp_start_gc_world");
+    #endif
     *(void**)(&gchandle_new) = dlsym(imagehandle, "il2cpp_gchandle_new");
     log(INFO, "Loaded: il2cpp_gchandle_new");
     *(void**)(&gchandle_new_weakref) = dlsym(imagehandle, "il2cpp_gchandle_new_weakref");
@@ -295,6 +339,20 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_gchandle_get_target ");
     *(void**)(&gchandle_free) = dlsym(imagehandle, "il2cpp_gchandle_free");
     log(INFO, "Loaded: il2cpp_gchandle_free");
+    #ifdef UNITY_2019
+    *(void**)(&gchandle_foreach_get_target) = dlsym(imagehandle, "il2cpp_gchandle_foreach_get_target");
+    log(INFO, "Loaded: il2cpp_gchandle_foreach_get_target");
+    *(void**)(&object_header_size) = dlsym(imagehandle, "il2cpp_object_header_size");
+    log(INFO, "Loaded: il2cpp_object_header_size");
+    *(void**)(&array_object_header_size) = dlsym(imagehandle, "il2cpp_array_object_header_size");
+    log(INFO, "Loaded: il2cpp_array_object_header_size");
+    *(void**)(&offset_of_array_length_in_array_object_header) = dlsym(imagehandle, "il2cpp_offset_of_array_length_in_array_object_header");
+    log(INFO, "Loaded: il2cpp_offset_of_array_length_in_array_object_header");
+    *(void**)(&offset_of_array_bounds_in_array_object_header) = dlsym(imagehandle, "il2cpp_offset_of_array_bounds_in_array_object_header");
+    log(INFO, "Loaded: il2cpp_offset_of_array_bounds_in_array_object_header");
+    *(void**)(&allocation_granularity) = dlsym(imagehandle, "il2cpp_allocation_granularity");
+    log(INFO, "Loaded: il2cpp_allocation_granularity");
+    #endif
     *(void**)(&unity_liveness_calculation_begin) = dlsym(imagehandle, "il2cpp_unity_liveness_calculation_begin");
     log(INFO, "Loaded: il2cpp_unity_liveness_calculation_begin");
     *(void**)(&unity_liveness_calculation_end) = dlsym(imagehandle, "il2cpp_unity_liveness_calculation_end");
@@ -437,6 +495,10 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_current_thread_get_stack_depth");
     *(void**)(&thread_get_stack_depth) = dlsym(imagehandle, "il2cpp_thread_get_stack_depth");
     log(INFO, "Loaded: il2cpp_thread_get_stack_depth");
+    #ifdef UNITY_2019
+    *(void**)(&override_stack_backtrace) = dlsym(imagehandle, "il2cpp_override_stack_backtrace");
+    log(INFO, "Loaded: il2cpp_override_stack_backtrace");
+    #endif
     *(void**)(&type_get_object) = dlsym(imagehandle, "il2cpp_type_get_object");
     log(INFO, "Loaded: il2cpp_type_get_object");
     *(void**)(&type_get_type) = dlsym(imagehandle, "il2cpp_type_get_type");
@@ -453,6 +515,12 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_type_equals");
     *(void**)(&type_get_assembly_qualified_name) = dlsym(imagehandle, "il2cpp_type_get_assembly_qualified_name");
     log(INFO, "Loaded: il2cpp_type_get_assembly_qualified_name");
+    #ifdef UNITY_2019
+    *(void**)(&type_is_static) = dlsym(imagehandle, "il2cpp_type_is_static");
+    log(INFO, "Loaded: il2cpp_type_is_static");
+    *(void**)(&type_is_pointer_type) = dlsym(imagehandle, "il2cpp_type_is_pointer_type");
+    log(INFO, "Loaded: il2cpp_type_is_pointer_type");
+    #endif
     *(void**)(&image_get_assembly) = dlsym(imagehandle, "il2cpp_image_get_assembly");
     log(INFO, "Loaded: il2cpp_image_get_assembly");
     *(void**)(&image_get_name) = dlsym(imagehandle, "il2cpp_image_get_name");
@@ -477,6 +545,12 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_debugger_set_agent_options");
     *(void**)(&is_debugger_attached) = dlsym(imagehandle, "il2cpp_is_debugger_attached");
     log(INFO, "Loaded: il2cpp_is_debugger_attached");
+    #ifdef UNITY_2019
+    *(void**)(&register_debugger_agent_transport) = dlsym(imagehandle, "il2cpp_register_debugger_agent_transport");
+    log(INFO, "Loaded: il2cpp_register_debugger_agent_transport");
+    *(void**)(&debug_get_method_info) = dlsym(imagehandle, "il2cpp_debug_get_method_info");
+    log(INFO, "Loaded: il2cpp_debug_get_method_info");
+    #endif
     *(void**)(&unity_install_unitytls_interface) = dlsym(imagehandle, "il2cpp_unity_install_unitytls_interface");
     log(INFO, "Loaded: il2cpp_unity_install_unitytls_interface");
     *(void**)(&custom_attrs_from_class) = dlsym(imagehandle, "il2cpp_custom_attrs_from_class");
@@ -491,6 +565,12 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_custom_attrs_construct");
     *(void**)(&custom_attrs_free) = dlsym(imagehandle, "il2cpp_custom_attrs_free");
     log(INFO, "Loaded: il2cpp_custom_attrs_free");
+    #ifdef UNITY_2019
+    *(void**)(&class_set_userdata) = dlsym(imagehandle, "il2cpp_class_set_userdata");
+    log(INFO, "Loaded: il2cpp_class_set_userdata");
+    *(void**)(&class_get_userdata_offset) = dlsym(imagehandle, "il2cpp_class_get_userdata_offset");
+    log(INFO, "Loaded: il2cpp_class_get_userdata_offset");
+    #endif
 
     // MANUALLY DEFINED CONST DEFINITIONS
     *(void**)(&class_get_type_const) = dlsym(imagehandle, "il2cpp_class_get_type");
