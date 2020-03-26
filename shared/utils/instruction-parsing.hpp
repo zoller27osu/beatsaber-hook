@@ -27,13 +27,14 @@ public:
     const int32_t* addr;  // the pointer to the instruction
     // Rd and Rs are capitalized in accordance with typical Register notation
     int_fast8_t Rd = -2;  // the destination register's number, or -1 if none
-    int_fast8_t Rd2 = -2;  // the 2nd destination register's number, or -1 if none
+    int_fast8_t Rd2 = -1;  // the 2nd destination register's number, or -1 if none
     int_fast8_t numSourceRegisters = -1;  // the number of source registers this instruction has
     union {
         int_fast8_t Rs[3] = { -1, -1, -1 };  // the number(s) of the source register(s), e.g. {12, 29} for X12 & X29
         int64_t result;  // iff numSourceRegisters is 0, the value that will be stored to Rd by this instruction
     };
     std::optional<int64_t> imm;  // the immediate, if applicable
+    std::optional<const int32_t*> label;  // if present, a pointer to assembly to be calculated or jumped to
 
     // see https://developer.arm.com/docs/ddi0596/a/a64-shared-pseudocode-functions/aarch64-instrs-pseudocode#impl-aarch64.ShiftReg.3
     enum ShiftType {  // in most cases (exceptiing noShift) the amount is stored in imm and the shift is applied to Rm (Rs[1])
@@ -120,7 +121,7 @@ public:
                 if (matches == n) return inst;
             } else if ((rets >= 0) && inst->isReturn()) {
                 if (rets == 0) {
-                    log(DEBUG, "Breaking on offset %llX", ((long long)inst->addr) - getRealOffset(0));
+                    log(DEBUG, "Breaking on offset %lX", ((intptr_t)inst->addr) - getRealOffset(0));
                     break;
                 }
                 rets--;

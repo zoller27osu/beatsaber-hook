@@ -690,7 +690,7 @@ namespace il2cpp_utils {
     static std::unordered_map<Il2CppClass*, std::map<std::string, Il2CppGenericClass*, doj::alphanum_less<std::string>>> classToGenericClassMap;
     void BuildGenericsMap() {
         auto metadataReg = RET_V_UNLESS(*il2cpp_functions::s_Il2CppMetadataRegistrationPtr);
-        log(DEBUG, "metadataReg: %p, offset = %llX", metadataReg, ((long long)metadataReg) - getRealOffset(nullptr));
+        log(DEBUG, "metadataReg: %p, offset = %lX", metadataReg, ((intptr_t)metadataReg) - getRealOffset(0));
 
         int uncached_class_count = 0;
         for (int i=0; i < metadataReg->genericClassesCount; i++) {
