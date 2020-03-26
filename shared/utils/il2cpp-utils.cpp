@@ -81,45 +81,34 @@ namespace il2cpp_utils {
         return types;
     }
 
+    const Il2CppType* MakeRef(const Il2CppType* type) {
+        if (type->byref) return type;
+        // could use Class::GetByrefType instead of &->this_arg but it does the same thing
+        return &il2cpp_functions::class_from_il2cpp_type(type)->this_arg;
+    }
+
+    const Il2CppType* UnRef(const Il2CppType* type) {
+        if (!type->byref) return type;
+        return il2cpp_functions::class_get_type(il2cpp_functions::class_from_il2cpp_type(type));
+    }
+
     bool IsConvertible(const Il2CppType* to, const Il2CppType* from) {
-        if (il2cpp_functions::type_equals(to, from)) {
-            log(DEBUG, "IsConvertible: types equal (%s), returning true", TypeGetSimpleName(to));
-            return true;
+        if (to->byref) {
+            if (!from->byref) {
+                log(DEBUG, "IsConvertible: to (%s, %p) is ref/out while from (%s, %p) is not. Not convertible.",
+                    TypeGetSimpleName(to), to, TypeGetSimpleName(from), from);
+                return false;
+            } else {
+                log(DEBUG, "IsConvertible: to (%s, %p) and from (%s, %p) are both ret/out. May be convertible.",
+                    TypeGetSimpleName(to), to, TypeGetSimpleName(from), from);
+            }
         }
-        log(DEBUG, "%s (%x) != %s (%x)", TypeGetSimpleName(to), to->type, TypeGetSimpleName(from), from->type);
-
-        auto classFrom = il2cpp_functions::class_from_il2cpp_type(from);
         auto classTo = il2cpp_functions::class_from_il2cpp_type(to);
-        if (classTo) {
-            if (classTo->enumtype) {
-                auto e = classTo->element_class;
-                if (e != classTo) {
-                    log(DEBUG, "IsConvertible: extracted value type '%s' from Enum 'to', recursing!", TypeGetSimpleName(&e->byval_arg));
-                    if (IsConvertible(&e->byval_arg, from)) return true;
-                }
-            }
-
-            // See if 'from' satisfies the interface represented by 'to'.
-            if (IsInterface(classTo)) {
-                void* iter = nullptr;
-                Il2CppClass* interface;
-                while ((interface = il2cpp_functions::class_get_interfaces(classFrom, &iter))) {
-                    log(DEBUG, "IsConvertible: comparing interfaces: %s, %s", ClassStandardName(classTo).c_str(), ClassStandardName(interface).c_str());
-                    if (classTo == interface) {
-                        log(DEBUG, "IsConvertible: interface match (%s), returning true!", ClassStandardName(classTo).c_str());
-                        return true;
-                    }
-                }
-            }
-        }
-
-        // Try from's parent
-        if (classFrom && classFrom->parent && classFrom->parent != classFrom) {
-            log(DEBUG, "IsConvertible: recursing on 'from's parent");
-            return IsConvertible(to, il2cpp_functions::class_get_type(classFrom->parent));
-        }
-        log(DEBUG, "IsConvertible: no match found, returning false!");
-        return false;
+        auto classFrom = il2cpp_functions::class_from_il2cpp_type(from);
+        auto ret = il2cpp_functions::class_is_assignable_from(classTo, classFrom);
+        log(DEBUG, "IsConvertible: class_is_assignable_from(%s, %s) returned %s",
+            ClassStandardName(classTo).c_str(), ClassStandardName(classFrom).c_str(), ret ? "true" : "false");
+        return ret;
     }
 
     bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, decltype(MethodInfo::parameters_count) count) {
@@ -139,6 +128,7 @@ namespace il2cpp_utils {
 
     static std::unordered_map<Il2CppClass*, const char*> typeMap;
 
+    // TODO: somehow append "out/ref " to the front if type->byref? Make a TypeStandardName?
     const char* TypeGetSimpleName(const Il2CppType* type) {
         il2cpp_functions::Init();
 
