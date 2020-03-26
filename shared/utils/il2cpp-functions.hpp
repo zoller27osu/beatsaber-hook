@@ -286,7 +286,7 @@ class il2cpp_functions {
     #ifdef UNITY_2019
     inline static bool (*type_is_static)(const Il2CppType * type);
     inline static bool (*type_is_pointer_type)(const Il2CppType * type);
-    #endif UNITY_2019
+    #endif
     inline static const Il2CppAssembly* (*image_get_assembly)(const Il2CppImage * image);
     inline static const char* (*image_get_name)(const Il2CppImage * image);
     inline static const char* (*image_get_filename)(const Il2CppImage * image);

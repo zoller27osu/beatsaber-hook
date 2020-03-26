@@ -61,6 +61,12 @@ namespace il2cpp_utils {
         return klass;
     }
 
+    // Seriously, don't un-const the returned Type
+    const Il2CppType* MakeRef(const Il2CppType* type);
+
+    // Generally, it's better to just use class_from_type!
+    const Il2CppType* UnRef(const Il2CppType* type);
+
     // Framework provided by DaNike
     namespace il2cpp_type_check {
         // To fix "no member named 'get' in il2cpp_type_check::il2cpp_arg_type_<Blah>", define il2cpp_arg_type_<Blah>!
@@ -69,7 +75,7 @@ namespace il2cpp_utils {
         struct il2cpp_arg_type_ {};
 
         template<typename T>
-        using il2cpp_arg_type = il2cpp_arg_type_<std::decay_t<T>>;
+        using il2cpp_arg_type = il2cpp_arg_type_<T>;
 
         #define DEFINE_IL2CPP_DEFAULT_TYPE(type, fieldName) \
         template<> \
@@ -162,6 +168,23 @@ namespace il2cpp_utils {
         };
         #undef has_obj
         #undef has_object
+
+        template<typename T>
+        struct il2cpp_arg_type_<T&> {
+            static inline Il2CppType const* get(T& arg) {
+                // A method can store a result back to a non-const ref! Make the type byref!
+                auto base = il2cpp_arg_type_<T>::get(arg);
+                return MakeRef(base);
+            }
+        };
+
+        template<typename T>
+        struct il2cpp_arg_type_<const T&> {
+            static inline Il2CppType const* get(const T& arg) {
+                // A method cannot store a result back to a const ref. It is not a C# ref.
+                return il2cpp_arg_type_<T>::get(arg);
+            }
+        };
 
         template<typename T>
         struct il2cpp_arg_ptr {
