@@ -235,11 +235,7 @@ namespace il2cpp_utils {
 
     // Returns the MethodInfo for the method on the given class with the given name and number of arguments
     // Created by zoller27osu
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, int argsCount);
-    // TODO: instead of this 1 additional resolution, direct all integer-only or non-pointer/string params to the argsCount overload
-    inline const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, size_t argsCount) {
-        return FindMethod(klass, methodName, static_cast<int>(argsCount));
-    }
+    const MethodInfo* FindMethodUnsafe(Il2CppClass* klass, std::string_view methodName, int argsCount);
 
     // Returns the MethodInfo for the method on the given class with the given name and types of arguments
     // Created by zoller27osu
@@ -249,7 +245,12 @@ namespace il2cpp_utils {
     // Varargs to vector helper
     template <typename... TArgs, std::enable_if_t<(... && !is_vector<TArgs>::value), int> = 0>  // prevents template recursion
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, TArgs&&... args) {
-        return FindMethod(klass, methodName, {args...});
+        if constexpr (sizeof...(TArgs) == 1 && (std::is_integral_v<std::decay_t<TArgs>> && ...)) {
+            static_assert(false_t<TArgs...>,
+                "FindMethod using argCount is invalid! If argCount is 0 then remove it; otherwise use FindMethodUnsafe!");
+        } else {
+            return FindMethod(klass, methodName, {args...});
+        }
     }
 
     // Returns the MethodInfo for the method on class found via namespace and name with the given other arguments
@@ -257,12 +258,14 @@ namespace il2cpp_utils {
     const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
         return FindMethod(GetClassFromName(nameSpace, className), params...);
     }
+    const MethodInfo* FindMethodUnsafe(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount);
 
     // Returns the MethodInfo for the method on the given instance
     template<class... TArgs>
     const MethodInfo* FindMethod(Il2CppObject* instance, TArgs&&... params) {
         return FindMethod(GetClassOfObject(instance, "FindMethod"), params...);
     }
+    const MethodInfo* FindMethodUnsafe(Il2CppObject* instance, std::string_view methodName, int argsCount);
 
     inline auto ExtractValues() {
         return std::vector<void*>();
@@ -292,20 +295,31 @@ namespace il2cpp_utils {
         return base;
     }
 
-    template<class TOut, class... TArgs>
+    template<class TOut, class T, class... TArgs>
     // Runs a MethodInfo with the specified parameters and instance, with return type TOut
     // Assumes a static method if instance == nullptr
     // Returns false if it fails
     // Created by zoller27osu, modified by Sc2ad
-    bool RunMethod(TOut* out, void* instance, const MethodInfo* method, TArgs&& ...params) {
+    bool RunMethod(TOut* out, T* instance, const MethodInfo* method, TArgs&& ...params) {
         il2cpp_functions::Init();
         if (!method) {
             log(ERROR, "il2cpp_utils: RunMethod: Null MethodInfo!");
             return false;
         }
+
+        // runtime_invoke will assume obj is unboxed and box it. We need to counter that for pre-boxed instances.
+        // Note: we could also just call Runtime::Invoke directly, but box non-Il2CppObject instances ourselves as method->klass
+        void* inst = instance;
+        if constexpr (std::is_same_v<T, Il2CppObject>) {
+            if (method->klass->valuetype) {
+                // We assume that if the method is for a ValueType and instance is an Il2CppObject, then it was pre-boxed.
+                inst = il2cpp_functions::object_unbox(instance);
+            }
+        }
+
         Il2CppException* exp = nullptr;
         auto invokeParamsVec = ExtractValues(params...);
-        auto ret = il2cpp_functions::runtime_invoke(method, instance, invokeParamsVec.data(), &exp);
+        auto ret = il2cpp_functions::runtime_invoke(method, inst, invokeParamsVec.data(), &exp);
         if constexpr (std::is_pointer_v<TOut>) {
             *out = reinterpret_cast<TOut>(ret);
         } else {
@@ -320,12 +334,12 @@ namespace il2cpp_utils {
         return true;
     }
 
-    template<class... TArgs>
+    template<class... TArgs, class T>
     // Runs a MethodInfo with the specified parameters and instance; best for void return type
     // Assumes a static method if instance == nullptr
     // Returns false if it fails
     // Created by zoller27osu
-    bool RunMethod(void* instance, const MethodInfo* method, TArgs&& ...params) {
+    bool RunMethod(T* instance, const MethodInfo* method, TArgs&& ...params) {
         void* out = nullptr;
         return RunMethod(&out, instance, method, params...);
     }
@@ -334,8 +348,9 @@ namespace il2cpp_utils {
     // Runs a (static) method with the specified method name, with return type TOut.
     // Checks the types of the parameters against the candidate methods. Returns false if it fails.
     // Created by zoller27osu, modified by Sc2ad
-    bool RunMethod(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
-        static_assert(std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>);
+    // TODO: define these via KlassOrInstance types if possible
+    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
+    RunMethod(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
         il2cpp_functions::Init();
         if (!classOrInstance) {
             log(ERROR, "il2cpp_utils: RunMethod: Null classOrInstance parameter!");
@@ -351,7 +366,7 @@ namespace il2cpp_utils {
         if (!method) return false;
 
         if constexpr (std::is_base_of_v<Il2CppClass, T>) {
-            return RunMethod(out, nullptr, method, params...);
+            return RunMethod<TOut, void>(out, nullptr, method, params...);
         }
         return RunMethod(out, classOrInstance, method, params...);
     }
@@ -360,38 +375,78 @@ namespace il2cpp_utils {
     // Runs a (static) method with the specified method name and number of arguments, with return type TOut.
     // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
     // Created by zoller27osu, modified by Sc2ad
-    bool RunMethodUnsafe(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
-        static_assert(std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>);
+    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
+    RunMethodUnsafe(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
         il2cpp_functions::Init();
         if (!classOrInstance) {
             log(ERROR, "il2cpp_utils: RunMethod: Null classOrInstance parameter!");
             return false;
         }
-        auto method = FindMethod(classOrInstance, methodName, sizeof...(TArgs));
+        auto method = FindMethodUnsafe(classOrInstance, methodName, sizeof...(TArgs));
         if (!method) return false;
 
         if constexpr (std::is_base_of_v<Il2CppClass, T>) {
-            return RunMethod(out, nullptr, method, params...);
+            return RunMethod<TOut, void>(out, nullptr, method, params...);
         }
         return RunMethod(out, classOrInstance, method, params...);
+    }
+
+    template<class TOut, class... TArgs>
+    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
+    // The method also has return type TOut.
+    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
+    bool RunMethod(TOut* out, std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
+        auto klass = GetClassFromName(nameSpace, klassName);
+        if (!klass) return false;
+        return RunMethod(out, klass, methodName, params...);
+    }
+
+    template<class TOut, class... TArgs>
+    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
+    // The method also has return type TOut.
+    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
+    bool RunMethodUnsafe(TOut* out, std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
+        auto klass = GetClassFromName(nameSpace, klassName);
+        if (!klass) return false;
+        return RunMethodUnsafe(out, klass, methodName, params...);
+    }
+
+    template<class... TArgs>
+    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
+    // Best for void return type.
+    // Checks the types of the parameters against the candidate methods. Returns false if it fails.
+    bool RunMethod(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
+        void* out = nullptr;
+        return RunMethod(&out, nameSpace, klassName, methodName, params...);
+    }
+
+    template<class... TArgs>
+    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
+    // Best for void return type.
+    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
+    bool RunMethodUnsafe(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
+        void* out = nullptr;
+        return RunMethodUnsafe(&out, nameSpace, klassName, methodName, params...);
     }
 
     template<class T, class... TArgs>
     // Runs a (static) method with the specified method name; best for void return type
     // Checks the types of the parameters against the candidate methods. Returns false if it fails.
     // Created by zoller27osu
-    bool RunMethod(T* klassOrInstance, std::string_view methodName, TArgs&& ...params) {
+    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
+    RunMethod(T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
         void* out = nullptr;
-        return RunMethod(&out, klassOrInstance, methodName, params...);
+        return RunMethod(&out, classOrInstance, methodName, params...);
     }
 
     template<class T, class... TArgs>
     // Runs a (static) method with the specified method name and number of arguments; best for void return type
     // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
     // Created by zoller27osu
-    bool RunMethodUnsafe(T* klassOrInstance, std::string_view methodName, TArgs&& ...params) {
+    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
+    RunMethodUnsafe(T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
         void* out = nullptr;
-        return RunMethodUnsafe(&out, klassOrInstance, methodName, params...);
+        return RunMethodUnsafe(&out, classOrInstance, methodName, params...);
     }
 
     template<typename TObj = Il2CppObject, typename... TArgs>

@@ -1,11 +1,5 @@
 #include "utils.h"
 
-#define SAFE_ABORT() do { \
-    log(ERROR, "Aborting at %s:%i", __FILE__, __LINE__); \
-    usleep(100000000L); \
-    abort(); \
-} while(false)
-
 // copies of the highly-inlinable functions
 const Il2CppTypeDefinition* il2cpp_functions::MetadataCache_GetTypeDefinitionFromIndex(TypeDefinitionIndex index) {
     CheckS_GlobalMetadata();
@@ -581,69 +575,74 @@ void il2cpp_functions::Init() {
     // XREF TRACES
     // Class::Init. 0x846A68 in 1.5, 0x9EC0A4 in 1.7.0, 0xA6D1B8 in 1.8.0b1
     Instruction ans((const int32_t*)array_new_specific);
-    Instruction Array_NewSpecific((const int32_t*)ans.imm);
-    log(DEBUG, "Array::NewSpecific offset: %llX", ((long long)Array_NewSpecific.addr) - getRealOffset(0));
-    auto j2Cl_I = Array_NewSpecific.findNthCall(1);  // also the 113th call in Runtime::Init
-    if (!j2Cl_I) SAFE_ABORT();
-    Class_Init = (decltype(Class_Init))j2Cl_I->imm;
-    log(DEBUG, "Class::Init found? offset: %llX", ((long long)Class_Init) - getRealOffset(0));
+    Instruction Array_NewSpecific(*CRASH_UNLESS(ans.label));
+    log(DEBUG, "Array::NewSpecific offset: %lX", ((intptr_t)Array_NewSpecific.addr) - getRealOffset(0));
+    auto j2Cl_I = CRASH_UNLESS(Array_NewSpecific.findNthCall(1));  // also the 113th call in Runtime::Init
+    Class_Init = (decltype(Class_Init))*CRASH_UNLESS(j2Cl_I->label);
+    log(DEBUG, "Class::Init found? offset: %lX", ((intptr_t)Class_Init) - getRealOffset(0));
+    usleep(1000);  // 0.001s
 
     // MetadataCache::GetTypeInfoFromTypeIndex. offset 0x84F764 in 1.5, 0x9F5250 in 1.7.0, 0xA7A79C in 1.8.0b1
     Instruction caha((const int32_t*)custom_attrs_has_attr);
-    Instruction MetadataCache_HasAttribute((const int32_t*)caha.imm);
-    auto j2MC_GTIFTI = MetadataCache_HasAttribute.findNthCall(1);
-    if (!j2MC_GTIFTI) SAFE_ABORT();
-    MetadataCache_GetTypeInfoFromTypeIndex = (decltype(MetadataCache_GetTypeInfoFromTypeIndex))j2MC_GTIFTI->imm;
-    log(DEBUG, "MetadataCache::GetTypeInfoFromTypeIndex found? offset: %llX",
-        ((long long)MetadataCache_GetTypeInfoFromTypeIndex) - getRealOffset(0));
+    Instruction MetadataCache_HasAttribute(*CRASH_UNLESS(caha.label));
+    auto j2MC_GTIFTI = CRASH_UNLESS(MetadataCache_HasAttribute.findNthCall(1));
+    MetadataCache_GetTypeInfoFromTypeIndex = (decltype(MetadataCache_GetTypeInfoFromTypeIndex))*CRASH_UNLESS(j2MC_GTIFTI->label);
+    log(DEBUG, "MetadataCache::GetTypeInfoFromTypeIndex found? offset: %lX",
+        ((intptr_t)MetadataCache_GetTypeInfoFromTypeIndex) - getRealOffset(0));
+    usleep(1000);  // 0.001s
 
     // MetadataCache::GetTypeInfoFromTypeDefinitionIndex. offset 0x84FBA4 in 1.5, 0x9F5690 in 1.7.0, 0xA75958 in 1.8.0b1
     Instruction tgcoec((const int32_t*)type_get_class_or_element_class);
-    Instruction Type_GetClassOrElementClass((const int32_t*)tgcoec.imm);
-    auto j2MC_GTIFTDI = Type_GetClassOrElementClass.findNthDirectBranchWithoutLink(5);
-    if (!j2MC_GTIFTDI) SAFE_ABORT();
-    MetadataCache_GetTypeInfoFromTypeDefinitionIndex = (decltype(MetadataCache_GetTypeInfoFromTypeDefinitionIndex))j2MC_GTIFTDI->imm;
-    log(DEBUG, "MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %llX",
-        ((long long)MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
+    Instruction Type_GetClassOrElementClass(*CRASH_UNLESS(tgcoec.label));
+    auto j2MC_GTIFTDI = CRASH_UNLESS(Type_GetClassOrElementClass.findNthDirectBranchWithoutLink(5));
+    MetadataCache_GetTypeInfoFromTypeDefinitionIndex =
+        (decltype(MetadataCache_GetTypeInfoFromTypeDefinitionIndex))*CRASH_UNLESS(j2MC_GTIFTDI->label);
+    log(DEBUG, "MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %lX",
+        ((intptr_t)MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
+    usleep(1000);  // 0.001s
 
     // Type::GetName. offset 0x8735DC in 1.5, 0xA1A458 in 1.7.0, 0xA7B634 in 1.8.0b1
     Instruction tanq((const int32_t*)type_get_assembly_qualified_name);
-    _Type_GetName_ = (decltype(_Type_GetName_))tanq.findNthCall(1)->imm;
-    log(DEBUG, "Type::GetName found? offset: %llX", ((long long)_Type_GetName_) - getRealOffset(0));
+    auto j2T_GN = CRASH_UNLESS(tanq.findNthCall(1));
+    _Type_GetName_ = (decltype(_Type_GetName_))*CRASH_UNLESS(j2T_GN->label);
+    log(DEBUG, "Type::GetName found? offset: %lX", ((intptr_t)_Type_GetName_) - getRealOffset(0));
+    usleep(1000);  // 0.001s
 
     // GenericClass::GetClass. offset 0x88DF64 in 1.5, 0xA34F20 in 1.7.0, 0xA6E4EC in 1.8.0b1
     Instruction cfit((const int32_t*)class_from_il2cpp_type);
-    Instruction Class_FromIl2CppType((const int32_t*)cfit.imm);
-    auto caseStart = EvalSwitch(Class_FromIl2CppType.addr, 1, 1, IL2CPP_TYPE_GENERICINST);
-    if (!caseStart) SAFE_ABORT();
-    auto j2GC_GC = caseStart->findNthDirectBranchWithoutLink(1);
-    if (!j2GC_GC) SAFE_ABORT();
+    Instruction Class_FromIl2CppType(*CRASH_UNLESS(cfit.label));
+    auto caseStart = CRASH_UNLESS(EvalSwitch(Class_FromIl2CppType.addr, 1, 1, IL2CPP_TYPE_GENERICINST));
+    auto j2GC_GC = CRASH_UNLESS(caseStart->findNthDirectBranchWithoutLink(1));
     log(DEBUG, "j2GC_GC: %s", j2GC_GC->toString().c_str());
-    GenericClass_GetClass = (decltype(GenericClass_GetClass))j2GC_GC->imm;
-    log(DEBUG, "GenericClass::GetClass found? offset: %llX", ((long long)GenericClass_GetClass) - getRealOffset(0));
+    GenericClass_GetClass = (decltype(GenericClass_GetClass))*CRASH_UNLESS(j2GC_GC->label);
+    log(DEBUG, "GenericClass::GetClass found? offset: %lX", ((intptr_t)GenericClass_GetClass) - getRealOffset(0));
+    usleep(1000);  // 0.001s
 
     Instruction iu16((const int32_t*)init_utf16);
-    auto j2R_I = iu16.findNthCall(3);
-    if (!j2R_I) SAFE_ABORT();
-    Instruction Runtime_Init((const int32_t*)j2R_I->imm);
-    auto ldr = Runtime_Init.findNth(1, std::mem_fn(&Instruction::isLoad));  // the load for the malloc that precedes our adrp
-    if (!ldr) SAFE_ABORT();
+    auto j2R_I = CRASH_UNLESS(iu16.findNthCall(3));
+    Instruction Runtime_Init(*CRASH_UNLESS(j2R_I->label));
+    auto ldr = CRASH_UNLESS(Runtime_Init.findNth(1, std::mem_fn(&Instruction::isLoad)));  // the load for the malloc that precedes our adrp
     // alternatively, could just get the 1st ADRP in Runtime::Init with dest reg x20
     il2cpp_functions::defaults = (decltype(il2cpp_functions::defaults))ExtractAddress(ldr->addr, 1, 1);
-    log(DEBUG, "il2cpp_defaults found? offset: %llX", ((long long)defaults) - getRealOffset(0));
+    log(DEBUG, "il2cpp_defaults found? offset: %lX", ((intptr_t)defaults) - getRealOffset(0));
+    usleep(1000);  // 0.001s
 
     // FIELDS
     // Extract locations of s_GlobalMetadataHeader, s_Il2CppMetadataRegistration, & s_GlobalMetadata
     // TODO: refactor to reduce instruction re-parsing?
-    il2cpp_functions::s_GlobalMetadataHeaderPtr = (decltype(il2cpp_functions::s_GlobalMetadataHeaderPtr))ExtractAddress(
-        il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex, 3, 1);
-    il2cpp_functions::s_Il2CppMetadataRegistrationPtr = (decltype(il2cpp_functions::s_Il2CppMetadataRegistrationPtr))ExtractAddress(
-        il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex, 4, 1);
-    il2cpp_functions::s_GlobalMetadataPtr = (decltype(il2cpp_functions::s_GlobalMetadataPtr))ExtractAddress(
-        il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex, 5, 1);
+    il2cpp_functions::s_GlobalMetadataHeaderPtr = (decltype(il2cpp_functions::s_GlobalMetadataHeaderPtr))CRASH_UNLESS(
+        ExtractAddress(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex, 3, 1));
+    usleep(1000);  // 0.001s
+    il2cpp_functions::s_Il2CppMetadataRegistrationPtr = (decltype(il2cpp_functions::s_Il2CppMetadataRegistrationPtr))CRASH_UNLESS(
+        ExtractAddress(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex, 4, 1));
+    usleep(1000);  // 0.001s
+    il2cpp_functions::s_GlobalMetadataPtr = (decltype(il2cpp_functions::s_GlobalMetadataPtr))CRASH_UNLESS(
+        ExtractAddress(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex, 5, 1));
+    usleep(1000);  // 0.001s
+    log(DEBUG, "All global constants found!");
 
     dlclose(imagehandle);
     initialized = true;
     log(INFO, "il2cpp_functions: Init: Successfully loaded all il2cpp functions!");
-    usleep(100000L);
+    usleep(100);  // 0.0001s
 }
