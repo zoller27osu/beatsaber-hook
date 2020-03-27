@@ -69,17 +69,17 @@ static void StartCoroutine(Function&& fun, Args&&... args) {
     t->detach();
 }
 
-// logs the file and line, sleeps to allow logs to flush, then terminates program
-void safeAbort(const char* file, int line);
+// logs the function, file and line, sleeps to allow logs to flush, then terminates program
+void safeAbort(const char* func, const char* file, int line);
 // sets "file" and "line" to the file and line you call this macro from
-#define SAFE_ABORT() safeAbort(__FILE__, __LINE__)
+#define SAFE_ABORT() safeAbort(__func__, __FILE__, __LINE__)
 
 template<class T>
-auto crashUnless(T&& arg, const char* file, int line) {
-    if (!arg) safeAbort(file, line);
+auto crashUnless(T&& arg, const char* func, const char* file, int line) {
+    if (!arg) safeAbort(func, file, line);
     return std::forward<T>(arg);
 }
-#define CRASH_UNLESS(expr) crashUnless(expr, __FILE__, __LINE__)
+#define CRASH_UNLESS(expr) crashUnless(expr, __func__, __FILE__, __LINE__)
 
 template<class T>
 intptr_t getBase(T pc) {
