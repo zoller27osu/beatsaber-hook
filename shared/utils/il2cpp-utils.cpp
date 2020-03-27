@@ -59,6 +59,7 @@ namespace il2cpp_utils {
     typedef std::pair<std::string, std::vector<const Il2CppType*>> classesNamesTypesInnerPairType;
     static std::unordered_map<std::pair<Il2CppClass*, classesNamesTypesInnerPairType>, const MethodInfo*, hash_pair_3> classesNamesTypesToMethodsCache;
     static std::unordered_map<std::pair<Il2CppClass*, std::string>, FieldInfo*, hash_pair> classesNamesToFieldsCache;
+    static std::unordered_map<std::pair<Il2CppClass*, std::string>, const PropertyInfo*, hash_pair> classesNamesToPropertiesCache;
     // Maximum length of characters of an exception message - 1
     #define EXCEPTION_MESSAGE_SIZE 4096
 
@@ -293,7 +294,7 @@ namespace il2cpp_utils {
         auto field = il2cpp_functions::class_get_field_from_name(klass, fieldName.data());
         if (!field) {
             log(ERROR, "could not find field %s in class '%s'!", fieldName.data(), ClassStandardName(klass).c_str());
-            LogFields(klass, true);
+            LogFields(klass);
             if (klass->parent != klass) field = FindField(klass->parent, fieldName);
         }
         classesNamesToFieldsCache.insert({key, field});
@@ -311,8 +312,7 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         RET_0_UNLESS(klass);
 
-        auto field = FindField(klass, fieldName);
-        if (!field) return nullptr;
+        auto field = RET_0_UNLESS(FindField(klass, fieldName));
         return GetFieldValue(nullptr, field);
     }
 
@@ -320,18 +320,14 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         RET_0_UNLESS(instance);
 
-        auto field = FindField(instance, fieldName);
-        if (!field) return nullptr;
+        auto field = RET_0_UNLESS(FindField(instance, fieldName));
         return GetFieldValue(instance, field);
     }
 
     bool SetFieldValue(Il2CppObject* instance, FieldInfo* field, void* value) {
         il2cpp_functions::Init();
+        RET_0_UNLESS(field);
 
-        if (!field) {
-            log(ERROR, "il2cpp_utils: SetFieldValue: Null field parameter!");
-            return false;
-        }
         if (instance) {
             il2cpp_functions::field_set_value(instance, field, value);
         } else { // Fallback to perform a static field set
@@ -344,8 +340,7 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         RET_0_UNLESS(klass);
 
-        auto field = FindField(klass, fieldName);
-        if (!field) return false;
+        auto field = RET_0_UNLESS(FindField(klass, fieldName));
         return SetFieldValue(nullptr, field, value);
     }
 
@@ -353,9 +348,60 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         RET_0_UNLESS(instance);
 
-        auto field = FindField(instance, fieldName);
-        if (!field) return false;
+        auto field = RET_0_UNLESS(FindField(instance, fieldName));
         return SetFieldValue(instance, field, value);
+    }
+
+    const PropertyInfo* FindProperty(Il2CppClass* klass, std::string_view propName) {
+        il2cpp_functions::Init();
+        RET_0_UNLESS(klass);
+
+        // Check Cache
+        auto key = std::pair<Il2CppClass*, std::string>(klass, propName);
+        auto itr = classesNamesToPropertiesCache.find(key);
+        if (itr != classesNamesToPropertiesCache.end()) {
+            return itr->second;
+        }
+        auto prop = il2cpp_functions::class_get_property_from_name(klass, propName.data());
+        if (!prop) {
+            log(ERROR, "could not find property %s in class '%s'!", propName.data(), ClassStandardName(klass).c_str());
+            LogProperties(klass);
+            if (klass->parent != klass) prop = FindProperty(klass->parent, propName);
+        }
+        classesNamesToPropertiesCache.insert({key, prop});
+        return prop;
+    }
+
+    Il2CppObject* GetPropertyValue(Il2CppClass* klass, std::string_view propName) {
+        il2cpp_functions::Init();
+        RET_0_UNLESS(klass);
+
+        auto prop = RET_0_UNLESS(FindProperty(klass, propName));
+        return GetPropertyValue<void>(nullptr, prop);
+    }
+
+    Il2CppObject* GetPropertyValue(Il2CppObject* instance, std::string_view propName) {
+        il2cpp_functions::Init();
+        RET_0_UNLESS(instance);
+
+        auto prop = RET_0_UNLESS(FindProperty(instance, propName));
+        return GetPropertyValue(instance, prop);
+    }
+
+    bool SetPropertyValue(Il2CppClass* klass, std::string_view propName, void* value) {
+        il2cpp_functions::Init();
+        RET_0_UNLESS(klass);
+
+        auto prop = RET_0_UNLESS(FindProperty(klass, propName));
+        return SetPropertyValue<void>(nullptr, prop, value);
+    }
+
+    bool SetPropertyValue(Il2CppObject* instance, std::string_view propName, void* value) {
+        il2cpp_functions::Init();
+        RET_0_UNLESS(instance);
+
+        auto prop = RET_0_UNLESS(FindProperty(instance, propName));
+        return SetPropertyValue(instance, prop, value);
     }
 
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types) {
@@ -470,13 +516,55 @@ namespace il2cpp_utils {
         if (klass->name) il2cpp_functions::Class_Init(klass);
         if (logParents) log(INFO, "class name: %s", ClassStandardName(klass).c_str());
 
-        log(DEBUG, "property_count: %i, field_count: %i", klass->property_count, klass->field_count);
+        log(DEBUG, "field_count: %i", klass->field_count);
         while ((field = il2cpp_functions::class_get_fields(klass, &myIter))) {
             LogField(field);
         }
         usleep(100);
         if (logParents && klass->parent && klass->parent != klass) {
             LogFields(klass->parent, logParents);
+        }
+    }
+
+    void LogProperty(const PropertyInfo* prop) {
+        il2cpp_functions::Init();
+        RET_V_UNLESS(prop);
+
+        auto flags = il2cpp_functions::property_get_flags(prop);
+        const char* flagStr = (flags & FIELD_ATTRIBUTE_STATIC) ? "static " : "";
+        auto name = il2cpp_functions::property_get_name(prop);
+        name = name ? name : "__noname__";
+        auto getter = il2cpp_functions::property_get_get_method(prop);
+        auto getterName = getter ? il2cpp_functions::method_get_name(getter) : "";
+        auto setter = il2cpp_functions::property_get_set_method(prop);
+        auto setterName = setter ? il2cpp_functions::method_get_name(setter) : "";
+        const Il2CppType* type = nullptr;
+        if (getter) {
+            type = il2cpp_functions::method_get_return_type(getter);
+        } else if (setter) {
+            type = il2cpp_functions::method_get_param(setter, 0);
+        }
+        auto typeStr = type ? TypeGetSimpleName(type) : "?type?";
+
+        log(DEBUG, "%s%s %s { %s; %s; }; // flags: 0x%.4X", flagStr, typeStr, name, getterName, setterName, flags);
+    }
+
+    void LogProperties(Il2CppClass* klass, bool logParents) {
+        il2cpp_functions::Init();
+        RET_V_UNLESS(klass);
+
+        void* myIter = nullptr;
+        const PropertyInfo* prop;
+        if (klass->name) il2cpp_functions::Class_Init(klass);
+        if (logParents) log(INFO, "class name: %s", ClassStandardName(klass).c_str());
+
+        log(DEBUG, "property_count: %i", klass->property_count);
+        while ((prop = il2cpp_functions::class_get_properties(klass, &myIter))) {
+            LogProperty(prop);
+        }
+        usleep(100);
+        if (logParents && klass->parent && klass->parent != klass) {
+            LogProperties(klass->parent, logParents);
         }
     }
 
@@ -669,6 +757,9 @@ namespace il2cpp_utils {
         log(DEBUG, "%i =========FIELDS=========", indent);
         LogFields(klass);
         log(DEBUG, "%i =======END FIELDS=======", indent);
+        log(DEBUG, "%i =======PROPERTIES=======", indent);
+        LogProperties(klass);
+        log(DEBUG, "%i =====END PROPERTIES=====", indent);
 
         auto parent = il2cpp_functions::class_get_parent(klass);
         log(DEBUG, "parent: %p (%s)", parent, parent ? ClassStandardName(parent).c_str() : "");

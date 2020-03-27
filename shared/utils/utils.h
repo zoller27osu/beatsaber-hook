@@ -32,7 +32,7 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
 #define RET_UNLESS(retval, expr) ({ \
     const auto& __temp__ = expr; \
     if (!__temp__) { \
-        log(ERROR, "%s (at %s:%i) returned false!", #expr, __FILE__, __LINE__); \
+        log(ERROR, "%s (in %s at %s:%i) returned false!", #expr, __func__, __FILE__, __LINE__); \
         return retval; \
     } \
     __temp__; \
