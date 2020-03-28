@@ -754,12 +754,12 @@ namespace il2cpp_utils {
         log(DEBUG, "element class: %p (self = %p)", element, klass);
         if (element && element != klass && logParents) LogClass(element, logParents);
 
-        log(DEBUG, "%i =========FIELDS=========", indent);
-        LogFields(klass);
-        log(DEBUG, "%i =======END FIELDS=======", indent);
         log(DEBUG, "%i =======PROPERTIES=======", indent);
         LogProperties(klass);
         log(DEBUG, "%i =====END PROPERTIES=====", indent);
+        log(DEBUG, "%i =========FIELDS=========", indent);
+        LogFields(klass);
+        log(DEBUG, "%i =======END FIELDS=======", indent);
 
         auto parent = il2cpp_functions::class_get_parent(klass);
         log(DEBUG, "parent: %p (%s)", parent, parent ? ClassStandardName(parent).c_str() : "");
