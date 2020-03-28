@@ -641,12 +641,10 @@ namespace il2cpp_utils {
 
     // Gets an Il2CppObject* from the given class and property name
     // Returns nullptr if it fails
-    // Created by zoller27
     Il2CppObject* GetPropertyValue(Il2CppClass* klass, std::string_view propName);
 
     // Gets an Il2CppObject* from the given object instance and property name
     // Returns nullptr if it fails
-    // Created by darknight1050, modified by Sc2ad
     Il2CppObject* GetPropertyValue(Il2CppObject* instance, std::string_view propName);
 
     // Wrapper around the above GetPropertyValue's that casts the result for you
@@ -660,7 +658,6 @@ namespace il2cpp_utils {
     // Gets a value from the given object instance, and PropertyInfo, with return type TOut
     // Returns false if it fails
     // Assumes a static property if instance == nullptr
-    // Created by darknight1050, modified by Sc2ad and zoller27osu
     bool GetPropertyValue(TOut* out, T* instance, const PropertyInfo* prop) {
         il2cpp_functions::Init();
         RET_0_UNLESS(prop);
@@ -671,7 +668,6 @@ namespace il2cpp_utils {
     template<typename TOut>
     // Gets the value of the property with type TOut and the given name from the given class
     // Returns false if it fails
-    // Adapted by zoller27osu
     bool GetPropertyValue(TOut* out, Il2CppClass* klass, std::string_view propName) {
         il2cpp_functions::Init();
         RET_0_UNLESS(klass);
@@ -682,7 +678,6 @@ namespace il2cpp_utils {
     template<typename TOut>
     // Gets a value from the given object instance and property name, with return type TOut
     // Returns false if it fails
-    // Created by darknight1050, modified by Sc2ad and zoller27osu
     bool GetPropertyValue(TOut* out, Il2CppObject* instance, std::string_view propName) {
         il2cpp_functions::Init();
         RET_0_UNLESS(instance);
@@ -713,7 +708,6 @@ namespace il2cpp_utils {
     // Sets the value of a given property, given an object instance and property name
     // Unbox "value" before passing if it is an Il2CppObject but the property is a primitive or struct!
     // Returns false if it fails
-    // Adapted by zoller27osu
     bool SetPropertyValue(Il2CppClass* klass, std::string_view propName, void* value);
 
     // Sets the value of a given property, given an object instance and property name
