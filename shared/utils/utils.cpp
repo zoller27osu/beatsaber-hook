@@ -13,11 +13,11 @@
 
 using namespace std;
 
-void safeAbort(const char* file, int line) {
+void safeAbort(const char* func, const char* file, int line) {
     // we REALLY want this to appear at least once in the log (for fastest fixing)
     for (int i = 0; i < 2; i++) {
         usleep(100000L);  // 0.1s
-        log(CRITICAL, "Aborting at %s:%i", file, line);
+        log(CRITICAL, "Aborting in %s at %s:%i", func, file, line);
     }
     usleep(100000L);  // 0.1s
     std::terminate();  // cleans things up and then calls abort

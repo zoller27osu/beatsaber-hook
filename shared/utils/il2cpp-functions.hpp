@@ -225,11 +225,11 @@ class il2cpp_functions {
     inline static void (*profiler_install_fileio)(Il2CppProfileFileIOFunc callback);
     inline static void (*profiler_install_thread)(Il2CppProfileThreadFunc start, Il2CppProfileThreadFunc end);
 
-    inline static uint32_t (*property_get_flags)(PropertyInfo * prop);
-    inline static const MethodInfo* (*property_get_get_method)(PropertyInfo * prop);
-    inline static const MethodInfo* (*property_get_set_method)(PropertyInfo * prop);
-    inline static const char* (*property_get_name)(PropertyInfo * prop);
-    inline static Il2CppClass* (*property_get_parent)(PropertyInfo * prop);
+    inline static uint32_t (*property_get_flags)(const PropertyInfo * prop);
+    inline static const MethodInfo* (*property_get_get_method)(const PropertyInfo * prop);
+    inline static const MethodInfo* (*property_get_set_method)(const PropertyInfo * prop);
+    inline static const char* (*property_get_name)(const PropertyInfo * prop);
+    inline static Il2CppClass* (*property_get_parent)(const PropertyInfo * prop);
     inline static Il2CppClass* (*object_get_class)(Il2CppObject * obj);
     inline static uint32_t (*object_get_size)(Il2CppObject * obj);
     inline static const MethodInfo* (*object_get_virtual_method)(Il2CppObject * obj, const MethodInfo * method);

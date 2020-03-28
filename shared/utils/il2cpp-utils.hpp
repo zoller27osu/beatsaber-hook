@@ -271,6 +271,8 @@ namespace il2cpp_utils {
         if constexpr (sizeof...(TArgs) == 1 && (std::is_integral_v<std::decay_t<TArgs>> && ...)) {
             static_assert(false_t<TArgs...>,
                 "FindMethod using argCount is invalid! If argCount is 0 then remove it; otherwise use FindMethodUnsafe!");
+        } else if constexpr (sizeof...(TArgs) == 0) {
+            return FindMethodUnsafe(klass, methodName, 0);
         } else {
             return FindMethod(klass, methodName, {args...});
         }
@@ -334,7 +336,7 @@ namespace il2cpp_utils {
         // Note: we could also just call Runtime::Invoke directly, but box non-Il2CppObject instances ourselves as method->klass
         void* inst = instance;
         if constexpr (std::is_same_v<T, Il2CppObject>) {
-            if (method->klass->valuetype) {
+            if (instance && method->klass->valuetype) {
                 // We assume that if the method is for a ValueType and instance is an Il2CppObject, then it was pre-boxed.
                 inst = il2cpp_functions::object_unbox(instance);
             }
@@ -528,11 +530,10 @@ namespace il2cpp_utils {
     Il2CppObject* GetFieldValue(Il2CppObject* instance, std::string_view fieldName);
 
     // Wrapper around the non-template GetFieldValue's that casts the result for you
-    template<class TOut, class... TArgs>
-    TOut* GetFieldValue(TArgs... params) {
-        static_assert(sizeof...(TArgs) == 2);
-        static_assert(std::is_base_of_v<Il2CppObject, TOut>, "The return type of this function must inherit Il2CppObject! See GetFieldValueUnsafe for an alternative.");
-        return reinterpret_cast<TOut*>(GetFieldValue(params...));
+    template<class TOut, class TA, class TB>
+    std::enable_if_t<std::is_base_of_v<Il2CppObject, TOut>, TOut*>
+    GetFieldValue(TA* a, TB b) {
+        return reinterpret_cast<TOut*>(GetFieldValue(a, b));
     }
 
     template<typename TOut>
@@ -592,6 +593,7 @@ namespace il2cpp_utils {
         return out;
     }
 
+    // TODO: typecheck the SetField/PropertyValue methods' value params?
     // Sets the value of a given field, given an object instance and FieldInfo
     // Unbox "value" before passing if it is an Il2CppObject but the field is a primitive or struct!
     // Returns false if it fails
@@ -608,6 +610,110 @@ namespace il2cpp_utils {
     // Unbox "value" before passing if it is an Il2CppObject but the field is a primitive or struct!
     // Returns false if it fails
     bool SetFieldValue(Il2CppObject* instance, std::string_view fieldName, void* value);
+
+    // Returns the PropertyInfo for the property of the given class with the given name
+    // Created by zoller27osu
+    const PropertyInfo* FindProperty(Il2CppClass* klass, std::string_view propertyName);
+    // Wrapper for FindProperty taking a namespace and class name in place of an Il2CppClass*
+    template<class... TArgs>
+    const PropertyInfo* FindProperty(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
+        return FindProperty(GetClassFromName(nameSpace, className), params...);
+    }
+    // Wrapper for FindProperty taking an Il2CppObject* in place of an Il2CppClass*
+    template<class... TArgs>
+    const PropertyInfo* FindProperty(Il2CppObject* instance, TArgs&&... params) {
+        return FindProperty(GetClassOfObject(instance, "FindProperty"), params...);
+    }
+
+    // Gets an Il2cppObject* from the given object instance and PropertyInfo
+    // instance can only be null for static properties
+    // Returns nullptr if it fails
+    template<class T>
+    Il2CppObject* GetPropertyValue(T* instance, const PropertyInfo* prop) {
+        il2cpp_functions::Init();
+        RET_0_UNLESS(prop);
+
+        auto getter = RET_0_UNLESS(il2cpp_functions::property_get_get_method(prop));
+        Il2CppObject* out = nullptr;
+        RET_0_UNLESS(RunMethod(out, instance, getter));
+        return out;
+    }
+
+    // Gets an Il2CppObject* from the given class and property name
+    // Returns nullptr if it fails
+    Il2CppObject* GetPropertyValue(Il2CppClass* klass, std::string_view propName);
+
+    // Gets an Il2CppObject* from the given object instance and property name
+    // Returns nullptr if it fails
+    Il2CppObject* GetPropertyValue(Il2CppObject* instance, std::string_view propName);
+
+    // Wrapper around the above GetPropertyValue's that casts the result for you
+    template<class TOut, class TA, class TB>
+    std::enable_if_t<std::is_base_of_v<Il2CppObject, TOut>, TOut*>
+    GetPropertyValue(TA* a, TB b) {
+        return reinterpret_cast<TOut*>(GetPropertyValue(a, b));
+    }
+
+    template<class TOut, class T>
+    // Gets a value from the given object instance, and PropertyInfo, with return type TOut
+    // Returns false if it fails
+    // Assumes a static property if instance == nullptr
+    bool GetPropertyValue(TOut* out, T* instance, const PropertyInfo* prop) {
+        il2cpp_functions::Init();
+        RET_0_UNLESS(prop);
+        auto getter = RET_0_UNLESS(il2cpp_functions::property_get_get_method(prop));
+        return RunMethod(out, instance, getter);
+    }
+
+    template<typename TOut>
+    // Gets the value of the property with type TOut and the given name from the given class
+    // Returns false if it fails
+    bool GetPropertyValue(TOut* out, Il2CppClass* klass, std::string_view propName) {
+        il2cpp_functions::Init();
+        RET_0_UNLESS(klass);
+        auto prop = RET_0_UNLESS(FindProperty(klass, propName));
+        return GetPropertyValue<TOut, void>(out, nullptr, prop);
+    }
+
+    template<typename TOut>
+    // Gets a value from the given object instance and property name, with return type TOut
+    // Returns false if it fails
+    bool GetPropertyValue(TOut* out, Il2CppObject* instance, std::string_view propName) {
+        il2cpp_functions::Init();
+        RET_0_UNLESS(instance);
+        auto prop = FindProperty(instance, propName);
+        return GetPropertyValue(out, instance, prop);
+    }
+
+    // An unsafe wrapper around the TOut GetPropertyValues; il2cpp should unbox when appropriate
+    template<class TOut, class... TArgs>
+    TOut GetPropertyValueUnsafe(TArgs... params) {
+        TOut out;
+        GetPropertyValue(&out, params...);
+        return out;
+    }
+
+    // Sets the value of a given property, given an object instance and PropertyInfo
+    // Unbox "value" before passing if it is an Il2CppObject but the property is a primitive or struct!
+    // Returns false if it fails
+    // Assumes static property if instance == nullptr
+    template<class T>
+    bool SetPropertyValue(T* instance, const PropertyInfo* prop, void* value) {
+        il2cpp_functions::Init();
+        RET_0_UNLESS(prop);
+        auto setter = RET_0_UNLESS(il2cpp_functions::property_get_set_method(prop));
+        return RunMethod(instance, setter, value);
+    }
+
+    // Sets the value of a given property, given an object instance and property name
+    // Unbox "value" before passing if it is an Il2CppObject but the property is a primitive or struct!
+    // Returns false if it fails
+    bool SetPropertyValue(Il2CppClass* klass, std::string_view propName, void* value);
+
+    // Sets the value of a given property, given an object instance and property name
+    // Unbox "value" before passing if it is an Il2CppObject but the property is a primitive or struct!
+    // Returns false if it fails
+    bool SetPropertyValue(Il2CppObject* instance, std::string_view propName, void* value);
 
     template<typename T = MulticastDelegate, typename R, typename... TArgs>
     // Creates an Action and casts it to a MulticastDelegate*
@@ -669,6 +775,14 @@ namespace il2cpp_utils {
     // Created by zoller27osu
     // Calls LogField on all fields in the given class
     void LogFields(Il2CppClass* klass, bool logParents = false);
+
+    // Created by zoller27osu
+    // Logs information about the given PropertyInfo* as log(DEBUG)
+    void LogProperty(const PropertyInfo* field);
+
+    // Created by zoller27osu
+    // Calls LogProperty on all properties in the given class
+    void LogProperties(Il2CppClass* klass, bool logParents = false);
 
     // Some parts provided by zoller27osu
     // Logs information about the given Il2CppClass* as log(DEBUG)
