@@ -102,6 +102,12 @@ namespace CustomUI {
         return true;
     }
 
+    bool TextObject::set(std::string_view text) {
+        auto str = il2cpp_utils::createcsstr(text);
+        RET_0_UNLESS(il2cpp_utils::SetPropertyValue(textMesh, "text", str));
+        return true;
+    }
+
     static auto findDataSize(Il2CppObject* downloadHandler) {
         Array<uint8_t>* data;
         if (il2cpp_utils::RunMethod(&data, "UnityEngine.Networking", "DownloadHandler", "InternalGetByteArray", downloadHandler)) {
