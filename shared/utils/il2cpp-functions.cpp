@@ -626,7 +626,6 @@ void il2cpp_functions::Init() {
     il2cpp_functions::defaults = (decltype(il2cpp_functions::defaults))ExtractAddress(ldr->addr, 1, 1);
     log(DEBUG, "il2cpp_defaults found? offset: %lX", ((intptr_t)defaults) - getRealOffset(0));
     usleep(1000);  // 0.001s
-    CRASH_UNLESS(false);
 
     // FIELDS
     // Extract locations of s_GlobalMetadataHeader, s_Il2CppMetadataRegistration, & s_GlobalMetadata
