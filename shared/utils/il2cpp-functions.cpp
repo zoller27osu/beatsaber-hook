@@ -74,8 +74,9 @@ const char* il2cpp_functions::Type_GetName(const Il2CppType *type, Il2CppTypeNam
 #ifdef FILE_LOG
 // closes log on application shutdown
 // Address is unused, so left as 0
-MAKE_HOOK(log_shutdown, 0, void) {
+MAKE_HOOK_NAT(log_shutdown, 0, void) {
     log_close();
+    log_shutdown();
 }
 #endif
 
@@ -93,12 +94,13 @@ void il2cpp_functions::Init() {
         return;
     }
 
+    // Please verify that these have more than 1 instruction to their name before attempting to hook them!
     *(void**)(&init) = dlsym(imagehandle, "il2cpp_init");
     log(INFO, "Loaded: il2cpp_init, error: %s", dlerror());
+    *(void**)(&shutdown) = dlsym(imagehandle, "il2cpp_shutdown");
+    log(INFO, "Loaded: il2cpp_shutdown, error: %s", dlerror());
     *(void**)(&init_utf16) = dlsym(imagehandle, "il2cpp_init_utf16");
     log(INFO, "Loaded: il2cpp_init_utf16");
-    *(void**)(&shutdown) = dlsym(imagehandle, "il2cpp_shutdown");
-    log(INFO, "Loaded: il2cpp_shutdown");
     *(void**)(&set_config_dir) = dlsym(imagehandle, "il2cpp_set_config_dir");
     log(INFO, "Loaded: il2cpp_set_config_dir");
     *(void**)(&set_data_dir) = dlsym(imagehandle, "il2cpp_set_data_dir");
@@ -338,7 +340,7 @@ void il2cpp_functions::Init() {
     *(void**)(&gchandle_new_weakref) = dlsym(imagehandle, "il2cpp_gchandle_new_weakref");
     log(INFO, "Loaded: il2cpp_gchandle_new_weakref");
     *(void**)(&gchandle_get_target) = dlsym(imagehandle, "il2cpp_gchandle_get_target");
-    log(INFO, "Loaded: il2cpp_gchandle_get_target ");
+    log(INFO, "Loaded: il2cpp_gchandle_get_target");
     *(void**)(&gchandle_free) = dlsym(imagehandle, "il2cpp_gchandle_free");
     log(INFO, "Loaded: il2cpp_gchandle_free");
     #ifdef UNITY_2019
@@ -580,6 +582,11 @@ void il2cpp_functions::Init() {
     *(void**)(&il2cpp_functions::class_get_name_const) = dlsym(imagehandle, "il2cpp_class_get_name");
     log(INFO, "Loaded: il2cpp_class_get_name CONST VERSION!");
 
+    const char* err = dlerror();
+    if (err) {
+        log(CRITICAL, "A dlsym failed! dlerror: %s", err);
+    }
+
     // XREF TRACES
     // Class::Init. 0x846A68 in 1.5, 0x9EC0A4 in 1.7.0, 0xA6D1B8 in 1.8.0b1
     Instruction ans((const int32_t*)array_new_specific);
@@ -650,14 +657,17 @@ void il2cpp_functions::Init() {
     log(DEBUG, "All global constants found!");
 
     #ifdef FILE_LOG
-    // Install shutdown hook to close file stream
-    auto addr = dlsym(imagehandle, "il2cpp_shutdown");
-    auto err = dlerror();
-    if (addr == nullptr || err) {
-        log(CRITICAL, "Failed to get address of il2cpp_shutdown! Could not install shutdown hook for closing file logs.");
-        log(CRITICAL, "Addr: %p, dlerror: %s", addr, err);
+    if (il2cpp_functions::shutdown) {
+        Instruction sd((const int32_t*)il2cpp_functions::shutdown);
+        if (sd.label) {
+            auto Runtime_Shutdown = *(sd.label);
+            log(INFO, "hook installing to: %p (offset %lX)", Runtime_Shutdown, ((intptr_t)Runtime_Shutdown) - getRealOffset(0));
+            INSTALL_HOOK_DIRECT(log_shutdown, Runtime_Shutdown);
+        } else {
+            log(CRITICAL, "Failed to parse il2cpp_shutdown's implementation address! Could not install shutdown hook for closing file logs.");
+        }
     } else {
-        INSTALL_HOOK_DIRECT(log_shutdown, addr);
+        log(CRITICAL, "Failed to get address of il2cpp_shutdown (see above)! Could not install shutdown hook for closing file logs.");
     }
     #endif
 

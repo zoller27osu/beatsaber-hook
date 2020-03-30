@@ -184,15 +184,20 @@ Instruction* Instruction::findNthImmOffsetOnReg(int n, uint_fast8_t reg, int ret
 Instruction::Instruction(const int32_t* inst) {
     addr = inst;
     auto pc = (intptr_t)inst;
-    auto base = CRASH_UNLESS(getBase(pc));
+    auto base = getBase(pc);
+    if (!base) {
+        log(CRITICAL, "Instruction::Instruction: Could not get the .so base for pointer %p. "
+            "It is likely not a valid pointer at all!", inst);
+        return;
+    }
 
     parseLevel = 0;
     parsed = false;
     auto code = *inst;
     // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64#top
     uint_fast8_t top0 = bits(code, 28, 25);  // op0 for top-level only
-    log(DEBUG, "inst: ptr = 0x%lX (offset 0x%lX), bytes = 0x%X, top-level op0: %i",
-        pc, pc - base, code, top0);
+    log(DEBUG, "inst: ptr = 0x%lX (offset 0x%lX), bytes = %s, top-level op0: %i",
+        pc, pc - base, std::bitset<32>(code).to_string().c_str(), top0);
     // Bit patterns like 1x0x where x is any bit and all other bits must match are implemented by:
     // 1. (a & [1's where pattern has non-x]) == [pattern with x's as 0]
     // 2. (a | [1's where pattern has x])     == [pattern with x's as 1]
