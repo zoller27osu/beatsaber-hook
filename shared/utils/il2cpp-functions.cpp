@@ -651,7 +651,13 @@ void il2cpp_functions::Init() {
 
     #ifdef FILE_LOG
     // Install shutdown hook to close file stream
-    INSTALL_HOOK_DIRECT(log_shutdown, dlsym(imagehandle, "il2cpp_shutdown"));
+    auto addr = dlsym(imagehandle, "il2cpp_shutdown");
+    if (addr == nullptr || dlerror()) {
+        log(CRITICAL, "Failed to get address of il2cpp_shutdown! Could not install shutdown hook for closing file logs.");
+        log(CRITICAL, "Addr: %p, dlerror: %s", addr, dlerror());
+    } else {
+        INSTALL_HOOK_DIRECT(log_shutdown, addr);
+    }
     #endif
 
     dlclose(imagehandle);
