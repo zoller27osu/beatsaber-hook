@@ -337,7 +337,7 @@ void il2cpp_functions::Init() {
     log(INFO, "Loaded: il2cpp_gchandle_new");
     *(void**)(&gchandle_new_weakref) = dlsym(imagehandle, "il2cpp_gchandle_new_weakref");
     log(INFO, "Loaded: il2cpp_gchandle_new_weakref");
-    *(void**)(&gchandle_get_target ) = dlsym(imagehandle, "il2cpp_gchandle_get_target ");
+    *(void**)(&gchandle_get_target) = dlsym(imagehandle, "il2cpp_gchandle_get_target");
     log(INFO, "Loaded: il2cpp_gchandle_get_target ");
     *(void**)(&gchandle_free) = dlsym(imagehandle, "il2cpp_gchandle_free");
     log(INFO, "Loaded: il2cpp_gchandle_free");
