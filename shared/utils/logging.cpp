@@ -1,3 +1,4 @@
+#ifdef FILE_LOG
 #include "logging.h"
 #include <chrono>
 #include <iomanip>
@@ -62,3 +63,5 @@ void log_close() {
         fclose(fp);
     }
 }
+
+#endif
