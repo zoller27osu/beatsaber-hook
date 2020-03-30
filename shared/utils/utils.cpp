@@ -14,6 +14,9 @@
 using namespace std;
 
 void safeAbort(const char* func, const char* file, int line) {
+    #ifdef FILE_LOG
+    log_close();
+    #endif
     // we REALLY want this to appear at least once in the log (for fastest fixing)
     for (int i = 0; i < 2; i++) {
         usleep(100000L);  // 0.1s
@@ -328,9 +331,5 @@ bool parsejson(ConfigDocument& doc, string_view js) {
 }
 
 string getconfigpath() {
-    string filename;
-    filename = filename.append(CONFIG_PATH);
-    filename = filename.append(MOD_ID);
-    filename = filename.append(".json");
-    return filename;
+    return std::string(CONFIG_PATH) + MOD_ID + ".json";
 }

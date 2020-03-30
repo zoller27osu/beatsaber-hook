@@ -29,8 +29,39 @@ enum LOG_VERBOSE_TYPE {
 
 #define TAG "QuestHook[" MOD_ID "|" VERSION "]"
 
-#define log(lvl, ...) __android_log_print(lvl, TAG, __VA_ARGS__)
+#ifdef log
+#undef log
+#endif
+
 #define logv(lvl, ...) __android_log_vprint(lvl, TAG, __VA_ARGS__)
+#ifndef FILE_LOG
+#define log(lvl, ...) __android_log_print(lvl, TAG, __VA_ARGS__)
+#else
+
+#ifndef CHARS_PER_ARG
+#define CHARS_PER_ARG 50
+#endif
+
+#ifndef LOG_PATH
+#define LOG_PATH "/sdcard/Android/data/com.beatgames.beatsaber/files/logs/"
+#endif
+
+bool direxists(const char* dirname);
+
+std::string get_level(int level);
+
+// Logs with the corresponding level and format string to the log file
+void log_file(int level, const char* format, ...);
+
+// Flushes the log file
+void log_flush();
+
+// Closes the log file
+void log_close();
+
+#define log(lvl, ...) do { __android_log_print(lvl, TAG, __VA_ARGS__); \
+log_file(lvl, __VA_ARGS__);} while(0);
+#endif
 
 #ifndef STD_BUFFER_SIZE
 #define STD_BUFFER_SIZE 256
