@@ -215,6 +215,7 @@ inlineHook((uint32_t)addr); \
 }
 #endif /* __cplusplus */
 
+// TODO: Remove
 #include "instruction-parsing.hpp"
 
 #endif /* UTILS_H_INCLUDED */
