@@ -74,9 +74,9 @@ const char* il2cpp_functions::Type_GetName(const Il2CppType *type, Il2CppTypeNam
 #ifdef FILE_LOG
 // closes log on application shutdown
 // Address is unused, so left as 0
-MAKE_HOOK_NAT(log_shutdown, 0, void) {
+MAKE_HOOK_OFFSETLESS(shutdown_hook, void) {
     log_close();
-    log_shutdown();
+    shutdown_hook();
 }
 #endif
 
@@ -662,7 +662,7 @@ void il2cpp_functions::Init() {
         if (sd.label) {
             auto Runtime_Shutdown = *(sd.label);
             log(INFO, "hook installing to: %p (offset %lX)", Runtime_Shutdown, ((intptr_t)Runtime_Shutdown) - getRealOffset(0));
-            INSTALL_HOOK_DIRECT(log_shutdown, Runtime_Shutdown);
+            INSTALL_HOOK_DIRECT(shutdown_hook, Runtime_Shutdown);
         } else {
             log(CRITICAL, "Failed to parse il2cpp_shutdown's implementation address! Could not install shutdown hook for closing file logs.");
         }
