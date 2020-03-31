@@ -109,6 +109,10 @@ namespace il2cpp_utils {
         auto ret = il2cpp_functions::class_is_assignable_from(classTo, classFrom);
         log(DEBUG, "IsConvertible: class_is_assignable_from(%s, %s) returned %s",
             ClassStandardName(classTo).c_str(), ClassStandardName(classFrom).c_str(), ret ? "true" : "false");
+        if (!ret && il2cpp_functions::class_is_enum(classTo)) {
+            log(DEBUG, "IsConvertible: but classTo is enum! Comparing against class_enum_basetype.");
+            ret = IsConvertible(il2cpp_functions::class_enum_basetype(classTo), from);
+        }
         return ret;
     }
 
@@ -748,10 +752,10 @@ namespace il2cpp_utils {
         log(DEBUG, "%i =======END METHODS=======", indent);
 
         auto declaring = il2cpp_functions::class_get_declaring_type(klass);
-        log(DEBUG, "declaring type: %p", declaring);
+        log(DEBUG, "declaring type: %p (%s)", declaring, declaring ? ClassStandardName(declaring).c_str() : "");
         if (declaring && logParents) LogClass(declaring, logParents);
         auto element = il2cpp_functions::class_get_element_class(klass);
-        log(DEBUG, "element class: %p (self = %p)", element, klass);
+        log(DEBUG, "element class: %p ('%s', self = %p)", element, element ? ClassStandardName(element).c_str() : "", klass);
         if (element && element != klass && logParents) LogClass(element, logParents);
 
         log(DEBUG, "%i =======PROPERTIES=======", indent);
