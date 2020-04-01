@@ -630,11 +630,11 @@ Instruction::Instruction(const int32_t* inst) {
                 if ((opc == 0b11) || (sf != N)) {
                     kind[parseLevel++] = unalloc;
                 } else if (opc == 0) {
-
+                    kind[parseLevel++] = sf ? "SBFM — 64-bit" : "SBFM — 32-bit";
                 } else if (opc == 0b1) {
-
+                    kind[parseLevel++] = sf ? "BFM — 64-bit" : "BFM — 32-bit";
                 } else if (opc == 0b10) {
-
+                    kind[parseLevel++] = sf ? "UBFM — 64-bit" : "UBFM — 32-bit";
                 }
                 log(DEBUG, "sf == N == %i, opc: %i", sf, opc);
             }

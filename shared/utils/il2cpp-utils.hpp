@@ -716,10 +716,10 @@ namespace il2cpp_utils {
     bool SetPropertyValue(Il2CppObject* instance, std::string_view propName, void* value);
 
     template<typename T = MulticastDelegate, typename R, typename... TArgs>
-    // Creates an Action and casts it to a MulticastDelegate*
-    // actionType should be extracted from the FieldInfo or MethodInfo you plan to send the action to!
+    // Creates an Action of type actionType, with the given callback and callback self 'obj', and casts it to a T*
+    // PLEASE!!! use the below FieldInfo or MethodInfo versions instead if you can.
     // Created by zoller27osu
-    T* MakeAction(Il2CppObject* obj, function_ptr_t<R, TArgs...> callback, const Il2CppType* actionType) {
+    T* MakeAction(const Il2CppType* actionType, Il2CppObject* obj, function_ptr_t<R, TArgs...> callback) {
         Il2CppClass* actionClass = il2cpp_functions::class_from_il2cpp_type(actionType);
 
         /*
@@ -747,9 +747,53 @@ namespace il2cpp_utils {
     }
 
     template<typename T = MulticastDelegate>
-    T* MakeAction(Il2CppObject* obj, void* callback, const Il2CppType* actionType) {
+    T* MakeAction(const Il2CppType* actionType, Il2CppObject* obj, void* callback) {
         auto tmp = reinterpret_cast<function_ptr_t<void>>(callback);
-        return MakeAction(obj, tmp, actionType);
+        return MakeAction(actionType, obj, tmp);
+    }
+
+    // Creates an Action fit to be passed in the given parameter position to the given method.
+    template<typename T = MulticastDelegate, typename... TArgs>
+    T* MakeAction(const MethodInfo* method, int paramIdx, TArgs&& ...args) {
+        auto actionType = RET_0_UNLESS(il2cpp_functions::method_get_param(method, paramIdx));
+        return MakeAction(actionType, args...);
+    }
+
+    // Creates an Action fit to be assigned to the given field.
+    template<typename T = MulticastDelegate, typename... TArgs>
+    T* MakeAction(FieldInfo* field, TArgs&& ...args) {
+        auto actionType = RET_0_UNLESS(il2cpp_functions::field_get_type(field));
+        return MakeAction(actionType, args...);
+    }
+
+    // Intializes an object with the given args fit to be passed to the given method at the given parameter index.
+    template<typename... TArgs>
+    Il2CppObject* CreateParam(const MethodInfo* method, int paramIdx, TArgs&& ...args) {
+        auto type = RET_0_UNLESS(il2cpp_functions::method_get_param(method, paramIdx));
+        auto klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(type));
+        return il2cpp_utils::New(klass, args...);
+    }
+
+    template<typename... TArgs>
+    Il2CppObject* CreateParamUnsafe(const MethodInfo* method, int paramIdx, TArgs&& ...args) {
+        auto type = RET_0_UNLESS(il2cpp_functions::method_get_param(method, paramIdx));
+        auto klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(type));
+        return il2cpp_utils::NewUnsafe(klass, args...);
+    }
+
+    // Intializes an object with the given args fit to be assigned to the given field.
+    template<typename... TArgs>
+    Il2CppObject* CreateFieldValue(FieldInfo* field, TArgs&& ...args) {
+        auto type = RET_0_UNLESS(il2cpp_functions::field_get_type(field));
+        auto klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(type));
+        return il2cpp_utils::New(klass, args...);
+    }
+
+    template<typename... TArgs>
+    Il2CppObject* CreateFieldValueUnsafe(FieldInfo* field, TArgs&& ...args) {
+        auto type = RET_0_UNLESS(il2cpp_functions::field_get_type(field));
+        auto klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(type));
+        return il2cpp_utils::NewUnsafe(klass, args...);
     }
 
     // Calls the System.RuntimeType.MakeGenericType(System.Type gt, System.Type[] types) function
@@ -757,8 +801,6 @@ namespace il2cpp_utils {
 
     // Function made by zoller27osu, modified by Sc2ad
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
-
-
 
     // Function made by zoller27osu, modified by Sc2ad
     // Logs information about the given MethodInfo* as log(DEBUG)
