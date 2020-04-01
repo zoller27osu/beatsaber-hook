@@ -766,7 +766,7 @@ namespace il2cpp_utils {
         return MakeAction(actionType, args...);
     }
 
-    // Intializes an object with the given args fit to be passed to the given method at the given parameter index.
+    // Intializes an object (using the given args) fit to be passed to the given method at the given parameter index.
     template<typename... TArgs>
     Il2CppObject* CreateParam(const MethodInfo* method, int paramIdx, TArgs&& ...args) {
         auto type = RET_0_UNLESS(il2cpp_functions::method_get_param(method, paramIdx));
@@ -781,7 +781,7 @@ namespace il2cpp_utils {
         return il2cpp_utils::NewUnsafe(klass, args...);
     }
 
-    // Intializes an object with the given args fit to be assigned to the given field.
+    // Intializes an object (using the given args) fit to be assigned to the given field.
     template<typename... TArgs>
     Il2CppObject* CreateFieldValue(FieldInfo* field, TArgs&& ...args) {
         auto type = RET_0_UNLESS(il2cpp_functions::field_get_type(field));
@@ -800,6 +800,7 @@ namespace il2cpp_utils {
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types);
 
     // Function made by zoller27osu, modified by Sc2ad
+    // PLEASE don't use, there are easier ways to get generics (see CreateParam, CreateFieldValue)
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
 
     // Function made by zoller27osu, modified by Sc2ad
