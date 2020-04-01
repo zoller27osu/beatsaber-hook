@@ -11,25 +11,28 @@ static const char* addSubImm = "Add/subtract (immediate)";
 
 // https://developer.arm.com/docs/ddi0596/a/a64-shared-pseudocode-functions/aarch64-instrs-pseudocode#impl-aarch64.DecodeBitMasks
 // Explanation at https://dinfuehr.github.io/blog/encoding-of-immediate-values-on-aarch64/
-uint64_t DecodeBitMasks(unsigned N, unsigned imms, unsigned immr, unsigned regSize) {
+std::optional<std::pair<uint64_t, uint64_t>> DecodeBitMasks(unsigned N, unsigned imms, unsigned immr, unsigned regSize, bool logical) {
     auto len = HighestSetBit((N << 6) | trunc(~imms, 6), 7);
-    if (len < 1) return -1;
+    if (len < 1) return std::nullopt;
 
     unsigned size = 1 << len;
+    assert(regSize >= size);
     unsigned levels = size - 1;  // a real bitmask of the rightmost "size" bits
     unsigned R = immr & levels;
     unsigned S = imms & levels;
     // For logical immediates an all-ones value of S is reserved since it would generate a useless all-ones result
-    if (S == levels) return -1;
+    if (logical && (S == levels)) return std::nullopt;
 
-    uint64_t pattern = (1ULL << (S + 1)) - 1;
-    pattern = ROR(pattern, size, R);
-    // Replicate the pattern to fill regSize
-    while (size < regSize) {
-        pattern |= (pattern << size);
-        size *= 2;
-    }
-    return pattern;
+    auto diff = S - R;  // "6-bit subtract with borrow"
+    unsigned d = trunc(diff, len);
+
+    uint64_t welem = ONES(S + 1);  // # of sig bits = size
+    uint64_t telem = ONES(d + 1);  // # of sig bits = size
+    welem = ROR(welem, size, R);
+    // Replicate the patterns to fill regSize
+    auto wmask = Replicate<uint64_t>(welem, size, regSize);
+    auto tmask = Replicate<uint64_t>(telem, size, regSize);
+    return std::pair{wmask, tmask};
 }
 
 decltype(Instruction::result) ExtractAddress(Instruction* instWithResultAdr, Instruction* instWithImmOffset) {
@@ -555,20 +558,30 @@ Instruction::Instruction(const int32_t* inst) {
                     }
                 }
             }
-        } else if (op0 == 0b10) {
+        } else if ((op1 & 0b10) == 0) {  // 0x
             uint_fast8_t opc = bits(code, 30, 29);
-            if ((op1 & 0b10) == 0) {  // 0x
+            bool N = bits(code, 22, 22);
+            uint_fast8_t immr = bits(code, 21, 16);
+            uint_fast8_t imms = bits(code, 15, 10);
+            uint_fast8_t Rn = bits(code, 9, 5);
+
+            bool logical = (op0 == 0b10);
+            auto masks = DecodeBitMasks(N, imms, immr, sf ? 64 : 32, logical);
+            if (masks) {
+                log(DEBUG, "N: %i, immr: 0x%X (%u), imms: 0x%X, wmask: 0x%lX, tmask: 0x%lX", N, immr, immr, imms, masks->first, masks->second);
+            } else {
+                log(DEBUG, "N: %i, immr: 0x%X (%u), imms: 0x%X, invalid imm", N, immr, immr, imms);
+                valid = false;
+            }
+
+            if (logical) {
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#log_imm
                 kind[parseLevel++] = "Logical (immediate)";
                 RdCanBeSP = (opc != 0b11);  // for all but ANDS
                 Rs0CanBeSP = false;
-                bool N = bits(code, 22, 22);
-                uint_fast8_t immr = bits(code, 21, 16);
-                uint_fast8_t imms = bits(code, 15, 10);
-                uint_fast8_t Rn = bits(code, 9, 5);
-                imm = DecodeBitMasks(N, imms, immr, sf ? 64 : 32);
-                log(DEBUG, "N: %i, immr: 0x%X, imms: 0x%X, decoded imm: 0x%lX", N, immr, imms, *imm);
-                if (*imm == -1) valid = false;
+                if (masks) {
+                    imm = masks->first;
+                }
 
                 if (Rn == RZR) {
                     numSourceRegisters = 0;
@@ -587,14 +600,14 @@ Instruction::Instruction(const int32_t* inst) {
                         kind[parseLevel++] = "AND (immediate) — 64-bit";
                     }
                 } else if (opc == 0b1) {
-                    if (Rn == RZR) result = *imm;
+                    if (imm && (Rn == RZR)) result = *imm;
                     if (sf == 0) {
                         kind[parseLevel++] = "ORR (immediate) — 32-bit";
                     } else {
                         kind[parseLevel++] = "ORR (immediate) — 64-bit";
                     }
                 } else if (opc == 0b10) {
-                    if (Rn == RZR) result = *imm;
+                    if (imm && (Rn == RZR)) result = *imm;
                     if (sf == 0) {
                         kind[parseLevel++] = "EOR (immediate) — 32-bit";
                     } else {
@@ -609,18 +622,34 @@ Instruction::Instruction(const int32_t* inst) {
                     }
                 }
             } else {
-                log(DEBUG, "sf: %i, op0 == 0b10, op1: %u", sf, op1);
-            }
-        } else {
-            assert(op0 == 0b11);
-            if ((op1 & 0b10) == 0) {  // 0x
+                assert(op0 == 0b11);  // logic error, there should be no other options!
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#bitfield
                 kind[parseLevel++] = "Bitfield";
-            } else {  // op1 == 1x
+                RdCanBeSP = Rs0CanBeSP = false;
+
+                if ((opc == 0b11) || (sf != N)) {
+                    kind[parseLevel++] = unalloc;
+                } else if (opc == 0) {
+
+                } else if (opc == 0b1) {
+
+                } else if (opc == 0b10) {
+
+                }
+                log(DEBUG, "sf == N == %i, opc: %i", sf, opc);
+            }
+        } else {  // op1 == 1x
+            if (op0 == 0b10) {
+                // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#movewide
+                kind[parseLevel++] = "Move wide (immediate)";
+                auto opc = bits(code, 30, 29);  // op21 for Extract
+            } else {  // op0 == 11
+                assert(op0 == 0b11);  // logic error, there should be no other options!
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#extract
                 kind[parseLevel++] = "Extract";
+                bool N = bits(code, 22, 22);
+                auto op21 = bits(code, 30, 29);
             }
-            log(DEBUG, "sf: %i, op0 == 3, op1: %u", sf, op1);
         }
     } else if ((top0 | 0b1) == 0b1011) {  // 101x
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions
