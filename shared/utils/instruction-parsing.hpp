@@ -236,33 +236,56 @@ private:
     ParseState parseState;
 };
 
+#define ONES(N) ((1ull << (N)) - 1ull)
+
 // Truncates the given integer to its least significant N bits.
 template<class T>
-T trunc(T bits, uint8_t N) {
-    return bits & ((1ull << N) - 1ull);
+T trunc(T bits, int N) {
+    if (N == sizeof(T)*CHAR_BIT) return bits;
+    CRASH_UNLESS(N < sizeof(T)*CHAR_BIT);
+    return bits & ONES(N);
 }
 
 // Transforms the given integer (with M denoting the true number of significant bits) into an unsigned number of type To.
 template<class To, class From>
-To ZeroExtend(From bits, uint8_t M) {
+To ZeroExtend(From bits, int M) {
     static_assert(std::is_unsigned_v<From>);
     return static_cast<To>(bits);
 }
 
 // Transforms the given integer (with M denoting the true number of significant bits) into a properly signed number of type To.
 template<class To, class From>
-To SignExtend(From bits, uint8_t M) {
+To SignExtend(From bits, int M) {
     static_assert(std::is_signed_v<To>);
-    constexpr uint8_t N = sizeof(To) * CHAR_BIT;
+    constexpr int N = sizeof(To) * CHAR_BIT;
     assert(N >= M);
     To prep = ((To)bits) << (N - M);
     return (prep >> (N - M));
 }
 
+// Replicates the given bits (with M denoting the true number of significant bits) until they fill N bits.
+template<class To, class From>
+To Replicate(From bits, int M, int N = sizeof(To) * CHAR_BIT) {
+    CRASH_UNLESS(N % M == 0);
+    To replicatedBits = bits;
+    auto repSize = M;
+    while (repSize * 2 <= N) {
+        replicatedBits |= (replicatedBits << repSize);
+        repSize *= 2;
+    }
+    // The overlap should all match since N % M == 0 means that N - M*a % M == 0
+    replicatedBits |= (replicatedBits << (N - repSize));
+    if (N != M) {
+        log(DEBUG, "Replicate %s * %i = %s", std::bitset<sizeof(From)*CHAR_BIT>(bits).to_string().c_str(), N / M,
+            std::bitset<sizeof(To)*CHAR_BIT>(replicatedBits).to_string().c_str());
+    }
+    return replicatedBits;
+}
+
 // N is the true number of significant bits in x.
 // Returns the index of the most significant ON bit in x.
 template<class T>
-int HighestSetBit(T x, uint8_t N) {
+int HighestSetBit(T x, int N) {
     for (int i = N - 1; i >= 0; i--) {
         if (x & (1 << i)) return i;
     }
@@ -272,33 +295,39 @@ int HighestSetBit(T x, uint8_t N) {
 // For all shifts (LSL, LSR, ASR, ROR): N is the true number of significant bits in x.
 // Left shift
 template<class T>
-T LSL(T x, uint8_t N, unsigned shift) {
+T LSL(T x, int N, unsigned shift) {
     return trunc(x << shift, N);
 }
 
 // Right shift, taking x as unsigned.
 template<class T>
-T LSR(T x, uint8_t N, unsigned shift) {
+T LSR(T x, int N, unsigned shift) {
     return trunc(x >> shift, N - shift);
 }
 
 // Right shift, taking x as signed.
 template<class T>
-T ASR(T x, uint8_t N, unsigned shift) {
+T ASR(T x, int N, unsigned shift) {
     typedef typename std::make_signed<T>::type signedT;
     return trunc(SignExtend<signedT>(x, N) >> shift, N);
 }
 
 // Right shift, but bits that "fall off" move to the front instead
 template<class T>
-T ROR(T x, uint8_t N, unsigned shift) {
+T ROR(T x, int N, unsigned shift) {
     shift %= N;
-    return LSR(x, N, shift) | LSL(x, N, N - shift);
+    T ret = LSR(x, N, shift) | LSL(x, N, N - shift);
+    if ((ret == 0) && (x != 0)) {
+        log(DEBUG, "%s ROR %i (-%i) returned %s!", std::bitset<sizeof(T)*CHAR_BIT>(x).to_string().c_str(), shift, N - shift,
+            std::bitset<sizeof(T)*CHAR_BIT>(ret).to_string().c_str());
+        SAFE_ABORT();
+    }
+    return ret;
 }
 
 // Returns the value of the bits in x at index high through low inclusive, where the LSB is index 0 and the MSB's index >= high.
 template<class T>
-T bits(T x, uint8_t high, uint8_t low) {
+T bits(T x, int high, int low) {
     return trunc(x >> low, high - low + 1);
 }
 

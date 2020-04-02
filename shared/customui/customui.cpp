@@ -209,11 +209,10 @@ namespace CustomUI {
 
         // If only we could use UnityEngine.WWW and its WaitUntilDoneIfPossible() :(
         auto method = RET_0_UNLESS(FindMethodUnsafe("UnityEngine.Networking", "UnityWebRequestAsyncOperation", "add_completed", 1));
-        auto fieldType = il2cpp_functions::method_get_param(method, 0);
 
         RET_0_UNLESS(RunMethod(&sendWebRequestObj, WWW, "SendWebRequest"));
 
-        auto action = RET_0_UNLESS(MakeAction(this, textureWebRequestComplete, fieldType));
+        auto action = RET_0_UNLESS(MakeAction(method, 0, this, textureWebRequestComplete));
         RET_0_UNLESS(RunMethod(sendWebRequestObj, method, action));
 
         // Uncomment this to watch the progress for debugging purposes (backtracks a lot):

@@ -11,25 +11,28 @@ static const char* addSubImm = "Add/subtract (immediate)";
 
 // https://developer.arm.com/docs/ddi0596/a/a64-shared-pseudocode-functions/aarch64-instrs-pseudocode#impl-aarch64.DecodeBitMasks
 // Explanation at https://dinfuehr.github.io/blog/encoding-of-immediate-values-on-aarch64/
-uint64_t DecodeBitMasks(unsigned N, unsigned imms, unsigned immr, unsigned regSize) {
+std::optional<std::pair<uint64_t, uint64_t>> DecodeBitMasks(unsigned N, unsigned imms, unsigned immr, unsigned regSize, bool logical) {
     auto len = HighestSetBit((N << 6) | trunc(~imms, 6), 7);
-    if (len < 1) return -1;
+    if (len < 1) return std::nullopt;
 
     unsigned size = 1 << len;
+    assert(regSize >= size);
     unsigned levels = size - 1;  // a real bitmask of the rightmost "size" bits
     unsigned R = immr & levels;
     unsigned S = imms & levels;
     // For logical immediates an all-ones value of S is reserved since it would generate a useless all-ones result
-    if (S == levels) return -1;
+    if (logical && (S == levels)) return std::nullopt;
 
-    uint64_t pattern = (1ULL << (S + 1)) - 1;
-    pattern = ROR(pattern, size, R);
-    // Replicate the pattern to fill regSize
-    while (size < regSize) {
-        pattern |= (pattern << size);
-        size *= 2;
-    }
-    return pattern;
+    auto diff = S - R;  // "6-bit subtract with borrow"
+    unsigned d = trunc(diff, len);
+
+    uint64_t welem = ONES(S + 1);  // # of sig bits = size
+    uint64_t telem = ONES(d + 1);  // # of sig bits = size
+    welem = ROR(welem, size, R);
+    // Replicate the patterns to fill regSize
+    auto wmask = Replicate<uint64_t>(welem, size, regSize);
+    auto tmask = Replicate<uint64_t>(telem, size, regSize);
+    return std::pair{wmask, tmask};
 }
 
 decltype(Instruction::result) ExtractAddress(Instruction* instWithResultAdr, Instruction* instWithImmOffset) {
@@ -452,7 +455,7 @@ Instruction::Instruction(const int32_t* inst) {
                                 kind[parseLevel++] = U ? "UMSUBL" : "SMSUBL";
                             }
                         }
-                    } else {  // 010, 110
+                    } else {  // op31 == 010, 110
                         assert((op31 & 0b11) == 0b10);
                         // All registers are viewed as 64-bit
                         if (Ra == RZR) {
@@ -555,20 +558,31 @@ Instruction::Instruction(const int32_t* inst) {
                     }
                 }
             }
-        } else if (op0 == 0b10) {
+        } else if ((op1 & 0b10) == 0) {  // 0x
             uint_fast8_t opc = bits(code, 30, 29);
-            if ((op1 & 0b10) == 0) {  // 0x
+            bool N = bits(code, 22, 22);
+            uint_fast8_t immr = bits(code, 21, 16);
+            uint_fast8_t imms = bits(code, 15, 10);
+            uint_fast8_t Rn = bits(code, 9, 5);
+            // TODO: both registers are viewed as 32-bit iff sf == 0, else 64-bit
+
+            bool logical = (op0 == 0b10);
+            auto masks = DecodeBitMasks(N, imms, immr, sf ? 64 : 32, logical);
+            if (masks) {
+                log(DEBUG, "N: %i, immr: 0x%X (%u), imms: 0x%X, wmask: 0x%lX, tmask: 0x%lX", N, immr, immr, imms, masks->first, masks->second);
+            } else {
+                log(DEBUG, "N: %i, immr: 0x%X (%u), imms: 0x%X, invalid bitmasks", N, immr, immr, imms);
+                valid = false;
+            }
+
+            if (logical) {
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#log_imm
                 kind[parseLevel++] = "Logical (immediate)";
                 RdCanBeSP = (opc != 0b11);  // for all but ANDS
                 Rs0CanBeSP = false;
-                bool N = bits(code, 22, 22);
-                uint_fast8_t immr = bits(code, 21, 16);
-                uint_fast8_t imms = bits(code, 15, 10);
-                uint_fast8_t Rn = bits(code, 9, 5);
-                imm = DecodeBitMasks(N, imms, immr, sf ? 64 : 32);
-                log(DEBUG, "N: %i, immr: 0x%X, imms: 0x%X, decoded imm: 0x%lX", N, immr, imms, *imm);
-                if (*imm == -1) valid = false;
+                if (masks) {
+                    imm = masks->first;
+                }
 
                 if (Rn == RZR) {
                     numSourceRegisters = 0;
@@ -581,46 +595,116 @@ Instruction::Instruction(const int32_t* inst) {
                     kind[parseLevel++] = unalloc;
                 } else if (opc == 0) {
                     if (Rn == RZR) result = 0;
-                    if (sf == 0) {
-                        kind[parseLevel++] = "AND (immediate) — 32-bit";
-                    } else {
-                        kind[parseLevel++] = "AND (immediate) — 64-bit";
-                    }
+                    kind[parseLevel++] = sf ? "AND (immediate) — 64-bit" : "AND (immediate) — 32-bit";
                 } else if (opc == 0b1) {
-                    if (Rn == RZR) result = *imm;
-                    if (sf == 0) {
-                        kind[parseLevel++] = "ORR (immediate) — 32-bit";
+                    if (Rn == RZR) {
+                        // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/mov-bitmask-immediate-move-bitmask-immediate-an-alias-of-orr-immediate
+                        kind[parseLevel++] = sf ? "MOV (bitmask immediate) — 64-bit" : "MOV (bitmask immediate) — 32-bit";
+                        if (imm) {
+                            result = *imm;
+                            if (HighestSetBit(result, sizeof(result)*CHAR_BIT) < 16) {
+                                log(ERROR, "This instruction should have been assembled as MOVZ or MOVN?!");
+                            }
+                        }
                     } else {
-                        kind[parseLevel++] = "ORR (immediate) — 64-bit";
+                        kind[parseLevel++] = sf ? "ORR (immediate) — 64-bit" : "ORR (immediate) — 32-bit";
                     }
                 } else if (opc == 0b10) {
-                    if (Rn == RZR) result = *imm;
-                    if (sf == 0) {
-                        kind[parseLevel++] = "EOR (immediate) — 32-bit";
-                    } else {
-                        kind[parseLevel++] = "EOR (immediate) — 64-bit";
-                    }
-                } else {  // 11
+                    if (imm && (Rn == RZR)) result = *imm;
+                    kind[parseLevel++] = sf ? "EOR (immediate) — 64-bit" : "EOR (immediate) — 32-bit";
+                } else {  // opc == 0b11
                     if (Rn == RZR) result = 0;
-                    if (sf == 0) {
-                        kind[parseLevel++] = "ANDS (immediate) — 32-bit";
+                    if (Rd == RZR) {
+                        // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/tst-immediate-test-bits-immediate-an-alias-of-ands-immediate
+                        kind[parseLevel++] = sf ? "TST (immediate) — 64-bit" : "TST (immediate) — 32-bit";  // preferred alias
+                        Rd = -1;
                     } else {
-                        kind[parseLevel++] = "ANDS (immediate) — 64-bit";
+                        kind[parseLevel++] = sf ? "ANDS (immediate) — 64-bit" : "ANDS (immediate) — 32-bit";
                     }
                 }
             } else {
-                log(DEBUG, "sf: %i, op0 == 0b10, op1: %u", sf, op1);
-            }
-        } else {
-            assert(op0 == 0b11);
-            if ((op1 & 0b10) == 0) {  // 0x
+                assert(op0 == 0b11);  // logic error, there should be no other options!
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#bitfield
                 kind[parseLevel++] = "Bitfield";
-            } else {  // op1 == 1x
+                RdCanBeSP = Rs0CanBeSP = false;
+
+                /*  If <imms> >= <immr>, [these copy] a bitfield of (<imms>-<immr>+1) bits
+                starting from bit position <immr> in Rn to the LSBs of Rd.
+                    If <imms> < <immr>, [these copy] a bitfield of (<imms>+1) bits
+                from the LSBs of Rn to bit position (regsize-<immr>) of Rd, where regsize is 32 iff sf == 0, else 64 bits. */
+                if ((opc == 0b11) || (sf != N)) {
+                    kind[parseLevel++] = unalloc;
+                } else if (opc == 0) {
+                    // In both cases the Rd bits below the bitfield are set to zero, and the bits above are sign extended.
+                    // TODO https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/sbfm-signed-bitfield-move#commonps
+
+                    // kind[parseLevel++] = sf ? "SBFM — 64-bit" : "SBFM — 32-bit";
+                    // SBFM exclusively goes by aliases
+                    // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/sbfm-signed-bitfield-move#aliasconditions
+                    if (imms == (sf ? ONES(6) : ONES(5))) {
+                        kind[parseLevel++] = sf ? "ASR (immediate) — 64-bit" : "ASR (immediate) — 32-bit";
+                    } else if (imms < immr) {
+                        kind[parseLevel++] = sf ? "SBFIZ — 64-bit" : "SBFIZ — 32-bit";
+                    } else if ((immr == 0) && (imms == ONES(3))) {
+                        kind[parseLevel++] = sf ? "SXTB — 64-bit" : "SXTB — 32-bit";
+                    } else if ((immr == 0) && (imms == ONES(4))) {
+                        kind[parseLevel++] = sf ? "SXTH — 64-bit" : "SXTH — 32-bit";
+                    } else if (sf && (immr == 0) && (imms == ONES(5))) {
+                        kind[parseLevel++] = "SXTW";  // only 64-bit
+                    } else {
+                        kind[parseLevel++] = sf ? "SBFX — 64-bit" : "SBFX — 32-bit";
+                    }
+                } else if (opc == 0b1) {
+                    // In both cases the other bits of Rd remain unchanged.
+                    // TODO https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/bfm-bitfield-move#commonps
+
+                    // kind[parseLevel++] = sf ? "BFM — 64-bit" : "BFM — 32-bit";
+                    // BFM exclusively goes by aliases
+                    // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/bfm-bitfield-move#aliasconditions
+                    if (imms >= immr) {
+                        kind[parseLevel++] = sf ? "BFXIL — 64-bit" : "BFXIL — 32-bit";
+                    } else if (Rn == RZR) {
+                        kind[parseLevel++] = sf ? "BFC — 64-bit" : "BFC — 32-bit";
+                        numSourceRegisters = 0;
+                    } else {
+                        kind[parseLevel++] = sf ? "BFI — 64-bit" : "BFI — 32-bit";
+                    }
+                } else {  // opc == 0b10
+                    assert(opc == 0b10);
+                    // In both cases the Rd bits below and above the bitfield are set to zero.
+                    // TODO https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/ubfm-unsigned-bitfield-move#commonps
+
+                    // kind[parseLevel++] = sf ? "UBFM — 64-bit" : "UBFM — 32-bit";
+                    // UBFM exclusively goes by aliases
+                    // https://developer.arm.com/docs/ddi0596/a/a64-base-instructions-alphabetic-order/ubfm-unsigned-bitfield-move#aliasconditions
+                    if (imms == (sf ? ONES(6) : ONES(5))) {
+                        kind[parseLevel++] = sf ? "LSR (immediate) — 64-bit" : "LSR (immediate) — 32-bit";
+                    } else if (imms + 1 == immr) {
+                        kind[parseLevel++] = sf ? "LSL (immediate) — 64-bit" : "LSL (immediate) — 32-bit";
+                    } else if (imms < immr) {
+                        kind[parseLevel++] = sf ? "UBFIZ — 64-bit" : "UBFIZ — 32-bit";
+                    } else if (!sf && (immr == 0) && (imms == ONES(3))) {
+                        kind[parseLevel++] = "UXTB";  // only 32-bit
+                    } else if (!sf && (immr == 0) && (imms == ONES(4))) {
+                        kind[parseLevel++] = "UXTH";  // only 32-bit
+                    } else {
+                        kind[parseLevel++] = sf ? "UBFX — 64-bit" : "UBFX — 32-bit";
+                    }
+                }
+                log(DEBUG, "sf == N == %i, opc: %i", sf, opc);
+            }
+        } else {  // op1 == 1x
+            if (op0 == 0b10) {
+                // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#movewide
+                kind[parseLevel++] = "Move wide (immediate)";
+                auto opc = bits(code, 30, 29);  // op21 for Extract
+            } else {  // op0 == 11
+                assert(op0 == 0b11);  // logic error, there should be no other options!
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#extract
                 kind[parseLevel++] = "Extract";
+                bool N = bits(code, 22, 22);
+                auto op21 = bits(code, 30, 29);
             }
-            log(DEBUG, "sf: %i, op0 == 3, op1: %u", sf, op1);
         }
     } else if ((top0 | 0b1) == 0b1011) {  // 101x
         // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions
@@ -1003,11 +1087,10 @@ Instruction::Instruction(const int32_t* inst) {
             log(DEBUG, "op0: %i, op2: %i, op3: %i, op4: %i", op0, op2, op3, op4);
         }
     } else {
-        kind[parseLevel++] = "ERROR: Our top-level bit patterns have a gap!";
         log(ERROR, "Our top-level bit patterns have a gap!");
-        valid = false;
+        SAFE_ABORT();
     }
-    if (parseLevel != sizeof(kind) / sizeof(kind[0])) {
+    if (parseLevel < sizeof(kind) / sizeof(kind[0])) {
         log(WARNING, "Could not complete parsing of 0x%X (offset %lX) - need more handling for kind '%s'!", code, ((intptr_t)addr) - getRealOffset(0), kind[parseLevel - 1]);
     } else {
         parsed = true;
