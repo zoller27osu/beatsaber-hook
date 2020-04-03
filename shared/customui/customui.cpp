@@ -30,14 +30,13 @@ namespace CustomUI {
         log(DEBUG, "TextObject::create: Getting type of TMPro.TMP_FontAsset");
         Il2CppObject *type_fontasset = GetSystemType("TMPro", "TMP_FontAsset");
         log(DEBUG, "TextObject::create: Gotten the type!");
-        Array<Il2CppObject *> *allObjects;
 
         // Find Objects of type TMP_fontAsset
-        allObjects = *RET_0_UNLESS(RunMethod<decltype(allObjects)>("UnityEngine", "Resources", "FindObjectsOfTypeAll", type_fontasset));
+        Array<Il2CppObject*>* allObjects = *RET_0_UNLESS(RunMethod("UnityEngine", "Resources", "FindObjectsOfTypeAll", type_fontasset));
         int match = -1;
         for (int i = 0; i < allObjects->Length(); i++) {
             // Treat it as a UnityEngine.Object (which it is) and call the name getter
-            auto* assetName = *RET_0_UNLESS(RunMethod<Il2CppString*>(allObjects->values[i], "get_name"));
+            Il2CppString* assetName = *RET_0_UNLESS(RunMethod(allObjects->values[i], "get_name"));
             if (to_utf8(csstrtostr(assetName)) == "Teko-Medium SDF No Glow") {
                 // Found matching asset
                 match = i;
@@ -106,7 +105,7 @@ namespace CustomUI {
     }
 
     static auto findDataSize(Il2CppObject* downloadHandler) {
-        auto* data = *RET_0_UNLESS(il2cpp_utils::RunMethod<Array<uint8_t>*>(
+        Array<uint8_t>* data = *RET_0_UNLESS(il2cpp_utils::RunMethod(
             "UnityEngine.Networking", "DownloadHandler", "InternalGetByteArray", downloadHandler));
         return data->Length();
     }
@@ -121,9 +120,11 @@ namespace CustomUI {
         float prevProg = -1;
         std::vector<decltype(Array<int>::max_length)> recvLens;
         while (!isDone) {
-            isDone = il2cpp_utils::RunMethod<bool>(obj->WWW, "get_isDone").value_or(false);
-            auto prog = il2cpp_utils::RunMethod<float>(obj->WWW, "GetDownloadProgress").value_or(-1);
-            if (prog >= 0) {
+            if (auto temp = il2cpp_utils::RunMethod(obj->WWW, "get_isDone")) {
+                isDone = *temp;
+            }
+            if (auto progTemp = il2cpp_utils::RunMethod(obj->WWW, "GetDownloadProgress")) {
+                float prog = *progTemp;
                 if (prog != prevProg) {
                     auto dataLen = findDataSize(downloadHandler);
                     decltype(Array<int>::max_length) cap = std::round(((float)dataLen) / prog);
@@ -149,7 +150,7 @@ namespace CustomUI {
         log(INFO, "real progs (out of %i): %s", finalLen, ss.str().c_str());
 
         log(INFO, "webRequest isDone.");
-        auto* str = *RET_V_UNLESS(RunMethod<Il2CppString*>(obj->WWW, "get_error"));
+        Il2CppString* str = *RET_V_UNLESS(RunMethod(obj->WWW, "get_error"));
         if (str) {
             log(ERROR, "webRequest error: %s", to_utf8(csstrtostr(str)).c_str());
         } else {
