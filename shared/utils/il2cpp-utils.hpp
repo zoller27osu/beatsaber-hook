@@ -311,7 +311,30 @@ namespace il2cpp_utils {
         return base;
     }
 
-    template<class TOut = Il2CppObject*, class T, class... TArgs>
+    template <class, template <class, class...> class>
+    struct is_instance : public std::false_type {};
+
+    template <class...Ts, template <class, class...> class U>
+    struct is_instance<U<Ts...>, U> : public std::true_type {};
+
+    class RetProxy {
+      private:
+        Il2CppObject* data;
+      public:
+        explicit RetProxy(Il2CppObject* obj): data(obj) {}
+
+        template <class TOut>
+        operator TOut*() const {
+            return reinterpret_cast<TOut*>(data);
+        }
+
+        template <class TOut, std::enable_if_t<!(is_instance<TOut, std::optional>::value), int> = 0>
+        operator TOut() const {
+            return *reinterpret_cast<TOut*>(il2cpp_functions::object_unbox(data));
+        }
+    };
+
+    template<class TOut = RetProxy, class T, class... TArgs>
     // Runs a MethodInfo with the specified parameters and instance, with return type TOut
     // Assumes a static method if instance == nullptr
     // Returns false if it fails
@@ -333,22 +356,15 @@ namespace il2cpp_utils {
         Il2CppException* exp = nullptr;
         auto invokeParamsVec = ExtractValues(params...);
         auto ret = il2cpp_functions::runtime_invoke(method, inst, invokeParamsVec.data(), &exp);
-        TOut out;
-        if constexpr (std::is_pointer_v<TOut>) {
-            out = reinterpret_cast<TOut>(ret);
-        } else {
-            out = *reinterpret_cast<TOut*>(il2cpp_functions::object_unbox(ret));
-        }
-
         if (exp) {
             log(ERROR, "il2cpp_utils: RunMethod: %s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
                 il2cpp_utils::ExceptionToString(exp).c_str());
             return std::nullopt;
         }
-        return out;
+        return RetProxy(ret);
     }
 
-    template<class TOut = Il2CppObject*, class T, class... TArgs>
+    template<class TOut = RetProxy, class T, class... TArgs>
     // Runs a (static) method with the specified method name, with return type TOut.
     // Checks the types of the parameters against the candidate methods. Returns false if it fails.
     // Created by zoller27osu, modified by Sc2ad
@@ -371,7 +387,7 @@ namespace il2cpp_utils {
         return RunMethod<TOut>(classOrInstance, method, params...);
     }
 
-    template<class TOut = Il2CppObject*, class T, class... TArgs>
+    template<class TOut = RetProxy, class T, class... TArgs>
     // Runs a (static) method with the specified method name and number of arguments, with return type TOut.
     // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
     // Created by zoller27osu, modified by Sc2ad
@@ -387,7 +403,7 @@ namespace il2cpp_utils {
         return RunMethod<TOut>(classOrInstance, method, params...);
     }
 
-    template<class TOut = Il2CppObject*, class... TArgs>
+    template<class TOut = RetProxy, class... TArgs>
     // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
     // The method also has return type TOut.
     // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
@@ -396,7 +412,7 @@ namespace il2cpp_utils {
         return RunMethod<TOut>(klass, methodName, params...);
     }
 
-    template<class TOut = Il2CppObject*, class... TArgs>
+    template<class TOut = RetProxy, class... TArgs>
     // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
     // The method also has return type TOut.
     // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
@@ -446,7 +462,7 @@ namespace il2cpp_utils {
         return FindField(klass, params...);
     }
 
-    template<typename TOut = Il2CppObject*>
+    template<typename TOut = RetProxy>
     // Gets a value from the given object instance, and FieldInfo, with return type TOut
     // Assumes a static field if instance == nullptr
     // Created by darknight1050, modified by Sc2ad and zoller27osu
@@ -454,16 +470,16 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         RET_NULLOPT_UNLESS(field);
 
-        TOut out;
+        Il2CppObject* out;
         if (instance) {
-            il2cpp_functions::field_get_value(instance, field, (void*)&out);
+            il2cpp_functions::field_get_value(instance, field, &out);
         } else { // Fallback to perform a static field set
-            il2cpp_functions::field_static_get_value(field, (void*)&out);
+            il2cpp_functions::field_static_get_value(field, &out);
         }
-        return out;
+        return RetProxy(out);
     }
 
-    template<typename TOut = Il2CppObject*>
+    template<typename TOut = RetProxy>
     // Gets the value of the field with type TOut and the given name from the given class
     // Adapted by zoller27osu
     std::optional<TOut> GetFieldValue(Il2CppClass* klass, std::string_view fieldName) {
@@ -474,7 +490,7 @@ namespace il2cpp_utils {
         return GetFieldValue<TOut>(nullptr, field);
     }
 
-    template<typename TOut = Il2CppObject*>
+    template<typename TOut = RetProxy>
     // Gets a value from the given object instance and field name, with return type TOut
     // Created by darknight1050, modified by Sc2ad and zoller27osu
     std::optional<TOut> GetFieldValue(Il2CppObject* instance, std::string_view fieldName) {
@@ -518,7 +534,7 @@ namespace il2cpp_utils {
         return FindProperty(klass, params...);
     }
 
-    template<class TOut = Il2CppObject*, class T>
+    template<class TOut = RetProxy, class T>
     // Gets a value from the given object instance, and PropertyInfo, with return type TOut
     // Assumes a static property if instance == nullptr
     std::optional<TOut> GetPropertyValue(T* instance, const PropertyInfo* prop) {
@@ -528,7 +544,7 @@ namespace il2cpp_utils {
         return RunMethod<TOut>(instance, getter);
     }
 
-    template<typename TOut = Il2CppObject*>
+    template<typename TOut = RetProxy>
     // Gets the value of the property with type TOut and the given name from the given class
     // Returns false if it fails
     std::optional<TOut> GetPropertyValue(Il2CppClass* klass, std::string_view propName) {
@@ -538,7 +554,7 @@ namespace il2cpp_utils {
         return GetPropertyValue<TOut, void>(nullptr, prop);
     }
 
-    template<typename TOut = Il2CppObject*>
+    template<typename TOut = RetProxy>
     // Gets a value from the given object instance and property name, with return type TOut
     // Returns false if it fails
     std::optional<TOut> GetPropertyValue(Il2CppObject* instance, std::string_view propName) {

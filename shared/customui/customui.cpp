@@ -47,14 +47,14 @@ namespace CustomUI {
         RET_0_UNLESS(match != -1);
 
         log(DEBUG, "TextObject::create: Instantiating the font");
-        auto* font = *RET_0_UNLESS(RunMethod("UnityEngine", "Object", "Instantiate", allObjects->values[match]));
+        Il2CppObject* font = *RET_0_UNLESS(RunMethod("UnityEngine", "Object", "Instantiate", allObjects->values[match]));
 
         log(DEBUG, "TextObject::create: Setting the font");
         RET_0_UNLESS(RunMethod(textMesh, "set_font", font));
 
         // textMesh.rectTransform.SetParent(parent, false);
         log(DEBUG, "TextObject::create: Getting rectTransform");
-        auto* rectTransform = *RET_0_UNLESS(RunMethod(textMesh, "get_rectTransform"));
+        Il2CppObject* rectTransform = *RET_0_UNLESS(RunMethod(textMesh, "get_rectTransform"));
 
         log(DEBUG, "TextObject::create: Setting Parent");
         if (!parentTransform) {
@@ -168,7 +168,7 @@ namespace CustomUI {
         obj->rawImage = *RET_0_UNLESS(RunMethod(obj->gameObj, "AddComponent", GetSystemType("UnityEngine.UI", "RawImage")));
         RET_0_UNLESS(RunMethod(obj->rawImage, "set_texture", obj->recievedTexture2D));
 
-        auto* rawImageRectTransform = *RET_0_UNLESS(RunMethod(obj->rawImage, "get_rectTransform"));
+        Il2CppObject* rawImageRectTransform = *RET_0_UNLESS(RunMethod(obj->rawImage, "get_rectTransform"));
         if (!obj->parentTransform) {
             log(ERROR, "RawImageObject::textureWebRequestComplete: obj->parentTransform is null! Fix it!");
         }
