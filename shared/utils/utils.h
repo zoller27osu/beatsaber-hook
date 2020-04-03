@@ -39,6 +39,7 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
 })
 #define RET_V_UNLESS(expr) RET_UNLESS(, expr)
 #define RET_0_UNLESS(expr) RET_UNLESS(0, expr)
+#define RET_NULLOPT_UNLESS(expr) RET_UNLESS(std::nullopt, expr)
 
 // Produces a has_[member]<T, U> type trait whose ::value tells you whether T has a member named [member] with type U.
 #define DEFINE_MEMBER_CHECKER(member) \

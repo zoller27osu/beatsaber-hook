@@ -51,16 +51,6 @@ namespace il2cpp_utils {
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
     Il2CppClass* GetClassFromName(std::string_view name_space, std::string_view type_name);
 
-    inline Il2CppClass* GetClassOfObject(Il2CppObject* instance, std::string_view whosAsking) {
-        il2cpp_functions::Init();
-        auto klass = il2cpp_functions::object_get_class(instance);
-        if (!klass) {
-            log(ERROR, "il2cpp_utils: %s: Could not find object's class!", whosAsking.data());
-            return nullptr;
-        }
-        return klass;
-    }
-
     // Seriously, don't un-const the returned Type
     const Il2CppType* MakeRef(const Il2CppType* type);
 
@@ -135,7 +125,7 @@ namespace il2cpp_utils {
             static inline Il2CppType const* get(Il2CppObject* arg) {
                 if (!arg) return nullptr;
                 il2cpp_functions::Init();
-                auto klass = GetClassOfObject(arg, "il2cpp_arg_type_<Il2CppObject*>");
+                auto klass = RET_0_UNLESS(il2cpp_functions::object_get_class(arg));
                 return il2cpp_functions::class_get_type(klass);
             }
         };
@@ -288,7 +278,8 @@ namespace il2cpp_utils {
     // Returns the MethodInfo for the method on the given instance
     template<class... TArgs>
     const MethodInfo* FindMethod(Il2CppObject* instance, TArgs&&... params) {
-        return FindMethod(GetClassOfObject(instance, "FindMethod"), params...);
+        auto klass = RET_0_UNLESS(il2cpp_functions::object_get_class(instance));
+        return FindMethod(klass, params...);
     }
     const MethodInfo* FindMethodUnsafe(Il2CppObject* instance, std::string_view methodName, int argsCount);
 
@@ -320,17 +311,14 @@ namespace il2cpp_utils {
         return base;
     }
 
-    template<class TOut, class T, class... TArgs>
+    template<class TOut = Il2CppObject*, class T, class... TArgs>
     // Runs a MethodInfo with the specified parameters and instance, with return type TOut
     // Assumes a static method if instance == nullptr
     // Returns false if it fails
     // Created by zoller27osu, modified by Sc2ad
-    bool RunMethod(TOut* out, T* instance, const MethodInfo* method, TArgs&& ...params) {
+    std::optional<TOut> RunMethod(T* instance, const MethodInfo* method, TArgs&& ...params) {
         il2cpp_functions::Init();
-        if (!method) {
-            log(ERROR, "il2cpp_utils: RunMethod: Null MethodInfo!");
-            return false;
-        }
+        RET_NULLOPT_UNLESS(method);
 
         // runtime_invoke will assume obj is unboxed and box it. We need to counter that for pre-boxed instances.
         // Note: we could also just call Runtime::Invoke directly, but box non-Il2CppObject instances ourselves as method->klass
@@ -345,133 +333,76 @@ namespace il2cpp_utils {
         Il2CppException* exp = nullptr;
         auto invokeParamsVec = ExtractValues(params...);
         auto ret = il2cpp_functions::runtime_invoke(method, inst, invokeParamsVec.data(), &exp);
+        TOut out;
         if constexpr (std::is_pointer_v<TOut>) {
-            *out = reinterpret_cast<TOut>(ret);
+            out = reinterpret_cast<TOut>(ret);
         } else {
-            *out = *reinterpret_cast<TOut*>(il2cpp_functions::object_unbox(ret));
+            out = *reinterpret_cast<TOut*>(il2cpp_functions::object_unbox(ret));
         }
 
         if (exp) {
             log(ERROR, "il2cpp_utils: RunMethod: %s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
                 il2cpp_utils::ExceptionToString(exp).c_str());
-            return false;
+            return std::nullopt;
         }
-        return true;
+        return out;
     }
 
-    template<class... TArgs, class T>
-    // Runs a MethodInfo with the specified parameters and instance; best for void return type
-    // Assumes a static method if instance == nullptr
-    // Returns false if it fails
-    // Created by zoller27osu
-    bool RunMethod(T* instance, const MethodInfo* method, TArgs&& ...params) {
-        void* out = nullptr;
-        return RunMethod(&out, instance, method, params...);
-    }
-
-    template<class TOut, class T, class... TArgs>
+    template<class TOut = Il2CppObject*, class T, class... TArgs>
     // Runs a (static) method with the specified method name, with return type TOut.
     // Checks the types of the parameters against the candidate methods. Returns false if it fails.
     // Created by zoller27osu, modified by Sc2ad
     // TODO: define these via KlassOrInstance types if possible
-    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
-    RunMethod(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
+    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, std::optional<TOut>>
+    RunMethod(T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
         il2cpp_functions::Init();
-        if (!classOrInstance) {
-            log(ERROR, "il2cpp_utils: RunMethod: Null classOrInstance parameter!");
-            return false;
-        }
+        RET_NULLOPT_UNLESS(classOrInstance);
 
         auto types = ExtractTypes(params...);
         if (types.size() != sizeof...(TArgs)) {
             log(WARNING, "RunMethod: ExtractTypes for method %s failed!", methodName.data());
-            return false;
+            return std::nullopt;
         }
-        auto method = FindMethod(classOrInstance, methodName, types);
-        if (!method) return false;
 
+        auto method = RET_NULLOPT_UNLESS(FindMethod(classOrInstance, methodName, types));
         if constexpr (std::is_base_of_v<Il2CppClass, T>) {
-            return RunMethod<TOut, void>(out, nullptr, method, params...);
+            return RunMethod<TOut, void>(nullptr, method, params...);
         }
-        return RunMethod(out, classOrInstance, method, params...);
+        return RunMethod<TOut>(classOrInstance, method, params...);
     }
 
-    template<class TOut, class T, class... TArgs>
+    template<class TOut = Il2CppObject*, class T, class... TArgs>
     // Runs a (static) method with the specified method name and number of arguments, with return type TOut.
     // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
     // Created by zoller27osu, modified by Sc2ad
-    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
-    RunMethodUnsafe(TOut* out, T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
-        il2cpp_functions::Init();
-        if (!classOrInstance) {
-            log(ERROR, "il2cpp_utils: RunMethod: Null classOrInstance parameter!");
-            return false;
-        }
-        auto method = FindMethodUnsafe(classOrInstance, methodName, sizeof...(TArgs));
-        if (!method) return false;
-
-        if constexpr (std::is_base_of_v<Il2CppClass, T>) {
-            return RunMethod<TOut, void>(out, nullptr, method, params...);
-        }
-        return RunMethod(out, classOrInstance, method, params...);
-    }
-
-    template<class TOut, class... TArgs>
-    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
-    // The method also has return type TOut.
-    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
-    bool RunMethod(TOut* out, std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
-        auto klass = GetClassFromName(nameSpace, klassName);
-        if (!klass) return false;
-        return RunMethod(out, klass, methodName, params...);
-    }
-
-    template<class TOut, class... TArgs>
-    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
-    // The method also has return type TOut.
-    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
-    bool RunMethodUnsafe(TOut* out, std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
-        auto klass = GetClassFromName(nameSpace, klassName);
-        if (!klass) return false;
-        return RunMethodUnsafe(out, klass, methodName, params...);
-    }
-
-    template<class... TArgs>
-    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
-    // Best for void return type.
-    // Checks the types of the parameters against the candidate methods. Returns false if it fails.
-    bool RunMethod(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
-        void* out = nullptr;
-        return RunMethod(&out, nameSpace, klassName, methodName, params...);
-    }
-
-    template<class... TArgs>
-    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
-    // Best for void return type.
-    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
-    bool RunMethodUnsafe(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
-        void* out = nullptr;
-        return RunMethodUnsafe(&out, nameSpace, klassName, methodName, params...);
-    }
-
-    template<class T, class... TArgs>
-    // Runs a (static) method with the specified method name; best for void return type
-    // Checks the types of the parameters against the candidate methods. Returns false if it fails.
-    // Created by zoller27osu
-    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
-    RunMethod(T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
-        void* out = nullptr;
-        return RunMethod(&out, classOrInstance, methodName, params...);
-    }
-
-    template<class T, class... TArgs>
-    // Runs a (static) method with the specified method name and number of arguments; best for void return type
-    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
-    // Created by zoller27osu
-    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, bool>
+    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, std::optional<TOut>>
     RunMethodUnsafe(T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
-        void* out = nullptr;
-        return RunMethodUnsafe(&out, classOrInstance, methodName, params...);
+        il2cpp_functions::Init();
+        RET_NULLOPT_UNLESS(classOrInstance);
+
+        auto method = RET_NULLOPT_UNLESS(FindMethodUnsafe(classOrInstance, methodName, sizeof...(TArgs)));
+        if constexpr (std::is_base_of_v<Il2CppClass, T>) {
+            return RunMethod<TOut, void>(nullptr, method, params...);
+        }
+        return RunMethod<TOut>(classOrInstance, method, params...);
+    }
+
+    template<class TOut = Il2CppObject*, class... TArgs>
+    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
+    // The method also has return type TOut.
+    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
+    std::optional<TOut> RunMethod(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
+        auto klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, klassName));
+        return RunMethod<TOut>(klass, methodName, params...);
+    }
+
+    template<class TOut = Il2CppObject*, class... TArgs>
+    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
+    // The method also has return type TOut.
+    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
+    std::optional<TOut> RunMethodUnsafe(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
+        auto klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, klassName));
+        return RunMethodUnsafe<TOut>(klass, methodName, params...);
     }
 
     template<typename TObj = Il2CppObject, typename... TArgs>
@@ -511,86 +442,47 @@ namespace il2cpp_utils {
     // Wrapper for FindField taking an Il2CppObject* in place of an Il2CppClass*
     template<class... TArgs>
     FieldInfo* FindField(Il2CppObject* instance, TArgs&&... params) {
-        return FindField(GetClassOfObject(instance, "FindField"), params...);
+        auto klass = RET_0_UNLESS(il2cpp_functions::object_get_class(instance));
+        return FindField(klass, params...);
     }
 
-    // Gets an Il2cppObject* from the given object instance and FieldInfo
-    // instance can only be null for static fields
-    // Returns nullptr if it fails
-    Il2CppObject* GetFieldValue(Il2CppObject* instance, FieldInfo* field);
-
-    // Gets an Il2CppObject* from the given class and field name
-    // Returns nullptr if it fails
-    // Created by zoller27
-    Il2CppObject* GetFieldValue(Il2CppClass* klass, std::string_view fieldName);
-
-    // Gets an Il2CppObject* from the given object instance and field name
-    // Returns nullptr if it fails
-    // Created by darknight1050, modified by Sc2ad
-    Il2CppObject* GetFieldValue(Il2CppObject* instance, std::string_view fieldName);
-
-    // Wrapper around the non-template GetFieldValue's that casts the result for you
-    template<class TOut, class TA, class TB>
-    std::enable_if_t<std::is_base_of_v<Il2CppObject, TOut>, TOut*>
-    GetFieldValue(TA* a, TB b) {
-        return reinterpret_cast<TOut*>(GetFieldValue(a, b));
-    }
-
-    template<typename TOut>
+    template<typename TOut = Il2CppObject*>
     // Gets a value from the given object instance, and FieldInfo, with return type TOut
-    // Returns false if it fails
     // Assumes a static field if instance == nullptr
     // Created by darknight1050, modified by Sc2ad and zoller27osu
-    bool GetFieldValue(TOut* out, Il2CppObject* instance, FieldInfo* field) {
+    std::optional<TOut> GetFieldValue(Il2CppObject* instance, FieldInfo* field) {
         il2cpp_functions::Init();
-        if (!field) {
-            log(ERROR, "il2cpp_utils: GetFieldValue: Null FieldInfo!");
-            return false;
-        }
-        if (instance) {
-            il2cpp_functions::field_get_value(instance, field, (void*)out);
-        } else { // Fallback to perform a static field set
-            il2cpp_functions::field_static_get_value(field, (void*)out);
-        }
-        return true;
-    }
+        RET_NULLOPT_UNLESS(field);
 
-    template<typename TOut>
-    // Gets the value of the field with type TOut and the given name from the given class
-    // Returns false if it fails
-    // Adapted by zoller27osu
-    bool GetFieldValue(TOut* out, Il2CppClass* klass, std::string_view fieldName) {
-        il2cpp_functions::Init();
-        if (!klass) {
-            log(ERROR, "il2cpp_utils: GetFieldValue: Could not find object class!");
-            return false;
-        }
-        auto field = FindField(klass, fieldName);
-        if (!field) return false;
-        return GetFieldValue(out, nullptr, field);
-    }
-
-    template<typename TOut>
-    // Gets a value from the given object instance and field name, with return type TOut
-    // Returns false if it fails
-    // Created by darknight1050, modified by Sc2ad and zoller27osu
-    bool GetFieldValue(TOut* out, Il2CppObject* instance, std::string_view fieldName) {
-        il2cpp_functions::Init();
-        if (!instance) {
-            log(ERROR, "il2cpp_utils: GetFieldValue: Null instance parameter!");
-            return false;
-        }
-        auto field = FindField(instance, fieldName);
-        if (!field) return false;
-        return GetFieldValue(out, instance, field);
-    }
-
-    // An unsafe wrapper around the TOut GetFieldValues; il2cpp should unbox when appropriate
-    template<class TOut, class... TArgs>
-    TOut GetFieldValueUnsafe(TArgs... params) {
         TOut out;
-        GetFieldValue(&out, params...);
+        if (instance) {
+            il2cpp_functions::field_get_value(instance, field, (void*)&out);
+        } else { // Fallback to perform a static field set
+            il2cpp_functions::field_static_get_value(field, (void*)&out);
+        }
         return out;
+    }
+
+    template<typename TOut = Il2CppObject*>
+    // Gets the value of the field with type TOut and the given name from the given class
+    // Adapted by zoller27osu
+    std::optional<TOut> GetFieldValue(Il2CppClass* klass, std::string_view fieldName) {
+        il2cpp_functions::Init();
+        RET_NULLOPT_UNLESS(klass);
+
+        auto field = RET_NULLOPT_UNLESS(FindField(klass, fieldName));
+        return GetFieldValue<TOut>(nullptr, field);
+    }
+
+    template<typename TOut = Il2CppObject*>
+    // Gets a value from the given object instance and field name, with return type TOut
+    // Created by darknight1050, modified by Sc2ad and zoller27osu
+    std::optional<TOut> GetFieldValue(Il2CppObject* instance, std::string_view fieldName) {
+        il2cpp_functions::Init();
+        RET_NULLOPT_UNLESS(instance);
+
+        auto field = RET_NULLOPT_UNLESS(FindField(instance, fieldName));
+        return GetFieldValue<TOut>(instance, field);
     }
 
     // TODO: typecheck the SetField/PropertyValue methods' value params?
@@ -622,75 +514,38 @@ namespace il2cpp_utils {
     // Wrapper for FindProperty taking an Il2CppObject* in place of an Il2CppClass*
     template<class... TArgs>
     const PropertyInfo* FindProperty(Il2CppObject* instance, TArgs&&... params) {
-        return FindProperty(GetClassOfObject(instance, "FindProperty"), params...);
+        auto klass = RET_0_UNLESS(il2cpp_functions::object_get_class(instance));
+        return FindProperty(klass, params...);
     }
 
-    // Gets an Il2cppObject* from the given object instance and PropertyInfo
-    // instance can only be null for static properties
-    // Returns nullptr if it fails
-    template<class T>
-    Il2CppObject* GetPropertyValue(T* instance, const PropertyInfo* prop) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(prop);
-
-        auto getter = RET_0_UNLESS(il2cpp_functions::property_get_get_method(prop));
-        Il2CppObject* out = nullptr;
-        RET_0_UNLESS(RunMethod(out, instance, getter));
-        return out;
-    }
-
-    // Gets an Il2CppObject* from the given class and property name
-    // Returns nullptr if it fails
-    Il2CppObject* GetPropertyValue(Il2CppClass* klass, std::string_view propName);
-
-    // Gets an Il2CppObject* from the given object instance and property name
-    // Returns nullptr if it fails
-    Il2CppObject* GetPropertyValue(Il2CppObject* instance, std::string_view propName);
-
-    // Wrapper around the above GetPropertyValue's that casts the result for you
-    template<class TOut, class TA, class TB>
-    std::enable_if_t<std::is_base_of_v<Il2CppObject, TOut>, TOut*>
-    GetPropertyValue(TA* a, TB b) {
-        return reinterpret_cast<TOut*>(GetPropertyValue(a, b));
-    }
-
-    template<class TOut, class T>
+    template<class TOut = Il2CppObject*, class T>
     // Gets a value from the given object instance, and PropertyInfo, with return type TOut
-    // Returns false if it fails
     // Assumes a static property if instance == nullptr
-    bool GetPropertyValue(TOut* out, T* instance, const PropertyInfo* prop) {
+    std::optional<TOut> GetPropertyValue(T* instance, const PropertyInfo* prop) {
         il2cpp_functions::Init();
-        RET_0_UNLESS(prop);
-        auto getter = RET_0_UNLESS(il2cpp_functions::property_get_get_method(prop));
-        return RunMethod(out, instance, getter);
+        RET_NULLOPT_UNLESS(prop);
+        auto getter = RET_NULLOPT_UNLESS(il2cpp_functions::property_get_get_method(prop));
+        return RunMethod<TOut>(instance, getter);
     }
 
-    template<typename TOut>
+    template<typename TOut = Il2CppObject*>
     // Gets the value of the property with type TOut and the given name from the given class
     // Returns false if it fails
-    bool GetPropertyValue(TOut* out, Il2CppClass* klass, std::string_view propName) {
+    std::optional<TOut> GetPropertyValue(Il2CppClass* klass, std::string_view propName) {
         il2cpp_functions::Init();
-        RET_0_UNLESS(klass);
-        auto prop = RET_0_UNLESS(FindProperty(klass, propName));
-        return GetPropertyValue<TOut, void>(out, nullptr, prop);
+        RET_NULLOPT_UNLESS(klass);
+        auto prop = RET_NULLOPT_UNLESS(FindProperty(klass, propName));
+        return GetPropertyValue<TOut, void>(nullptr, prop);
     }
 
-    template<typename TOut>
+    template<typename TOut = Il2CppObject*>
     // Gets a value from the given object instance and property name, with return type TOut
     // Returns false if it fails
-    bool GetPropertyValue(TOut* out, Il2CppObject* instance, std::string_view propName) {
+    std::optional<TOut> GetPropertyValue(Il2CppObject* instance, std::string_view propName) {
         il2cpp_functions::Init();
-        RET_0_UNLESS(instance);
-        auto prop = FindProperty(instance, propName);
-        return GetPropertyValue(out, instance, prop);
-    }
-
-    // An unsafe wrapper around the TOut GetPropertyValues; il2cpp should unbox when appropriate
-    template<class TOut, class... TArgs>
-    TOut GetPropertyValueUnsafe(TArgs... params) {
-        TOut out;
-        GetPropertyValue(&out, params...);
-        return out;
+        RET_NULLOPT_UNLESS(instance);
+        auto prop = RET_NULLOPT_UNLESS(FindProperty(instance, propName));
+        return GetPropertyValue<TOut>(instance, prop);
     }
 
     // Sets the value of a given property, given an object instance and PropertyInfo
@@ -702,7 +557,7 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         RET_0_UNLESS(prop);
         auto setter = RET_0_UNLESS(il2cpp_functions::property_get_set_method(prop));
-        return RunMethod(instance, setter, value);
+        return (bool)RunMethod(instance, setter, value);
     }
 
     // Sets the value of a given property, given an object instance and property name
