@@ -79,6 +79,16 @@ struct Il2CppNameToTypeDefinitionIndexHashTable : public Il2CppHashMap<std::pair
     }
 };
 
+// System.Collections.Generic.List
+template<class T>
+struct List : Il2CppObject
+{
+    Array<T>* items;
+    int size;
+    int version;
+    Il2CppObject* syncRoot;
+};
+
 extern "C" {
 #endif /* __cplusplus */
 #ifndef __cplusplus
