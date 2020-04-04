@@ -226,7 +226,8 @@ namespace il2cpp_utils {
     }
 
     const MethodInfo* FindMethodUnsafe(Il2CppObject* instance, std::string_view methodName, int argsCount) {
-        return FindMethodUnsafe(GetClassOfObject(instance, "FindMethod"), methodName, argsCount);
+        auto klass = RET_0_UNLESS(il2cpp_functions::object_get_class(instance));
+        return FindMethodUnsafe(klass, methodName, argsCount);
     }
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes) {
@@ -305,29 +306,6 @@ namespace il2cpp_utils {
         return field;
     }
 
-    Il2CppObject* GetFieldValue(Il2CppObject* instance, FieldInfo* field) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(field);
-
-        return il2cpp_functions::field_get_value_object(field, instance);
-    }
-
-    Il2CppObject* GetFieldValue(Il2CppClass* klass, std::string_view fieldName) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(klass);
-
-        auto field = RET_0_UNLESS(FindField(klass, fieldName));
-        return GetFieldValue(nullptr, field);
-    }
-
-    Il2CppObject* GetFieldValue(Il2CppObject* instance, std::string_view fieldName) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(instance);
-
-        auto field = RET_0_UNLESS(FindField(instance, fieldName));
-        return GetFieldValue(instance, field);
-    }
-
     bool SetFieldValue(Il2CppObject* instance, FieldInfo* field, void* value) {
         il2cpp_functions::Init();
         RET_0_UNLESS(field);
@@ -374,22 +352,6 @@ namespace il2cpp_utils {
         }
         classesNamesToPropertiesCache.insert({key, prop});
         return prop;
-    }
-
-    Il2CppObject* GetPropertyValue(Il2CppClass* klass, std::string_view propName) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(klass);
-
-        auto prop = RET_0_UNLESS(FindProperty(klass, propName));
-        return GetPropertyValue<void>(nullptr, prop);
-    }
-
-    Il2CppObject* GetPropertyValue(Il2CppObject* instance, std::string_view propName) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(instance);
-
-        auto prop = RET_0_UNLESS(FindProperty(instance, propName));
-        return GetPropertyValue(instance, prop);
     }
 
     bool SetPropertyValue(Il2CppClass* klass, std::string_view propName, void* value) {
