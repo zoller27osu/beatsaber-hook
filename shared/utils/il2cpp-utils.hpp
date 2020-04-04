@@ -312,10 +312,8 @@ namespace il2cpp_utils {
     }
 
     template<class TOut = Il2CppObject*, class T, class... TArgs>
-    // Runs a MethodInfo with the specified parameters and instance, with return type TOut
-    // Assumes a static method if instance == nullptr
-    // Returns false if it fails
-    // Created by zoller27osu, modified by Sc2ad
+    // Runs a MethodInfo with the specified parameters and instance, with return type TOut.
+    // Assumes a static method if instance == nullptr. May fail due to exception or wrong name, hence the std::optional.
     std::optional<TOut> RunMethod(T* instance, const MethodInfo* method, TArgs&& ...params) {
         il2cpp_functions::Init();
         RET_NULLOPT_UNLESS(method);
@@ -350,9 +348,8 @@ namespace il2cpp_utils {
 
     template<class TOut = Il2CppObject*, class T, class... TArgs>
     // Runs a (static) method with the specified method name, with return type TOut.
-    // Checks the types of the parameters against the candidate methods. Returns false if it fails.
-    // Created by zoller27osu, modified by Sc2ad
-    // TODO: define these via KlassOrInstance types if possible
+    // Checks the types of the parameters against the candidate methods.
+    // TODO: define classOrInstance T's via a ClassOrInstance type if possible
     std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, std::optional<TOut>>
     RunMethod(T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
         il2cpp_functions::Init();
@@ -373,8 +370,7 @@ namespace il2cpp_utils {
 
     template<class TOut = Il2CppObject*, class T, class... TArgs>
     // Runs a (static) method with the specified method name and number of arguments, with return type TOut.
-    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
-    // Created by zoller27osu, modified by Sc2ad
+    // DOES NOT PERFORM TYPE CHECKING.
     std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, std::optional<TOut>>
     RunMethodUnsafe(T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
         il2cpp_functions::Init();
@@ -390,7 +386,6 @@ namespace il2cpp_utils {
     template<class TOut = Il2CppObject*, class... TArgs>
     // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
     // The method also has return type TOut.
-    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
     std::optional<TOut> RunMethod(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
         auto klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, klassName));
         return RunMethod<TOut>(klass, methodName, params...);
@@ -399,7 +394,7 @@ namespace il2cpp_utils {
     template<class TOut = Il2CppObject*, class... TArgs>
     // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
     // The method also has return type TOut.
-    // DOES NOT PERFORM TYPE CHECKING. Returns false if it fails.
+    // DOES NOT PERFORM TYPE CHECKING.
     std::optional<TOut> RunMethodUnsafe(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
         auto klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, klassName));
         return RunMethodUnsafe<TOut>(klass, methodName, params...);
@@ -485,7 +480,8 @@ namespace il2cpp_utils {
         return GetFieldValue<TOut>(instance, field);
     }
 
-    // TODO: typecheck the SetField/PropertyValue methods' value params?
+    // TODO: typecheck the Set[Field/Property]Value methods' value params?
+
     // Sets the value of a given field, given an object instance and FieldInfo
     // Unbox "value" before passing if it is an Il2CppObject but the field is a primitive or struct!
     // Returns false if it fails
@@ -519,7 +515,7 @@ namespace il2cpp_utils {
     }
 
     template<class TOut = Il2CppObject*, class T>
-    // Gets a value from the given object instance, and PropertyInfo, with return type TOut
+    // Gets a value from the given object instance, and PropertyInfo, with return type TOut.
     // Assumes a static property if instance == nullptr
     std::optional<TOut> GetPropertyValue(T* instance, const PropertyInfo* prop) {
         il2cpp_functions::Init();
@@ -529,8 +525,7 @@ namespace il2cpp_utils {
     }
 
     template<typename TOut = Il2CppObject*>
-    // Gets the value of the property with type TOut and the given name from the given class
-    // Returns false if it fails
+    // Gets the value of the property with the given name from the given class, and returns it as TOut.
     std::optional<TOut> GetPropertyValue(Il2CppClass* klass, std::string_view propName) {
         il2cpp_functions::Init();
         RET_NULLOPT_UNLESS(klass);
@@ -539,8 +534,7 @@ namespace il2cpp_utils {
     }
 
     template<typename TOut = Il2CppObject*>
-    // Gets a value from the given object instance and property name, with return type TOut
-    // Returns false if it fails
+    // Gets a value from the given object instance and property name, and returns it as TOut.
     std::optional<TOut> GetPropertyValue(Il2CppObject* instance, std::string_view propName) {
         il2cpp_functions::Init();
         RET_NULLOPT_UNLESS(instance);

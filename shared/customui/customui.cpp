@@ -30,10 +30,9 @@ namespace CustomUI {
         log(DEBUG, "TextObject::create: Getting type of TMPro.TMP_FontAsset");
         Il2CppObject *type_fontasset = GetSystemType("TMPro", "TMP_FontAsset");
         log(DEBUG, "TextObject::create: Gotten the type!");
-        Array<Il2CppObject *> *allObjects;
 
         // Find Objects of type TMP_fontAsset
-        allObjects = *RET_0_UNLESS(RunMethod<decltype(allObjects)>("UnityEngine", "Resources", "FindObjectsOfTypeAll", type_fontasset));
+        auto* allObjects = *RET_0_UNLESS(RunMethod<Array<Il2CppObject*>*>("UnityEngine", "Resources", "FindObjectsOfTypeAll", type_fontasset));
         int match = -1;
         for (int i = 0; i < allObjects->Length(); i++) {
             // Treat it as a UnityEngine.Object (which it is) and call the name getter
@@ -122,8 +121,8 @@ namespace CustomUI {
         std::vector<decltype(Array<int>::max_length)> recvLens;
         while (!isDone) {
             isDone = il2cpp_utils::RunMethod<bool>(obj->WWW, "get_isDone").value_or(false);
-            auto prog = il2cpp_utils::RunMethod<float>(obj->WWW, "GetDownloadProgress").value_or(-1);
-            if (prog >= 0) {
+            if (auto progOpt = il2cpp_utils::RunMethod<float>(obj->WWW, "GetDownloadProgress")) {
+                float prog = *progOpt;
                 if (prog != prevProg) {
                     auto dataLen = findDataSize(downloadHandler);
                     decltype(Array<int>::max_length) cap = std::round(((float)dataLen) / prog);
