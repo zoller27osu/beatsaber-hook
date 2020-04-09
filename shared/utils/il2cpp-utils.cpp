@@ -370,6 +370,16 @@ namespace il2cpp_utils {
         return SetPropertyValue(instance, prop, value);
     }
 
+    Il2CppClass* GetParamClass(const MethodInfo* method, int paramIdx) {
+        auto type = RET_0_UNLESS(il2cpp_functions::method_get_param(method, paramIdx));
+        return il2cpp_functions::class_from_il2cpp_type(type);
+    }
+
+    Il2CppClass* GetFieldClass(FieldInfo* field) {
+        auto type = RET_0_UNLESS(il2cpp_functions::field_get_type(field));
+        return il2cpp_functions::class_from_il2cpp_type(type);
+    }
+
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types) {
         il2cpp_functions::Init();
 
