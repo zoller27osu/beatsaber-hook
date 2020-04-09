@@ -19,6 +19,20 @@ namespace std {
 #include <unordered_map>  // breaks if logging is imported before it
 #include <thread>
 
+// For use in SAFE_ABORT/CRASH_UNLESS (& RET_UNLESS if possible)
+#if __has_include(<source_location>)
+#error please alert sc2ad/beatsaber-hook that "std::source_location is live" (sharing your Android NDK version) then comment this out!
+#elif __has_include(<experimental/source_location>)
+#error please alert sc2ad/beatsaber-hook that "std::experimental::source_location is live" (sharing your Android NDK version) then comment this out!
+#endif
+
+// For use in ClassOrInstance concept
+#if __has_include(<concepts>)
+#error please alert sc2ad/beatsaber-hook that "std::concepts are live" (sharing your Android NDK version) then comment this out!
+#elif __has_include(<experimental/concepts>)
+#error please alert sc2ad/beatsaber-hook that "std::experimental::concepts are live" (sharing your Android NDK version) then comment this out!
+#endif
+
 template <typename Container> struct is_vector : std::false_type { };
 template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type { };
 // TODO: figure out how to write an is_vector_v that compiles properly?
@@ -27,16 +41,19 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
     expr; \
 } while(0)
 
+// >>>>>>>>>>>>>>>>> DO NOT NEST X_UNLESS MACROS <<<<<<<<<<<<<<<<<
+// Prefer RunMethod.value_or to a nested X_UNLESS(RunMethod)
+
 // Logs error and RETURNS argument 1 IFF argument 2 boolean evaluates as false; else EVALUATES to argument 2
 // thank god for this GCC ({}) extension which "evaluates to the last statement"
 #define RET_UNLESS(retval, expr) ({ \
-    const auto& __temp__ = expr; \
+    auto&& __temp__ = (expr); \
     if (!__temp__) { \
         log(ERROR, "%s (in %s at %s:%i) returned false!", #expr, __PRETTY_FUNCTION__, __FILE__, __LINE__); \
         return retval; \
     } \
-    __temp__; \
-})
+    __temp__; })
+
 #define RET_V_UNLESS(expr) RET_UNLESS(, expr)
 #define RET_0_UNLESS(expr) RET_UNLESS(0, expr)
 #define RET_NULLOPT_UNLESS(expr) RET_UNLESS(std::nullopt, expr)
