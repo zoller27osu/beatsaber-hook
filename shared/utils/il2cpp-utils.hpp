@@ -615,33 +615,33 @@ namespace il2cpp_utils {
         return MakeAction(actionType, args...);
     }
 
+    Il2CppClass* GetParamClass(const MethodInfo* method, int paramIdx);
+
     // Intializes an object (using the given args) fit to be passed to the given method at the given parameter index.
     template<typename... TArgs>
     Il2CppObject* CreateParam(const MethodInfo* method, int paramIdx, TArgs&& ...args) {
-        auto type = RET_0_UNLESS(il2cpp_functions::method_get_param(method, paramIdx));
-        auto klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(type));
+        auto klass = RET_0_UNLESS(GetParamClass(method, paramIdx));
         return il2cpp_utils::New(klass, args...);
     }
 
     template<typename... TArgs>
     Il2CppObject* CreateParamUnsafe(const MethodInfo* method, int paramIdx, TArgs&& ...args) {
-        auto type = RET_0_UNLESS(il2cpp_functions::method_get_param(method, paramIdx));
-        auto klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(type));
+        auto klass = RET_0_UNLESS(GetParamClass(method, paramIdx));
         return il2cpp_utils::NewUnsafe(klass, args...);
     }
+
+    Il2CppClass* GetFieldClass(FieldInfo* field);
 
     // Intializes an object (using the given args) fit to be assigned to the given field.
     template<typename... TArgs>
     Il2CppObject* CreateFieldValue(FieldInfo* field, TArgs&& ...args) {
-        auto type = RET_0_UNLESS(il2cpp_functions::field_get_type(field));
-        auto klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(type));
+        auto klass = RET_0_UNLESS(GetFieldClass(field));
         return il2cpp_utils::New(klass, args...);
     }
 
     template<typename... TArgs>
     Il2CppObject* CreateFieldValueUnsafe(FieldInfo* field, TArgs&& ...args) {
-        auto type = RET_0_UNLESS(il2cpp_functions::field_get_type(field));
-        auto klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(type));
+        auto klass = RET_0_UNLESS(GetFieldClass(field));
         return il2cpp_utils::NewUnsafe(klass, args...);
     }
 
