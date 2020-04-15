@@ -12,24 +12,21 @@ public:
     bool LoadedAssetBundle() const { return assetBundle; }
     bool LoadedAsset() const { return asset; }
 
-    AssetImporter(std::string_view assetBundlePath)
-    {
+    AssetImporter(std::string_view assetBundlePath) {
         assetFilePath = CRASH_UNLESS(il2cpp_utils::createcsstr(assetBundlePath));
         pathExists = *CRASH_UNLESS(il2cpp_utils::RunMethod<bool>("System.IO", "File", "Exists", assetFilePath));
     }
 
     AssetImporter(std::string_view assetBundlePath, std::string_view assetNameS, std::string_view assetNamespace = "UnityEngine",
         std::string_view assetClassName = "GameObject")
-        : AssetImporter(assetBundlePath)
-    {
+    : AssetImporter(assetBundlePath) {
         assetName = CRASH_UNLESS(il2cpp_utils::createcsstr(assetNameS));
         SetNextAssetType(assetNamespace, assetClassName);
     }
 
     // Returns true if the asset bundle load has been requested, false otherwise
     bool LoadAssetBundle(bool alsoLoadAsset = false);
-    bool SetNextAssetType(std::string_view assetNamespace, std::string_view assetClassName)
-    {
+    bool SetNextAssetType(std::string_view assetNamespace, std::string_view assetClassName) {
         // TODO: instantly return true if assetType is already set to these params
         if (assetAsync && !asset)
             return false;
@@ -41,8 +38,7 @@ public:
     // Returns true if the asset is (now) loading async, false otherwise
     bool LoadAsset(std::string_view assetNameS = "");
     // Returns true if the callback was stored, false if it was immediately called
-    bool RegisterOrDoCallback(decltype(whenDone) callback)
-    {
+    bool RegisterOrDoCallback(decltype(whenDone) callback) {
         if (LoadedAsset()) {
             callback(this);
             return false;

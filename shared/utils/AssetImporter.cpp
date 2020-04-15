@@ -1,7 +1,6 @@
 #include "AssetImporter.hpp"
 
-bool CheckAssetClass(Il2CppObject* asset)
-{
+bool CheckAssetClass(Il2CppObject* asset) {
     auto* cAsset = CRASH_UNLESS(il2cpp_functions::object_get_class(asset));
     if (cAsset == il2cpp_functions::defaults->string_class) {
         Il2CppString* str = reinterpret_cast<Il2CppString*>(asset);
@@ -14,8 +13,7 @@ bool CheckAssetClass(Il2CppObject* asset)
 }
 
 // Note: if too much time passes since AssetComplete, ->asset becomes corrupted?
-Il2CppObject* AssetImporter::InstantiateAsset() const
-{
+Il2CppObject* AssetImporter::InstantiateAsset() const {
     RET_0_UNLESS(LoadedAsset());
     // RET_0_UNLESS(CheckAssetClass(asset));
 
@@ -24,8 +22,7 @@ Il2CppObject* AssetImporter::InstantiateAsset() const
     return ret;
 }
 
-void AssetImporter::AssetComplete(AssetImporter* obj, Il2CppObject* asyncOp)
-{
+void AssetImporter::AssetComplete(AssetImporter* obj, Il2CppObject* asyncOp) {
     CRASH_UNLESS(il2cpp_utils::GetPropertyValue<bool>(asyncOp, "isDone").value_or(false));
     obj->asset = *RET_V_UNLESS(il2cpp_utils::GetPropertyValue(asyncOp, "asset"));
     // RET_V_UNLESS(CheckAssetClass(asset));
@@ -35,8 +32,7 @@ void AssetImporter::AssetComplete(AssetImporter* obj, Il2CppObject* asyncOp)
     }
 }
 
-bool AssetImporter::LoadAsset(std::string_view assetNameS)
-{
+bool AssetImporter::LoadAsset(std::string_view assetNameS) {
     if (assetAsync && !LoadedAsset()) {
         return (assetNameS.empty() || !assetName || (assetNameS == to_utf8(csstrtostr(assetName))));
     }
@@ -50,10 +46,8 @@ bool AssetImporter::LoadAsset(std::string_view assetNameS)
     log(INFO, "Loading asset '%s'", to_utf8(csstrtostr(assetName)).c_str());
 
     permissionToLoadAsset = true;
-    if (!LoadedAssetBundle())
-        return false;
-    if (LoadedAsset())
-        return true;
+    if (!LoadedAssetBundle()) return false;
+    if (LoadedAsset()) return true;
     asset = nullptr;
     assetAsync = *RET_0_UNLESS(il2cpp_utils::RunMethod(assetBundle, "LoadAssetAsync", assetName, assetType));
 
@@ -65,15 +59,13 @@ bool AssetImporter::LoadAsset(std::string_view assetNameS)
     return true;
 }
 
-void AssetImporter::AssetBundleComplete(AssetImporter* obj, Il2CppObject* asyncOp)
-{
+void AssetImporter::AssetBundleComplete(AssetImporter* obj, Il2CppObject* asyncOp) {
     obj->assetBundle = *RET_V_UNLESS(il2cpp_utils::GetPropertyValue(asyncOp, "assetBundle"));
     if (obj->permissionToLoadAsset)
         obj->LoadAsset();
 }
 
-bool AssetImporter::LoadAssetBundle(bool alsoLoadAsset)
-{
+bool AssetImporter::LoadAssetBundle(bool alsoLoadAsset) {
     permissionToLoadAsset = alsoLoadAsset;
     if (!pathExists) {
         pathExists = *RET_0_UNLESS(il2cpp_utils::RunMethod<bool>("System.IO", "File", "Exists", assetFilePath));
