@@ -73,8 +73,7 @@ bool AssetImporter::LoadAssetBundle(bool alsoLoadAsset) {
     RET_0_UNLESS(pathExists);
     if (!bundleAsync) {
         bundleAsync = *RET_0_UNLESS(il2cpp_utils::RunMethod("UnityEngine", "AssetBundle", "LoadFromFileAsync", assetFilePath));
-        // TODO: change to SetPropertyValue(bundleAsync, "allowSceneActivation", true) when true becomes a valid param
-        RET_0_UNLESS(il2cpp_utils::RunMethod(bundleAsync, "set_allowSceneActivation", true));
+        RET_0_UNLESS(il2cpp_utils::SetPropertyValue(bundleAsync, "allowSceneActivation", true));
 
         auto method = RET_0_UNLESS(il2cpp_utils::FindMethodUnsafe(bundleAsync, "add_completed", 1));
         auto action = RET_0_UNLESS(il2cpp_utils::MakeAction(method, 0, this, AssetBundleComplete));
