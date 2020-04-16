@@ -306,34 +306,6 @@ namespace il2cpp_utils {
         return field;
     }
 
-    bool SetFieldValue(Il2CppObject* instance, FieldInfo* field, void* value) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(field);
-
-        if (instance) {
-            il2cpp_functions::field_set_value(instance, field, value);
-        } else { // Fallback to perform a static field set
-            il2cpp_functions::field_static_set_value(field, value);
-        }
-        return true;
-    }
-
-    bool SetFieldValue(Il2CppClass* klass, std::string_view fieldName, void* value) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(klass);
-
-        auto field = RET_0_UNLESS(FindField(klass, fieldName));
-        return SetFieldValue(nullptr, field, value);
-    }
-
-    bool SetFieldValue(Il2CppObject* instance, std::string_view fieldName, void* value) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(instance);
-
-        auto field = RET_0_UNLESS(FindField(instance, fieldName));
-        return SetFieldValue(instance, field, value);
-    }
-
     const PropertyInfo* FindProperty(Il2CppClass* klass, std::string_view propName) {
         il2cpp_functions::Init();
         RET_0_UNLESS(klass);
@@ -352,22 +324,6 @@ namespace il2cpp_utils {
         }
         classesNamesToPropertiesCache.insert({key, prop});
         return prop;
-    }
-
-    bool SetPropertyValue(Il2CppClass* klass, std::string_view propName, void* value) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(klass);
-
-        auto prop = RET_0_UNLESS(FindProperty(klass, propName));
-        return SetPropertyValue<void>(nullptr, prop, value);
-    }
-
-    bool SetPropertyValue(Il2CppObject* instance, std::string_view propName, void* value) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(instance);
-
-        auto prop = RET_0_UNLESS(FindProperty(instance, propName));
-        return SetPropertyValue(instance, prop, value);
     }
 
     Il2CppClass* GetParamClass(const MethodInfo* method, int paramIdx) {
