@@ -669,7 +669,7 @@ namespace il2cpp_utils {
     template<typename T = MulticastDelegate, typename T1, typename T2>
     T* MakeAction(FieldInfo* field, T1&& arg1, T2&& arg2) {
         auto actionType = RET_0_UNLESS(il2cpp_functions::field_get_type(field));
-        return MakeAction(actionType, arg1, arg2);
+        return MakeAction<T, void>(actionType, arg1, arg2);
     }
 
     // Intializes an object (using the given args) fit to be passed to the given method at the given parameter index.
