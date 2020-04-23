@@ -193,10 +193,10 @@ namespace il2cpp_utils {
     std::vector<const Il2CppType*> ClassVecToTypes(std::vector<const Il2CppClass*> seq);
 
     // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for an Il2CppClass*
-    Il2CppObject* GetSystemType(const Il2CppClass* klass);
+    Il2CppReflectionType* GetSystemType(const Il2CppClass* klass);
 
     // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for the class with the given namespace and name
-    Il2CppObject* GetSystemType(std::string_view nameSpace, std::string_view className);
+    Il2CppReflectionType* GetSystemType(std::string_view nameSpace, std::string_view className);
 
     // Gets the standard class name of an Il2CppClass*
     std::string ClassStandardName(Il2CppClass* klass, bool generics = true);
@@ -659,17 +659,17 @@ namespace il2cpp_utils {
     }
 
     // Creates an Action fit to be passed in the given parameter position to the given method.
-    template<typename T = MulticastDelegate, typename... TArgs>
-    T* MakeAction(const MethodInfo* method, int paramIdx, TArgs&& ...args) {
+    template<typename T = MulticastDelegate, typename T1, typename T2>
+    T* MakeAction(const MethodInfo* method, int paramIdx, T1&& arg1, T2&& arg2) {
         auto actionType = RET_0_UNLESS(il2cpp_functions::method_get_param(method, paramIdx));
-        return MakeAction(actionType, args...);
+        return MakeAction<T, void>(actionType, arg1, arg2);
     }
 
     // Creates an Action fit to be assigned to the given field.
-    template<typename T = MulticastDelegate, typename... TArgs>
-    T* MakeAction(FieldInfo* field, TArgs&& ...args) {
+    template<typename T = MulticastDelegate, typename T1, typename T2>
+    T* MakeAction(FieldInfo* field, T1&& arg1, T2&& arg2) {
         auto actionType = RET_0_UNLESS(il2cpp_functions::field_get_type(field));
-        return MakeAction(actionType, args...);
+        return MakeAction<T, void>(actionType, arg1, arg2);
     }
 
     // Intializes an object (using the given args) fit to be passed to the given method at the given parameter index.
