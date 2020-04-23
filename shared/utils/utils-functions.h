@@ -26,15 +26,15 @@ bool parsejsonfile(rapidjson::Document& doc, std::string filename);
 // Dumps the 'before' bytes before and 'after' bytes after the given pointer to log
 void dump(int before, int after, void* ptr);
 // Reads all of the text of a file at the given filename. If the file does not exist, returns NULL
-char* readfile(const char* filename);
+std::string readfile(std::string_view filename);
 // Writes all of the text to a file at the given filename. Returns true on success, false otherwise
-bool writefile(const char* filename, const char* text);
+bool writefile(std::string_view filename, std::string_view text);
 // Deletes a file at the given filename. Returns true on success, false otherwise
-bool deletefile(const char* filename);
+bool deletefile(std::string_view filename);
 // Returns if a file exists and can be written to / read from
-bool fileexists(const char* filename);
+bool fileexists(std::string_view filename);
 // Returns if a directory exists and can be written to / read from
-bool direxists(const char* dirname);
+bool direxists(std::string_view dirname);
 // Returns a loaded UnityEngine.Object from an asset (NOT YET IMPLEMENTED!)
 void* loadfromasset(const char* assetFilePath, const char* assetName);
 // Returns the config path for the current mod

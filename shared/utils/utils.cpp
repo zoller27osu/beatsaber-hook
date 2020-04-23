@@ -265,14 +265,14 @@ void dump(int before, int after, void* ptr) {
 
 // SETTINGS
 
-bool fileexists(const char* filename) {
-    return access(filename, W_OK | R_OK) != -1;
+bool fileexists(std::string_view filename) {
+    return access(filename.data(), W_OK | R_OK) != -1;
 }
 
-bool direxists(const char* dirname) {
+bool direxists(std::string_view dirname) {
     struct stat info;
 
-    if (stat(dirname, &info) != 0) {
+    if (stat(dirname.data(), &info) != 0) {
         return false;
     } if (info.st_mode & S_IFDIR) {
         return true;
@@ -280,34 +280,28 @@ bool direxists(const char* dirname) {
     return false;
 }
 
-char* readfile(const char* filename) {
-    FILE* fp = fopen(filename, "r");
-    char* content = NULL;
-    long size = 0;
-    if (fp) {
-        fseek(fp, 0, SEEK_END);
-        size = ftell(fp);
-        rewind(fp);
-        content = (char*)malloc(size * sizeof(char));
-        fread(content, sizeof(char), size, fp);
-        fclose(fp);
+std::string readfile(std::string_view filename) {
+    std::ifstream t(filename.data());
+    if (!t.is_open()) {
+        return "";
     }
-    return content;
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    return buffer.str();
 }
 
-bool writefile(const char* filename, const char* text) {
-    FILE* fp = fopen(filename, "w");
-    if (fp) {
-        fwrite(text, sizeof(char), strlen(text), fp);
-        fclose(fp);
+bool writefile(std::string_view filename, std::string_view text) {
+    std::ofstream t(filename.data());
+    if (t.is_open()) {
+        t << text;
         return true;
     }
     return false;
 }
 
-bool deletefile(const char* filename) {
+bool deletefile(std::string_view filename) {
     if (fileexists(filename))
-        return remove(filename) == 0;
+        return remove(filename.data()) == 0;
     return false;
 }
 
