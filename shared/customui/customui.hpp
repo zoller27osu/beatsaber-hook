@@ -38,6 +38,9 @@ namespace CustomUI {
             // Sets the text.
             // Returns true on success, false otherwise.
             bool set(std::string_view text);
+            // Destroys the TextObject, removing dangling pointers.
+            // Returns true on success, false otherwise.
+            bool destroy();
     };
     // Except where mentioned, original code by Rugtveit and only slight modifications by zoller27osu.
     class RawImageObject : public Il2CppObject {

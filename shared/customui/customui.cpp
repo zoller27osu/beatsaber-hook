@@ -104,6 +104,13 @@ namespace CustomUI {
         return true;
     }
 
+    bool TextObject::destroy() {
+        RET_0_UNLESS(RunMethod("UnityEngine", "Object", "Destroy", gameObj));
+        gameObj = nullptr;
+        textMesh = nullptr;
+        return true;
+    }
+
     static auto findDataSize(Il2CppObject* downloadHandler) {
         auto* data = *RET_0_UNLESS(il2cpp_utils::RunMethod<Array<uint8_t>*>(
             "UnityEngine.Networking", "DownloadHandler", "InternalGetByteArray", downloadHandler));
