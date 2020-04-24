@@ -172,6 +172,14 @@ typedef struct Quaternion {
     float w;
 } Quaternion;
 
+// UnityEngine.Rect
+typedef struct Rect {
+    float m_XMin;
+    float m_YMin;
+    float m_Width;
+    float m_Height;
+} Rect;
+
 // UnityEngine.Scene
 typedef struct Scene {
     int m_Handle;

@@ -101,6 +101,7 @@ namespace il2cpp_utils {
         DEFINE_IL2CPP_ARG_TYPE(Vector2, "UnityEngine", "Vector2");
         DEFINE_IL2CPP_ARG_TYPE(Vector3, "UnityEngine", "Vector3");
         DEFINE_IL2CPP_ARG_TYPE(Quaternion, "UnityEngine", "Quaternion");
+        DEFINE_IL2CPP_ARG_TYPE(Rect, "UnityEngine", "Rect");
         DEFINE_IL2CPP_ARG_TYPE(Scene, "UnityEngine.SceneManagement", "Scene");
 
         template<>
