@@ -75,9 +75,6 @@ template <class...> constexpr std::false_type false_t{};
 #include "utils-functions.h"
 #include "../inline-hook/And64InlineHook.hpp"
 #include "logging.h"
-#include "il2cpp-functions.hpp"
-#include "il2cpp-utils.hpp"  // uses logging.h
-#include "../config/config-utils.hpp"
 
 #ifdef __cplusplus
 
@@ -112,6 +109,11 @@ ptrdiff_t asOffset(T pc) {
     auto base = getBase(pc);
     return (ptrdiff_t)(((intptr_t)pc) - base);
 }
+
+// function_ptr_t courtesy of DaNike
+template<typename TRet, typename ...TArgs>
+// A generic function pointer, which can be called with and set to a `getRealOffset` call
+using function_ptr_t = TRet(*)(TArgs...);
 
 extern "C" {
 #endif /* __cplusplus */
@@ -232,8 +234,5 @@ inlineHook((uint32_t)addr); \
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-
-// TODO: Remove
-#include "instruction-parsing.hpp"
 
 #endif /* UTILS_H_INCLUDED */

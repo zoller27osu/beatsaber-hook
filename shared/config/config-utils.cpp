@@ -19,21 +19,6 @@ bool readJson = false;
 
 using namespace rapidjson;
 
-
-bool parsejsonfile(ConfigDocument& doc, std::string filename) {
-    if (!fileexists(filename.c_str())) {
-        return false;
-    }
-    // FILE* fp = fopen(filename.c_str(), "r");
-
-    std::ifstream is;
-    is.open(filename.c_str());
-
-    IStreamWrapper wrapper {is};
-    
-    return !doc.ParseStream(wrapper).HasParseError();
-}
-
 // Loads the config for the given MOD_ID, if it doesn't exist, will leave it as an empty object.
 void Configuration::Load() {
     if (readJson) {
@@ -80,6 +65,34 @@ void Configuration::Write() {
     PrettyWriter<StringBuffer> writer(buf);
     config.Accept(writer);
     writefile(filename.c_str(), buf.GetString());
+}
+
+bool parsejsonfile(ConfigDocument& doc, std::string filename) {
+    if (!fileexists(filename.c_str())) {
+        return false;
+    }
+    // FILE* fp = fopen(filename.c_str(), "r");
+
+    std::ifstream is;
+    is.open(filename.c_str());
+
+    IStreamWrapper wrapper {is};
+    
+    return !doc.ParseStream(wrapper).HasParseError();
+}
+
+bool parsejson(ConfigDocument& doc, std::string_view js) {
+    char temp[js.length()];
+    memcpy(temp, js.data(), js.length());
+
+    if (doc.ParseInsitu(temp).HasParseError()) {
+        return false;
+    }
+    return true;
+}
+
+std::string getconfigpath() {
+    return std::string(CONFIG_PATH) + MOD_ID + ".json";
 }
 
 #endif /* CONFIG_DEFINED_H */

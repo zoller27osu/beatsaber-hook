@@ -40,6 +40,12 @@ typedef enum JsonParseError {
 } JsonParseError_t;
 
 // CONFIG
+// Parses the JSON of the filename, and returns whether it succeeded or not
+bool parsejsonfile(rapidjson::Document& doc, std::string filename);
+// Parses a JSON string, and returns whether it succeeded or not
+bool parsejson(ConfigDocument& doc, std::string_view js);
+// Returns the config path for the current mod
+std::string getconfigpath();
 
 #define CONFIG_PATH "/sdcard/Android/data/com.beatgames.beatsaber/files/mod_cfgs/"
 

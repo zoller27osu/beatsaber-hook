@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <string>
-#include "../config/rapidjson-utils.hpp"
+#include "typedefs.h"
 
 #ifndef __cplusplus
 bool = uchar8_t;
@@ -19,10 +19,6 @@ void setcsstr(Il2CppString* in, std::u16string_view str);
 std::string to_utf8(std::u16string_view view);
 // Converts a UTF8 string to a UTF16 string
 std::u16string to_utf16(std::string_view view);
-// Parses a JSON string, and returns whether it succeeded or not
-bool parsejson(rapidjson::Document& doc, std::string_view js);
-// Parses the JSON of the filename, and returns whether it succeeded or not
-bool parsejsonfile(rapidjson::Document& doc, std::string filename);
 // Dumps the 'before' bytes before and 'after' bytes after the given pointer to log
 void dump(int before, int after, void* ptr);
 // Reads all of the text of a file at the given filename. If the file does not exist, returns NULL
@@ -37,7 +33,5 @@ bool fileexists(std::string_view filename);
 bool direxists(std::string_view dirname);
 // Returns a loaded UnityEngine.Object from an asset (NOT YET IMPLEMENTED!)
 void* loadfromasset(const char* assetFilePath, const char* assetName);
-// Returns the config path for the current mod
-std::string getconfigpath();
 
 #endif /* UTILS_FUNCTIONS_H */

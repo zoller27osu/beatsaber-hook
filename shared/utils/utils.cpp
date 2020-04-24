@@ -11,8 +11,6 @@
 #include <sstream>
 #include <unordered_set>
 
-using namespace std;
-
 void safeAbort(const char* func, const char* file, int line) {
     #ifdef FILE_LOG
     log_close();
@@ -221,7 +219,7 @@ intptr_t findUniquePattern(bool& multiple, intptr_t dwAddress, const char* patte
 
 // C# SPECIFIC
 
-void setcsstr(Il2CppString* in, u16string_view str) {
+void setcsstr(Il2CppString* in, std::u16string_view str) {
     in->length = str.length();
     for(int i = 0; i < in->length; i++) {
         // Can assume that each char is only a single char (a single word --> double word)
@@ -230,25 +228,25 @@ void setcsstr(Il2CppString* in, u16string_view str) {
 }
 
 // Inspired by DaNike
-string to_utf8(u16string_view view) {
+std::string to_utf8(std::u16string_view view) {
     char dat[view.length() + 1];
-    transform(view.data(), view.data() + view.size(), dat, [](auto utf16_char) {
+    std::transform(view.data(), view.data() + view.size(), dat, [](auto utf16_char) {
         return static_cast<char>(utf16_char);
     });
     dat[view.length()] = '\0';
     return {dat};
 }
 
-u16string to_utf16(string_view view) {
+std::u16string to_utf16(std::string_view view) {
     char16_t dat[view.length() + 1];
-    transform(view.data(), view.data() + view.size(), dat, [](auto standardChar) {
+    std::transform(view.data(), view.data() + view.size(), dat, [](auto standardChar) {
         return static_cast<char16_t>(standardChar);
     });
     dat[view.length()] = '\0';
     return {dat};
 }
 
-u16string_view csstrtostr(Il2CppString* in)
+std::u16string_view csstrtostr(Il2CppString* in)
 {
     return {in->chars, static_cast<uint32_t>(in->length)};
 }
@@ -303,27 +301,4 @@ bool deletefile(std::string_view filename) {
     if (fileexists(filename))
         return remove(filename.data()) == 0;
     return false;
-}
-
-void* loadfromasset(const char* assetFilePath, const char* assetName) {
-    // TODO IMPLEMENT
-    // Create C# string
-    auto str = il2cpp_utils::createcsstr(assetFilePath);
-    void* fromFileParams[] = {str};
-    // auto asyncBundle = il2cpp_functions::runtime_invoke()
-    return nullptr;
-}
-
-bool parsejson(ConfigDocument& doc, string_view js) {
-    char temp[js.length()];
-    memcpy(temp, js.data(), js.length());
-
-    if (doc.ParseInsitu(temp).HasParseError()) {
-        return false;
-    }
-    return true;
-}
-
-string getconfigpath() {
-    return std::string(CONFIG_PATH) + MOD_ID + ".json";
 }
