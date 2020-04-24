@@ -22,14 +22,14 @@ namespace CustomUI {
 
         // gameObj.AddComponent<TextMeshProUGUI>();
         log(DEBUG, "TextObject::create: Getting type of TMPro.TextMeshProUGUI");
-        Il2CppObject *type_tmpugui = GetSystemType("TMPro", "TextMeshProUGUI");
+        auto *type_tmpugui = GetSystemType("TMPro", "TextMeshProUGUI");
 
         log(DEBUG, "TextObject::create: Adding component TMPro.TextMeshProUGUI");
         textMesh = *RET_0_UNLESS(RunMethod(gameObj, "AddComponent", type_tmpugui));
 
         // textMesh.font = GameObject.Instantiate(Resources.FindObjectsOfTypeAll<TMP_FontAsset>().First(t => t.name == "Teko-Medium SDF No Glow"));
         log(DEBUG, "TextObject::create: Getting type of TMPro.TMP_FontAsset");
-        Il2CppObject *type_fontasset = GetSystemType("TMPro", "TMP_FontAsset");
+        auto *type_fontasset = GetSystemType("TMPro", "TMP_FontAsset");
         log(DEBUG, "TextObject::create: Gotten the type!");
 
         // Find Objects of type TMP_fontAsset
