@@ -8,13 +8,25 @@
 #include <iostream>
 #include <unistd.h>
 
-enum LOG_VERBOSE_TYPE {
-    CRITICAL = ANDROID_LOG_FATAL,
-    ERROR = ANDROID_LOG_ERROR,
-    WARNING = ANDROID_LOG_WARN,
-    INFO = ANDROID_LOG_INFO,
-    DEBUG = ANDROID_LOG_DEBUG
-};
+#ifndef LOG_VERBOSE_TYPE
+#define LOG_VERBOSE_TYPE android_LogPriority
+#endif
+
+#ifndef CRITICAL
+#define CRITICAL ANDROID_LOG_FATAL
+#endif
+#ifndef ERROR
+#define ERROR ANDROID_LOG_ERROR
+#endif
+#ifndef WARNING
+#define WARNING ANDROID_LOG_WARN
+#endif
+#ifndef INFO
+#define INFO ANDROID_LOG_INFO
+#endif
+#ifndef DEBUG
+#define DEBUG ANDROID_LOG_DEBUG
+#endif
 
 #ifndef MOD_ID
 // This is too annoying, let's change it to default to some stupid stuff
