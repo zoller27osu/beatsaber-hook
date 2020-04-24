@@ -4,11 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
-
-// function_ptr_t courtesy of DaNike
-template<typename TRet, typename ...TArgs>
-// A generic function pointer, which can be called with and set to a `getRealOffset` call
-using function_ptr_t = TRet(*)(TArgs...);
+#include "il2cpp-functions.hpp"
+#include "logging.h"
+#include "utils.h"
 
 namespace il2cpp_utils {
     namespace array_utils {

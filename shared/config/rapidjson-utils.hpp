@@ -2,8 +2,6 @@
 #ifndef UTIL_JSON_H
 #define UTIL_JSON_H
 
-#define RAPIDJSON_HAS_STDSTRING 1
-
 #include <type_traits>
 #include "../../rapidjson/include/rapidjson/document.h"
 #include "../../rapidjson/include/rapidjson/allocators.h"

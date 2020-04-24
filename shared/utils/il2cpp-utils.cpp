@@ -1,5 +1,6 @@
 #include "utils.h"
-
+#include "il2cpp-utils.hpp"
+#include "il2cpp-functions.hpp"
 #include "alphanum.hpp"
 #include <algorithm>
 #include <map>

@@ -3,6 +3,7 @@
 
 #include "../utils/utils.h"
 #include "customui.hpp"
+#include "../utils/il2cpp-utils.hpp"
 
 #include <iostream>
 #include <sstream>

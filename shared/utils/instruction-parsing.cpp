@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include "instruction-parsing.hpp"
 #include <functional>
 #include <new>
 #include <sstream>
