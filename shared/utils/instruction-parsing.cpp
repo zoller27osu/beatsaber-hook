@@ -42,7 +42,7 @@ decltype(Instruction::result) ExtractAddress(Instruction* instWithResultAdr, Ins
     auto offset = *(instWithImmOffset->imm);
 
     auto jmp = jmpOff + offset;
-    log(DEBUG, "offset: %lX, jmp: %lX (offset %lX)", offset, jmp, jmp - getRealOffset(0));
+    log(DEBUG, "offset: %lX, jmp: %lX (offset %lX)", offset, jmp, asOffset(jmp));
     return jmp;
 }
 
@@ -740,7 +740,7 @@ Instruction::Instruction(const int32_t* inst) {
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions#branch_reg
                 kind[parseLevel++] = "Unconditional branch (register)";
                 numSourceRegisters = 1;
-                Rs[0] = bits(code, 9, 5);
+                Rs[0] = (uint8_t)bits(code, 9, 5);
 
                 uint_fast8_t opc = bits(code, 24, 21);
                 uint_fast8_t op2 = bits(code, 20, 16);
@@ -762,7 +762,7 @@ Instruction::Instruction(const int32_t* inst) {
                 } else if (opc == 0b1) {
                     branchType = INDCALL;
                     Rd = RLINK;
-                    result = pc + 4;
+                    imm = pc + 4;  // CANNOT WRITE TO result AS IT OVERWRITES Rs[0]
                     if (op3 == 0) {
                         if (op4 != 0) {
                             kind[parseLevel++] = unalloc;
@@ -1092,7 +1092,7 @@ Instruction::Instruction(const int32_t* inst) {
         SAFE_ABORT();
     }
     if (parseLevel < sizeof(kind) / sizeof(kind[0])) {
-        log(WARNING, "Could not complete parsing of 0x%X (offset %lX) - need more handling for kind '%s'!", code, ((intptr_t)addr) - getRealOffset(0), kind[parseLevel - 1]);
+        log(WARNING, "Could not complete parsing of 0x%X (offset %lX) - need more handling for kind '%s'!", code, pc - base, kind[parseLevel - 1]);
     } else {
         parsed = true;
         if (kind[parseLevel - 1] == unalloc) {
@@ -1110,10 +1110,10 @@ void InstructionTree::Eval(ProgramState* state) {
 InstructionTree* FindOrCreateInstruction(const int32_t* pc, ParseState& parseState, const char* msg) {
     auto p = parseState.codeToInstTree.find(pc);
     if (p != parseState.codeToInstTree.end()) {
-        log(DEBUG, "not recursing: InstructionTree for %p (offset %lX) already exists", pc, ((intptr_t)pc) - getRealOffset(0));
+        log(DEBUG, "not recursing: InstructionTree for %p (offset %lX) already exists", pc, asOffset((intptr_t)pc));
         return p->second;
     } else {
-        log(DEBUG, "%s (pc %p, offset %lX)", msg, pc, ((intptr_t)pc) - getRealOffset(0));
+        log(DEBUG, "%s (pc %p, offset %lX)", msg, pc, asOffset((intptr_t)pc));
         auto inst = new (std::nothrow) InstructionTree(pc);
         parseState.frontier.push({inst, parseState.dependencyMap});  // the inserted depMap is a copy
         parseState.codeToInstTree[pc] = inst;
@@ -1205,6 +1205,8 @@ void InstructionTree::PopulateChildren(ParseState& parseState) {
         if (isCall()) {
             parseState.functionCandidates.insert({addr, parseState.dependencyMap});  // the inserted depMap is a copy
         }
+    } else {
+        parseState.otherJumps.insert({pc, parseState.dependencyMap});
     }
     // unless instruction is unconditional branch, populate noBranch with next instruction in memory
     if (!isUnconditionalBranch()) {
@@ -1242,6 +1244,10 @@ AssemblyFunction::AssemblyFunction(const int32_t* pc): parseState() {
 
     log(INFO, "Function candidates: ");
     for (auto p : parseState.functionCandidates) {
-        log(INFO, "%p (offset %lX): depMap %s", p.first, ((intptr_t)p.first) - getRealOffset(0), DepMapToString(p.second).c_str());
+        log(INFO, "%p (offset %lX): depMap %s", p.first, asOffset((intptr_t)p.first), DepMapToString(p.second).c_str());
+    }
+    log(INFO, "Other jumps: ");
+    for (auto p : parseState.otherJumps) {
+        log(INFO, "%p (offset %lX): depMap %s", p.first, asOffset((intptr_t)p.first), DepMapToString(p.second).c_str());
     }
 }

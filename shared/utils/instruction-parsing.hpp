@@ -30,6 +30,7 @@ public:
     int_fast8_t Rd = -2;  // the destination register's number, or -1 if none
     int_fast8_t Rd2 = -1;  // the 2nd destination register's number, or -1 if none
     int_fast8_t numSourceRegisters = -1;  // the number of source registers this instruction has
+    // TODO: divorce? Sometimes the source registers are for the label, not the destination
     union {
         int_fast8_t Rs[3] = { -1, -1, -1 };  // the number(s) of the source register(s), e.g. {12, 29} for X12 & X29
         int64_t result;  // iff numSourceRegisters is 0, the value that will be stored to Rd by this instruction
@@ -199,7 +200,7 @@ struct ProgramState {
 struct ParseState;
 
 class InstructionTree : Instruction {
-public:
+  public:
     InstructionTree *noBranch;
     InstructionTree *branch;
 
@@ -217,6 +218,7 @@ struct ParseState {
     std::array<std::bitset<Register::TOTAL_NUMBER>, Register::TOTAL_NUMBER> dependencyMap;
     std::unordered_map<const int32_t*, InstructionTree*> codeToInstTree;  // the set of all instructions and their corresponding trees
     std::unordered_map<const int32_t*, decltype(dependencyMap)> functionCandidates;  // the set of instructions that were jumped to
+    std::unordered_map<const int32_t*, decltype(dependencyMap)> otherJumps;
     std::stack<std::pair<InstructionTree*, decltype(dependencyMap)>> frontier;  // points that still need ProcessRegisterDependencies run on them
 
     ParseState() {

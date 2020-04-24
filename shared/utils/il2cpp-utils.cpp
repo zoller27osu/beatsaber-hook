@@ -368,7 +368,7 @@ namespace il2cpp_utils {
 
         int i = 0;
         for (auto arg : args) {
-            auto o = GetSystemType(arg);
+            auto* o = GetSystemType(arg);
             if (!o) {
                 log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get type for %s", il2cpp_functions::class_get_name_const(arg));
                 return nullptr;
@@ -377,20 +377,21 @@ namespace il2cpp_utils {
             i++;
         }
 
-        auto reflection_type = RET_0_UNLESS(MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), arr));
-        auto ret = RET_0_UNLESS(il2cpp_functions::class_from_system_type(reflection_type));
+        auto* reflection_type = RET_0_UNLESS(MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), arr));
+        auto* ret = RET_0_UNLESS(il2cpp_functions::class_from_system_type(reflection_type));
         log(DEBUG, "il2cpp_utils: MakeGeneric: returning '%s'", ClassStandardName(ret).c_str());
         return ret;
     }
 
-    Il2CppObject* GetSystemType(const Il2CppClass* klass) {
+    Il2CppReflectionType* GetSystemType(const Il2CppClass* klass) {
         il2cpp_functions::Init();
         RET_0_UNLESS(klass);
 
-        return il2cpp_functions::type_get_object(il2cpp_functions::class_get_type_const(klass));
+        auto* typ = il2cpp_functions::class_get_type_const(klass);
+        return reinterpret_cast<Il2CppReflectionType*>(il2cpp_functions::type_get_object(typ));
     }
 
-    Il2CppObject* GetSystemType(std::string_view nameSpace, std::string_view className) {
+    Il2CppReflectionType* GetSystemType(std::string_view nameSpace, std::string_view className) {
         return GetSystemType(il2cpp_utils::GetClassFromName(nameSpace, className));
     }
 
@@ -405,14 +406,14 @@ namespace il2cpp_utils {
         if (flags & METHOD_ATTRIBUTE_ABSTRACT) flagStream << "abstract ";
         const auto& flagStrRef = flagStream.str();
         const char* flagStr = flagStrRef.c_str();
-        auto retType = il2cpp_functions::method_get_return_type(method);
+        auto* retType = il2cpp_functions::method_get_return_type(method);
         auto retTypeStr = TypeGetSimpleName(retType);
         auto methodName = il2cpp_functions::method_get_name(method);
         methodName = methodName ? methodName : "__noname__";
         std::stringstream paramStream;
         for (int i = 0; i < il2cpp_functions::method_get_param_count(method); i++) {
             if (i > 0) paramStream << ", ";
-            auto argType = il2cpp_functions::method_get_param(method, i);
+            auto* argType = il2cpp_functions::method_get_param(method, i);
             if (il2cpp_functions::type_is_byref(argType)) {
                 paramStream << "out/ref ";
             }
@@ -431,7 +432,7 @@ namespace il2cpp_utils {
 
         auto flags = il2cpp_functions::field_get_flags(field);
         const char* flagStr = (flags & FIELD_ATTRIBUTE_STATIC) ? "static " : "";
-        auto type = il2cpp_functions::field_get_type(field);
+        auto* type = il2cpp_functions::field_get_type(field);
         auto typeStr = TypeGetSimpleName(type);
         auto name = il2cpp_functions::field_get_name(field);
         name = name ? name : "__noname__";
@@ -467,9 +468,9 @@ namespace il2cpp_utils {
         const char* flagStr = (flags & FIELD_ATTRIBUTE_STATIC) ? "static " : "";
         auto name = il2cpp_functions::property_get_name(prop);
         name = name ? name : "__noname__";
-        auto getter = il2cpp_functions::property_get_get_method(prop);
+        auto* getter = il2cpp_functions::property_get_get_method(prop);
         auto getterName = getter ? il2cpp_functions::method_get_name(getter) : "";
-        auto setter = il2cpp_functions::property_get_set_method(prop);
+        auto* setter = il2cpp_functions::property_get_set_method(prop);
         auto setterName = setter ? il2cpp_functions::method_get_name(setter) : "";
         const Il2CppType* type = nullptr;
         if (getter) {
@@ -503,7 +504,7 @@ namespace il2cpp_utils {
 
     void GenericsToStringHelper(Il2CppGenericClass* genClass, std::ostream& os) {
         auto genContext = &genClass->context;
-        auto genInst = genContext->class_inst;
+        auto* genInst = genContext->class_inst;
         if (!genInst) {
             genInst = genContext->method_inst;
             if (genInst) log(WARNING, "Missing class_inst! Trying method_inst?");
@@ -525,7 +526,7 @@ namespace il2cpp_utils {
     std::string ClassStandardName(Il2CppClass* klass, bool generics) {
         std::stringstream ss;
         const char* namespaze = il2cpp_functions::class_get_namespace(klass);
-        auto declaring = il2cpp_functions::class_get_declaring_type(klass);
+        auto* declaring = il2cpp_functions::class_get_declaring_type(klass);
         bool hasNamespace = (namespaze && namespaze[0] != '\0');
         if (!hasNamespace && declaring) {
             ss << ClassStandardName(declaring) << "/";
@@ -536,7 +537,7 @@ namespace il2cpp_utils {
 
         if (generics) {
             il2cpp_functions::class_is_generic(klass);
-            auto genClass = klass->generic_class;
+            auto* genClass = klass->generic_class;
             if (genClass) {
                 GenericsToStringHelper(genClass, ss);
             }
@@ -549,7 +550,7 @@ namespace il2cpp_utils {
             return ClassStandardName(genClass->cached_class);
         }
         if (genClass->typeDefinitionIndex != kTypeDefinitionIndexInvalid) {
-            auto klass = il2cpp_functions::GenericClass_GetClass(genClass);
+            auto* klass = il2cpp_functions::GenericClass_GetClass(genClass);
             return ClassStandardName(klass);
         }
         return "?";
@@ -615,7 +616,7 @@ namespace il2cpp_utils {
             // log results of Class::Init
             log(WARNING, "klass->initialized: %i, init_pending: %i, has_initialization_error: %i, initializationExceptionGCHandle: %Xll",
                     klass->initialized, klass->init_pending, klass->has_initialization_error, klass->initializationExceptionGCHandle);
-            auto m1 = il2cpp_functions::class_get_methods(klass, &myIter);  // attempt again to initialize the method data
+            auto* m1 = il2cpp_functions::class_get_methods(klass, &myIter);  // attempt again to initialize the method data
             if (klass->method_count && !klass->methods) {
                 log(ERROR, "Class::Init and class_get_methods failed to initialize klass->methods! class_get_methods returned: %p",
                     m1);
@@ -633,7 +634,7 @@ namespace il2cpp_utils {
 
         log(DEBUG, "Assembly Name: %s", il2cpp_functions::class_get_assemblyname(klass));
 
-        auto typ = il2cpp_functions::class_get_type(klass);
+        auto* typ = il2cpp_functions::class_get_type(klass);
         if (typ) {
             log(DEBUG, "Type name: %s", il2cpp_functions::type_get_name(typ));
             auto ch = il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_REFLECTION);
@@ -654,14 +655,14 @@ namespace il2cpp_utils {
         // 1. If is_generic is set, then genericContainerIndex was also intentionally set (even if it's 0) and is not -1 (invalid)
         // 2. Even if is_generic wasn't set, a positive genericContainerIndex was intentionally set that way and is a valid index.
         if (klass->is_generic || klass->genericContainerIndex > 0) {
-            auto genContainer = il2cpp_functions::MetadataCache_GetGenericContainerFromIndex(klass->genericContainerIndex);
+            auto* genContainer = il2cpp_functions::MetadataCache_GetGenericContainerFromIndex(klass->genericContainerIndex);
             log(DEBUG, "genContainer: idx %i, ownerIndex: %i, is_method: %i", klass->genericContainerIndex, genContainer->ownerIndex, genContainer->is_method);
             if (genContainer->ownerIndex != typeDefIdx) {
                 log(ERROR, "genContainer ownerIndex mismatch!");
             }
             for (int i = 0; i < genContainer->type_argc; i++) {
                 auto genParamIdx = genContainer->genericParameterStart + i;
-                auto genParam = il2cpp_functions::MetadataCache_GetGenericParameterFromIndex(genParamIdx);
+                auto* genParam = il2cpp_functions::MetadataCache_GetGenericParameterFromIndex(genParamIdx);
                 if (genParam) {
                     log(DEBUG, "genParam #%i, idx %i: ownerIdx %i, name %s, num %i, flags (see "
                         "IL2CPP_GENERIC_PARAMETER_ATTRIBUTE_X in il2cpp-tabledefs.h) 0x%.2X", i, genParamIdx, genParam->ownerIndex,
@@ -674,16 +675,16 @@ namespace il2cpp_utils {
             log(DEBUG, "genericContainerIndex: %i", klass->genericContainerIndex);
         }
 
-        auto typDef = klass->typeDefinition;
+        auto* typDef = klass->typeDefinition;
 
         log(DEBUG, "%i =========METHODS=========", indent);
         LogMethods(klass);
         log(DEBUG, "%i =======END METHODS=======", indent);
 
-        auto declaring = il2cpp_functions::class_get_declaring_type(klass);
+        auto* declaring = il2cpp_functions::class_get_declaring_type(klass);
         log(DEBUG, "declaring type: %p (%s)", declaring, declaring ? ClassStandardName(declaring).c_str() : "");
         if (declaring && logParents) LogClass(declaring, logParents);
-        auto element = il2cpp_functions::class_get_element_class(klass);
+        auto* element = il2cpp_functions::class_get_element_class(klass);
         log(DEBUG, "element class: %p ('%s', self = %p)", element, element ? ClassStandardName(element).c_str() : "", klass);
         if (element && element != klass && logParents) LogClass(element, logParents);
 
@@ -694,7 +695,7 @@ namespace il2cpp_utils {
         LogFields(klass);
         log(DEBUG, "%i =======END FIELDS=======", indent);
 
-        auto parent = il2cpp_functions::class_get_parent(klass);
+        auto* parent = il2cpp_functions::class_get_parent(klass);
         log(DEBUG, "parent: %p (%s)", parent, parent ? ClassStandardName(parent).c_str() : "");
         if (parent && logParents) LogClass(parent, logParents);
         log(DEBUG, "%i, ==================================================================================", indent);
@@ -703,7 +704,7 @@ namespace il2cpp_utils {
 
     static std::unordered_map<Il2CppClass*, std::map<std::string, Il2CppGenericClass*, doj::alphanum_less<std::string>>> classToGenericClassMap;
     void BuildGenericsMap() {
-        auto metadataReg = RET_V_UNLESS(*il2cpp_functions::s_Il2CppMetadataRegistrationPtr);
+        auto* metadataReg = RET_V_UNLESS(*il2cpp_functions::s_Il2CppMetadataRegistrationPtr);
         log(DEBUG, "metadataReg: %p, offset = %lX", metadataReg, ((intptr_t)metadataReg) - getRealOffset(0));
 
         int uncached_class_count = 0;
@@ -715,7 +716,7 @@ namespace il2cpp_utils {
             }
             std::string genClassName = GenericClassStandardName(genClass);
 
-            auto typeDefClass = il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(genClass->typeDefinitionIndex);
+            auto* typeDefClass = il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(genClass->typeDefinitionIndex);
             if (!typeDefClass) continue;
 
             classToGenericClassMap[typeDefClass][genClassName.c_str()] = genClass;
@@ -730,10 +731,10 @@ namespace il2cpp_utils {
         // Begin prefix matching
         std::map<std::string, Il2CppClass*, doj::alphanum_less<std::string>> matches;
         // Get il2cpp domain
-        auto dom = il2cpp_functions::domain_get();
+        auto* dom = il2cpp_functions::domain_get();
         // Get all il2cpp assemblies
         size_t size;
-        auto assembs = il2cpp_functions::domain_get_assemblies(dom, &size);
+        auto** assembs = il2cpp_functions::domain_get_assemblies(dom, &size);
 
         for (size_t i = 0; i < size; ++i) {
             // Get image for each assembly
@@ -742,7 +743,7 @@ namespace il2cpp_utils {
                 continue;
             }
             log(DEBUG, "Scanning assembly \"%s\"", assembs[i]->aname.name);
-            auto img = il2cpp_functions::assembly_get_image(assembs[i]);
+            auto* img = il2cpp_functions::assembly_get_image(assembs[i]);
             if (!img) {
                 log(WARNING, "Assembly's image was null! Skipping.");
                 continue;
