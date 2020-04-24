@@ -37,24 +37,6 @@ typedef struct ArrayBounds
     int32_t lower_bound;
 } ArrayBounds;
 
-template<class T>
-struct Array : public Il2CppObject
-{
-    static_assert(is_value_type<T>::value, "T must be a C# value type! (primitive, pointer or Struct)");
-    /* bounds is NULL for szarrays */
-    ArrayBounds *bounds;
-    /* total number of elements of the array */
-    int32_t max_length;
-    T values[0];
-
-    int32_t Length() {
-        if (bounds) {
-            return bounds->length;
-        }
-        return max_length;
-    }
-};
-
 struct NamespaceAndNamePairHash
 {
     size_t operator()(const std::pair<const char*, const char*>& pair) const
@@ -76,6 +58,25 @@ struct Il2CppNameToTypeDefinitionIndexHashTable : public Il2CppHashMap<std::pair
     typedef Il2CppHashMap<std::pair<const char*, const char*>, TypeDefinitionIndex, NamespaceAndNamePairHash, NamespaceAndNamePairEquals> Base;
     Il2CppNameToTypeDefinitionIndexHashTable() : Base()
     {
+    }
+};
+
+// TODO: Move these to extern "C" region
+template<class T>
+struct Array : public Il2CppObject
+{
+    static_assert(is_value_type<T>::value, "T must be a C# value type! (primitive, pointer or Struct)");
+    /* bounds is NULL for szarrays */
+    ArrayBounds *bounds;
+    /* total number of elements of the array */
+    int32_t max_length;
+    T values[0];
+
+    int32_t Length() {
+        if (bounds) {
+            return bounds->length;
+        }
+        return max_length;
     }
 };
 
