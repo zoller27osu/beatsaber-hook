@@ -58,7 +58,6 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
 #define RET_UNLESS(retval, expr) ({ \
     auto&& __temp__ = (expr); \
     if (!__temp__) { \
-        log(ERROR, "%s (in %s at %s:%i) returned false!", #expr, __PRETTY_FUNCTION__, __FILE__, __LINE__); \
         return retval; \
     } \
     __temp__; })
