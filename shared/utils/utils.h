@@ -46,6 +46,7 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
 
 // Logs error and RETURNS argument 1 IFF argument 2 boolean evaluates as false; else EVALUATES to argument 2
 // thank god for this GCC ({}) extension which "evaluates to the last statement"
+#ifndef SUPPRESS_MACRO_LOGS
 #define RET_UNLESS(retval, expr) ({ \
     auto&& __temp__ = (expr); \
     if (!__temp__) { \
@@ -53,6 +54,15 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
         return retval; \
     } \
     __temp__; })
+#else
+#define RET_UNLESS(retval, expr) ({ \
+    auto&& __temp__ = (expr); \
+    if (!__temp__) { \
+        log(ERROR, "%s (in %s at %s:%i) returned false!", #expr, __PRETTY_FUNCTION__, __FILE__, __LINE__); \
+        return retval; \
+    } \
+    __temp__; })
+#endif
 
 #define RET_V_UNLESS(expr) RET_UNLESS(, expr)
 #define RET_0_UNLESS(expr) RET_UNLESS(0, expr)
@@ -87,14 +97,22 @@ static void StartCoroutine(Function&& fun, Args&&... args) {
 // logs the function, file and line, sleeps to allow logs to flush, then terminates program
 void safeAbort(const char* func, const char* file, int line);
 // sets "file" and "line" to the file and line you call this macro from
+#ifndef SUPPRESS_MACRO_LOGS
 #define SAFE_ABORT() safeAbort(__PRETTY_FUNCTION__, __FILE__, __LINE__)
+#else
+#define SAFE_ABORT() safeAbort("undefined_function", "undefined_file", -1)
+#endif
 
 template<class T>
 auto crashUnless(T&& arg, const char* func, const char* file, int line) {
     if (!arg) safeAbort(func, file, line);
     return std::forward<T>(arg);
 }
+#ifndef SUPPRESS_MACRO_LOGS
 #define CRASH_UNLESS(expr) crashUnless(expr, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#else
+#define CRASH_UNLESS(expr) crashUnless(expr, "undefined_function", "undefined_file", -1)
+#endif
 
 template<class T>
 intptr_t getBase(T pc) {
@@ -157,6 +175,8 @@ void* addr_ ## name = (void*) addr; \
 retval (*name)(__VA_ARGS__) = NULL; \
 retval hook_ ## name(__VA_ARGS__)
 
+#ifndef SUPPRESS_MACRO_LOGS
+
 #ifdef __aarch64__
 
 #define INSTALL_HOOK(name) MACRO_WRAP( \
@@ -205,8 +225,8 @@ A64HookFunction((void*)addr, (void*)&name, (void**)nullptr); \
 
 #else
 
-#define INSTALL_HOOK(name) \
-log(INFO, "Installing 32 bit hook!"); MACRO_WRAP( \
+#define INSTALL_HOOK(name) MACRO_WRAP( \
+log(INFO, "Installing 32 bit hook!"); \
 registerInlineHook((uint32_t)getRealOffset(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name); \
 inlineHook((uint32_t)getRealOffset(addr_ ## name)); \
 )
@@ -229,7 +249,73 @@ registerInlineHook((uint32_t)addr, (uint32_t)hook_ ## name, (uint32_t **)&name);
 inlineHook((uint32_t)addr); \
 )
 
-#endif
+#endif /* __aarch64__ */
+
+#else /* SUPPRESS_MACRO_LOGS */
+
+#ifdef __aarch64__
+
+#define INSTALL_HOOK(name) MACRO_WRAP( \
+A64HookFunction((void*)getRealOffset(addr_ ## name),(void*) hook_ ## name, (void**)&name); \
+)
+
+#define INSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
+A64HookFunction((void*)methodInfo->methodPointer,(void*) hook_ ## name, (void**)&name); \
+)
+
+#define INSTALL_HOOK_NAT(name) MACRO_WRAP( \
+A64HookFunction((void*)(addr_ ## name),(void*) hook_ ## name, (void**)&name); \
+)
+
+#define INSTALL_HOOK_DIRECT(name, addr) MACRO_WRAP( \
+A64HookFunction((void*)addr, (void*) hook_ ## name, (void**)&name); \
+)
+
+// Uninstalls currently just creates a hook at the hooked address
+// and sets the hook to call the original function
+// No original trampoline is created when uninstalling a hook, hence the nullptr
+
+#define UNINSTALL_HOOK(name) MACRO_WRAP( \
+A64HookFunction((void*)getRealOffset(addr_ ## name),(void*)&name, (void**)nullptr); \
+)
+
+#define UNINSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
+A64HookFunction((void*)methodInfo->methodPointer,(void*)&name, (void**)nullptr); \
+)
+
+#define UNINSTALL_HOOK_NAT(name) MACRO_WRAP( \
+A64HookFunction((void*)(addr_ ## name),(void*)&name, (void**)nullptr); \
+)
+
+#define UNINSTALL_HOOK_DIRECT(name, addr) MACRO_WRAP( \
+A64HookFunction((void*)addr, (void*)&name, (void**)nullptr); \
+)
+
+#else __aarch64__
+
+#define INSTALL_HOOK(name) MACRO_WRAP( \
+registerInlineHook((uint32_t)getRealOffset(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name); \
+inlineHook((uint32_t)getRealOffset(addr_ ## name)); \
+)
+
+#define INSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
+registerInlineHook((uint32_t)methodInfo->methodPointer, (uint32_t)hook_ ## name, (uint32_t **)&name); \
+inlineHook((uint32_t)methodInfo->methodPointer); \
+)
+
+#define INSTALL_HOOK_NAT(name) MACRO_WRAP( \
+registerInlineHook((uint32_t)(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name); \
+inlineHook((uint32_t)(addr_ ## name)); \
+)
+
+#define INSTALL_HOOK_DIRECT(name, addr) MACRO_WRAP( \
+registerInlineHook((uint32_t)addr, (uint32_t)hook_ ## name, (uint32_t **)&name); \
+inlineHook((uint32_t)addr); \
+)
+
+#endif /* __aarch64__ */
+
+#endif /* SUPPRESS_MACRO_LOGS */
 
 #ifdef __cplusplus
 }
