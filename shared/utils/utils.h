@@ -80,7 +80,6 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
 // For use in fire-if-compiled asserts e.g. static_assert(false_t<T>, "message")
 template <class...> constexpr std::false_type false_t{};
 
-#include "typedefs.h"
 #include "utils-functions.h"
 #include "../inline-hook/And64InlineHook.hpp"
 #include "logging.h"
