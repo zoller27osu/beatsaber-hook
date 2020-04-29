@@ -139,7 +139,7 @@ void resetSS(std::stringstream& ss);
 // Prints the given number of "tabs" as spaces to the given output stream.
 void tabs(std::ostream& os, int tabs, int spacesPerTab = 2);
 // Logs the given stringstream and clears it.
-void print(std::stringstream& ss, LOG_VERBOSE_TYPE lvl = INFO);
+void print(std::stringstream& ss, LOG_VERBOSE_TYPE lvl = (LOG_VERBOSE_TYPE)INFO);
 
 // Attempts to print what is stored at the given pointer.
 // For a given pointer, it will scan 4 void*'s worth of bytes at the location pointed to.
