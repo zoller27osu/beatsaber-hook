@@ -41,6 +41,21 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
     expr; \
 } while(0)
 
+template <class, template <class, class...> class>
+struct is_instance : public std::false_type {};
+
+template <class...Ts, template <class, class...> class U>
+struct is_instance<U<Ts...>, U> : public std::true_type {};
+
+template<class T>
+auto&& unwrap_optionals(T&& arg) {
+    if constexpr (is_instance<std::decay_t<T>, std::optional>::value) {
+        return *arg;
+    } else {
+        return arg;
+    }
+}
+
 // >>>>>>>>>>>>>>>>> DO NOT NEST X_UNLESS MACROS <<<<<<<<<<<<<<<<<
 // Prefer RunMethod.value_or to a nested X_UNLESS(RunMethod)
 
@@ -53,7 +68,7 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
         log(ERROR, "%s (in %s at %s:%i) returned false!", #expr, __PRETTY_FUNCTION__, __FILE__, __LINE__); \
         return retval; \
     } \
-    __temp__; })
+    unwrap_optionals(__temp__); })
 #else
 #define RET_UNLESS(retval, expr) ({ \
     auto&& __temp__ = (expr); \

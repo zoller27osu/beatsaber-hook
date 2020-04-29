@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <optional>
+
 #include "il2cpp-functions.hpp"
 #include "logging.h"
 #include "utils.h"

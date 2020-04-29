@@ -25,7 +25,7 @@ namespace CustomUI {
         auto *type_tmpugui = GetSystemType("TMPro", "TextMeshProUGUI");
 
         log(DEBUG, "TextObject::create: Adding component TMPro.TextMeshProUGUI");
-        textMesh = *RET_0_UNLESS(RunMethod(gameObj, "AddComponent", type_tmpugui));
+        textMesh = RET_0_UNLESS(RunMethod(gameObj, "AddComponent", type_tmpugui));
 
         // textMesh.font = GameObject.Instantiate(Resources.FindObjectsOfTypeAll<TMP_FontAsset>().First(t => t.name == "Teko-Medium SDF No Glow"));
         log(DEBUG, "TextObject::create: Getting type of TMPro.TMP_FontAsset");
@@ -33,11 +33,11 @@ namespace CustomUI {
         log(DEBUG, "TextObject::create: Gotten the type!");
 
         // Find Objects of type TMP_fontAsset
-        auto* allObjects = *RET_0_UNLESS(RunMethod<Array<Il2CppObject*>*>("UnityEngine", "Resources", "FindObjectsOfTypeAll", type_fontasset));
+        auto* allObjects = RET_0_UNLESS(RunMethod<Array<Il2CppObject*>*>("UnityEngine", "Resources", "FindObjectsOfTypeAll", type_fontasset));
         int match = -1;
         for (int i = 0; i < allObjects->Length(); i++) {
             // Treat it as a UnityEngine.Object (which it is) and call the name getter
-            auto* assetName = *RET_0_UNLESS(RunMethod<Il2CppString*>(allObjects->values[i], "get_name"));
+            auto* assetName = RET_0_UNLESS(RunMethod<Il2CppString*>(allObjects->values[i], "get_name"));
             if (to_utf8(csstrtostr(assetName)) == "Teko-Medium SDF No Glow") {
                 // Found matching asset
                 match = i;
@@ -47,14 +47,14 @@ namespace CustomUI {
         RET_0_UNLESS(match != -1);
 
         log(DEBUG, "TextObject::create: Instantiating the font");
-        auto* font = *RET_0_UNLESS(RunMethod("UnityEngine", "Object", "Instantiate", allObjects->values[match]));
+        auto* font = RET_0_UNLESS(RunMethod("UnityEngine", "Object", "Instantiate", allObjects->values[match]));
 
         log(DEBUG, "TextObject::create: Setting the font");
         RET_0_UNLESS(RunMethod(textMesh, "set_font", font));
 
         // textMesh.rectTransform.SetParent(parent, false);
         log(DEBUG, "TextObject::create: Getting rectTransform");
-        auto* rectTransform = *RET_0_UNLESS(RunMethod(textMesh, "get_rectTransform"));
+        auto* rectTransform = RET_0_UNLESS(RunMethod(textMesh, "get_rectTransform"));
 
         log(DEBUG, "TextObject::create: Setting Parent");
         if (!parentTransform) {
@@ -113,14 +113,14 @@ namespace CustomUI {
     }
 
     static auto findDataSize(Il2CppObject* downloadHandler) {
-        auto* data = *RET_0_UNLESS(il2cpp_utils::RunMethod<Array<uint8_t>*>(
+        auto* data = RET_0_UNLESS(il2cpp_utils::RunMethod<Array<uint8_t>*>(
             "UnityEngine.Networking", "DownloadHandler", "InternalGetByteArray", downloadHandler));
         return data->Length();
     }
 
     void RawImageObject::monitorProgress(RawImageObject* obj) {
         log(INFO, "monitorProgress start");
-        Il2CppObject* downloadHandler = *RET_V_UNLESS(il2cpp_utils::GetFieldValue(obj->WWW, "m_DownloadHandler"));
+        Il2CppObject* downloadHandler = RET_V_UNLESS(il2cpp_utils::GetFieldValue(obj->WWW, "m_DownloadHandler"));
         if (!downloadHandler) return;
 
         bool isDone = false;
@@ -156,7 +156,7 @@ namespace CustomUI {
         log(INFO, "real progs (out of %i): %s", finalLen, ss.str().c_str());
 
         log(INFO, "webRequest isDone.");
-        auto* str = *RET_V_UNLESS(RunMethod<Il2CppString*>(obj->WWW, "get_error"));
+        auto* str = RET_V_UNLESS(RunMethod<Il2CppString*>(obj->WWW, "get_error"));
         if (str) {
             log(ERROR, "webRequest error: %s", to_utf8(csstrtostr(str)).c_str());
         } else {
@@ -168,14 +168,14 @@ namespace CustomUI {
         // Notes: The field named "<webRequest>k__BackingField" on asyncOp is a pointer that should match obj->WWW
         log(DEBUG, "Entering textureWebRequestComplete!");
 
-        obj->recievedTexture2D = *RET_0_UNLESS(RunMethod("UnityEngine.Networking", "DownloadHandlerTexture", "GetContent", obj->WWW));
+        obj->recievedTexture2D = RET_0_UNLESS(RunMethod("UnityEngine.Networking", "DownloadHandlerTexture", "GetContent", obj->WWW));
 
         obj->gameObj = RET_0_UNLESS(New(GetClassFromName("UnityEngine", "GameObject"), createcsstr("RandomImage")));
         RET_0_UNLESS(RunMethod(obj->gameObj, "SetActive", false));
-        obj->rawImage = *RET_0_UNLESS(RunMethod(obj->gameObj, "AddComponent", GetSystemType("UnityEngine.UI", "RawImage")));
+        obj->rawImage = RET_0_UNLESS(RunMethod(obj->gameObj, "AddComponent", GetSystemType("UnityEngine.UI", "RawImage")));
         RET_0_UNLESS(RunMethod(obj->rawImage, "set_texture", obj->recievedTexture2D));
 
-        auto* rawImageRectTransform = *RET_0_UNLESS(RunMethod(obj->rawImage, "get_rectTransform"));
+        auto* rawImageRectTransform = RET_0_UNLESS(RunMethod(obj->rawImage, "get_rectTransform"));
         if (!obj->parentTransform) {
             log(ERROR, "RawImageObject::textureWebRequestComplete: obj->parentTransform is null! Fix it!");
         }
@@ -204,12 +204,12 @@ namespace CustomUI {
     }
 
     bool RawImageObject::create() {
-        WWW = *RET_0_UNLESS(RunMethod("UnityEngine.Networking", "UnityWebRequestTexture", "GetTexture", createcsstr(url)));
+        WWW = RET_0_UNLESS(RunMethod("UnityEngine.Networking", "UnityWebRequestTexture", "GetTexture", createcsstr(url)));
 
         // If only we could use UnityEngine.WWW and its WaitUntilDoneIfPossible() :(
         auto* method = RET_0_UNLESS(FindMethodUnsafe("UnityEngine.Networking", "UnityWebRequestAsyncOperation", "add_completed", 1));
 
-        sendWebRequestObj = *RET_0_UNLESS(RunMethod(WWW, "SendWebRequest"));
+        sendWebRequestObj = RET_0_UNLESS(RunMethod(WWW, "SendWebRequest"));
 
         auto* action = RET_0_UNLESS(MakeAction(method, 0, this, textureWebRequestComplete));
         RET_0_UNLESS(RunMethod(sendWebRequestObj, method, action));
