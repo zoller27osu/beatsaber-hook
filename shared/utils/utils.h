@@ -75,7 +75,7 @@ auto&& unwrap_optionals(T&& arg) {
     if (!__temp__) { \
         return retval; \
     } \
-    __temp__; })
+    unwrap_optionals(__temp__); })
 #endif
 
 #define RET_V_UNLESS(expr) RET_UNLESS(, expr)
