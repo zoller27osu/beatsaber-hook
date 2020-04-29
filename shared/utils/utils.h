@@ -41,6 +41,21 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
     expr; \
 } while(0)
 
+template <class, template <class, class...> class>
+struct is_instance : public std::false_type {};
+
+template <class...Ts, template <class, class...> class U>
+struct is_instance<U<Ts...>, U> : public std::true_type {};
+
+template<class T>
+auto&& unwrap_optionals(T&& arg) {
+    if constexpr (is_instance<std::decay_t<T>, std::optional>::value) {
+        return *arg;
+    } else {
+        return arg;
+    }
+}
+
 // >>>>>>>>>>>>>>>>> DO NOT NEST X_UNLESS MACROS <<<<<<<<<<<<<<<<<
 // Prefer RunMethod.value_or to a nested X_UNLESS(RunMethod)
 
@@ -53,14 +68,14 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
         log(ERROR, "%s (in %s at %s:%i) returned false!", #expr, __PRETTY_FUNCTION__, __FILE__, __LINE__); \
         return retval; \
     } \
-    __temp__; })
+    unwrap_optionals(__temp__); })
 #else
 #define RET_UNLESS(retval, expr) ({ \
     auto&& __temp__ = (expr); \
     if (!__temp__) { \
         return retval; \
     } \
-    __temp__; })
+    unwrap_optionals(__temp__); })
 #endif
 
 #define RET_V_UNLESS(expr) RET_UNLESS(, expr)
@@ -104,7 +119,7 @@ void safeAbort(const char* func, const char* file, int line);
 template<class T>
 auto crashUnless(T&& arg, const char* func, const char* file, int line) {
     if (!arg) safeAbort(func, file, line);
-    return std::forward<T>(arg);
+    return unwrap_optionals(arg);
 }
 #ifndef SUPPRESS_MACRO_LOGS
 #define CRASH_UNLESS(expr) crashUnless(expr, __PRETTY_FUNCTION__, __FILE__, __LINE__)
