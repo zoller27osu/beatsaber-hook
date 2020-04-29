@@ -119,7 +119,7 @@ void safeAbort(const char* func, const char* file, int line);
 template<class T>
 auto crashUnless(T&& arg, const char* func, const char* file, int line) {
     if (!arg) safeAbort(func, file, line);
-    return std::forward<T>(arg);
+    return unwrap_optionals(arg);
 }
 #ifndef SUPPRESS_MACRO_LOGS
 #define CRASH_UNLESS(expr) crashUnless(expr, __PRETTY_FUNCTION__, __FILE__, __LINE__)
