@@ -1,8 +1,9 @@
+#include <unistd.h>
+
 #include "utils.h"
 #include "il2cpp-functions.hpp"
 #include "instruction-parsing.hpp"
 #include "logging.h"
-#include <unistd.h>
 
 // copies of the highly-inlinable functions
 const Il2CppTypeDefinition* il2cpp_functions::MetadataCache_GetTypeDefinitionFromIndex(TypeDefinitionIndex index) {
@@ -594,28 +595,28 @@ void il2cpp_functions::Init() {
     // XREF TRACES
     // Class::Init. 0x846A68 in 1.5, 0x9EC0A4 in 1.7.0, 0xA6D1B8 in 1.8.0b1
     Instruction ans((const int32_t*)array_new_specific);
-    Instruction Array_NewSpecific(*CRASH_UNLESS(ans.label));
+    Instruction Array_NewSpecific(CRASH_UNLESS(ans.label));
     log(DEBUG, "Array::NewSpecific offset: %lX", ((intptr_t)Array_NewSpecific.addr) - getRealOffset(0));
     auto j2Cl_I = CRASH_UNLESS(Array_NewSpecific.findNthCall(1));  // also the 113th call in Runtime::Init
-    Class_Init = (decltype(Class_Init))*CRASH_UNLESS(j2Cl_I->label);
+    Class_Init = (decltype(Class_Init))CRASH_UNLESS(j2Cl_I->label);
     log(DEBUG, "Class::Init found? offset: %lX", ((intptr_t)Class_Init) - getRealOffset(0));
     usleep(1000);  // 0.001s
 
     // MetadataCache::GetTypeInfoFromTypeIndex. offset 0x84F764 in 1.5, 0x9F5250 in 1.7.0, 0xA7A79C in 1.8.0b1
     Instruction caha((const int32_t*)custom_attrs_has_attr);
-    Instruction MetadataCache_HasAttribute(*CRASH_UNLESS(caha.label));
+    Instruction MetadataCache_HasAttribute(CRASH_UNLESS(caha.label));
     auto j2MC_GTIFTI = CRASH_UNLESS(MetadataCache_HasAttribute.findNthCall(1));
-    MetadataCache_GetTypeInfoFromTypeIndex = (decltype(MetadataCache_GetTypeInfoFromTypeIndex))*CRASH_UNLESS(j2MC_GTIFTI->label);
+    MetadataCache_GetTypeInfoFromTypeIndex = (decltype(MetadataCache_GetTypeInfoFromTypeIndex))CRASH_UNLESS(j2MC_GTIFTI->label);
     log(DEBUG, "MetadataCache::GetTypeInfoFromTypeIndex found? offset: %lX",
         ((intptr_t)MetadataCache_GetTypeInfoFromTypeIndex) - getRealOffset(0));
     usleep(1000);  // 0.001s
 
     // MetadataCache::GetTypeInfoFromTypeDefinitionIndex. offset 0x84FBA4 in 1.5, 0x9F5690 in 1.7.0, 0xA75958 in 1.8.0b1
     Instruction tgcoec((const int32_t*)type_get_class_or_element_class);
-    Instruction Type_GetClassOrElementClass(*CRASH_UNLESS(tgcoec.label));
+    Instruction Type_GetClassOrElementClass(CRASH_UNLESS(tgcoec.label));
     auto j2MC_GTIFTDI = CRASH_UNLESS(Type_GetClassOrElementClass.findNthDirectBranchWithoutLink(5));
     MetadataCache_GetTypeInfoFromTypeDefinitionIndex =
-        (decltype(MetadataCache_GetTypeInfoFromTypeDefinitionIndex))*CRASH_UNLESS(j2MC_GTIFTDI->label);
+        (decltype(MetadataCache_GetTypeInfoFromTypeDefinitionIndex))CRASH_UNLESS(j2MC_GTIFTDI->label);
     log(DEBUG, "MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %lX",
         ((intptr_t)MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
     usleep(1000);  // 0.001s
@@ -623,23 +624,23 @@ void il2cpp_functions::Init() {
     // Type::GetName. offset 0x8735DC in 1.5, 0xA1A458 in 1.7.0, 0xA7B634 in 1.8.0b1
     Instruction tanq((const int32_t*)type_get_assembly_qualified_name);
     auto j2T_GN = CRASH_UNLESS(tanq.findNthCall(1));
-    _Type_GetName_ = (decltype(_Type_GetName_))*CRASH_UNLESS(j2T_GN->label);
+    _Type_GetName_ = (decltype(_Type_GetName_))CRASH_UNLESS(j2T_GN->label);
     log(DEBUG, "Type::GetName found? offset: %lX", ((intptr_t)_Type_GetName_) - getRealOffset(0));
     usleep(1000);  // 0.001s
 
     // GenericClass::GetClass. offset 0x88DF64 in 1.5, 0xA34F20 in 1.7.0, 0xA6E4EC in 1.8.0b1
     Instruction cfit((const int32_t*)class_from_il2cpp_type);
-    Instruction Class_FromIl2CppType(*CRASH_UNLESS(cfit.label));
+    Instruction Class_FromIl2CppType(CRASH_UNLESS(cfit.label));
     auto caseStart = CRASH_UNLESS(EvalSwitch(Class_FromIl2CppType.addr, 1, 1, IL2CPP_TYPE_GENERICINST));
     auto j2GC_GC = CRASH_UNLESS(caseStart->findNthDirectBranchWithoutLink(1));
     log(DEBUG, "j2GC_GC: %s", j2GC_GC->toString().c_str());
-    GenericClass_GetClass = (decltype(GenericClass_GetClass))*CRASH_UNLESS(j2GC_GC->label);
+    GenericClass_GetClass = (decltype(GenericClass_GetClass))CRASH_UNLESS(j2GC_GC->label);
     log(DEBUG, "GenericClass::GetClass found? offset: %lX", ((intptr_t)GenericClass_GetClass) - getRealOffset(0));
     usleep(1000);  // 0.001s
 
     Instruction iu16((const int32_t*)init_utf16);
     auto j2R_I = CRASH_UNLESS(iu16.findNthCall(3));
-    Instruction Runtime_Init(*CRASH_UNLESS(j2R_I->label));
+    Instruction Runtime_Init(CRASH_UNLESS(j2R_I->label));
     auto ldr = CRASH_UNLESS(Runtime_Init.findNth(1, std::mem_fn(&Instruction::isLoad)));  // the load for the malloc that precedes our adrp
     // alternatively, could just get the 1st ADRP in Runtime::Init with dest reg x20
     il2cpp_functions::defaults = (decltype(il2cpp_functions::defaults))ExtractAddress(ldr->addr, 1, 1);

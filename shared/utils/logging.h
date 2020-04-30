@@ -2,6 +2,7 @@
 #define LOGGING_H
 
 #include <android/log.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
