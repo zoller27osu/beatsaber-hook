@@ -200,8 +200,8 @@ Instruction::Instruction(const int32_t* inst) {
     auto code = *inst;
     // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64#top
     uint_fast8_t top0 = bits(code, 28, 25);  // op0 for top-level only
-    log(DEBUG, "inst: ptr = 0x%lX (offset 0x%lX), bytes = %s, top-level op0: %i",
-        pc, pc - base, std::bitset<32>(code).to_string().c_str(), top0);
+    log(DEBUG, "inst: ptr = 0x%lX (offset 0x%lX), bytes = %s (%X), top-level op0: %i",
+        pc, pc - base, std::bitset<32>(code).to_string().c_str(), code, top0);
     // Bit patterns like 1x0x where x is any bit and all other bits must match are implemented by:
     // 1. (a & [1's where pattern has non-x]) == [pattern with x's as 0]
     // 2. (a | [1's where pattern has x])     == [pattern with x's as 1]
@@ -1092,7 +1092,7 @@ Instruction::Instruction(const int32_t* inst) {
         SAFE_ABORT();
     }
     if (parseLevel < sizeof(kind) / sizeof(kind[0])) {
-        log(WARNING, "Could not complete parsing of 0x%X (offset %lX) - need more handling for kind '%s'!", code, pc - base, kind[parseLevel - 1]);
+        log(WARNING, "Could not complete parsing of 0x%lX (offset %lX) - need more handling for kind '%s'!", pc, pc - base, kind[parseLevel - 1]);
     } else {
         parsed = true;
         if (kind[parseLevel - 1] == unalloc) {
