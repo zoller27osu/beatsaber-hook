@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "typedefs.h"
-#include "logging.h"
+#include "logging.hpp"
 
 #if __has_include("il2cpp-runtime-stats.h")
 #define UNITY_2019
