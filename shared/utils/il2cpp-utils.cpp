@@ -1,5 +1,6 @@
-#include "utils.h"
+#include <utility>  // for std::pair
 #include "il2cpp-utils.hpp"
+#include "utils.h"
 #include "il2cpp-functions.hpp"
 #include "alphanum.hpp"
 #include <algorithm>
@@ -172,6 +173,7 @@ namespace il2cpp_utils {
     Il2CppClass* GetClassFromName(std::string_view name_space, std::string_view type_name) {
         il2cpp_functions::Init();
 
+        // TODO: avoid creating std::string at any point except new pair insertion via P0919
         // Check cache
         auto key = std::pair<std::string, std::string>(name_space, type_name);
         auto itr = namesToClassesCache.find(key);
@@ -191,7 +193,7 @@ namespace il2cpp_utils {
             }
             auto klass = il2cpp_functions::class_from_name(img, name_space.data(), type_name.data());
             if (klass) {
-                namesToClassesCache.insert({key, klass});
+                namesToClassesCache.emplace(key, klass);
                 return klass;
             }
         }
@@ -218,7 +220,7 @@ namespace il2cpp_utils {
                 ClassStandardName(klass).c_str());
             LogMethods(klass, true);
         }
-        classesNamesToMethodsCache.insert({key, methodInfo});
+        classesNamesToMethodsCache.emplace(key, methodInfo);
         return methodInfo;
     }
 
@@ -269,7 +271,7 @@ namespace il2cpp_utils {
             log(ERROR, "%s", ss.str().c_str());
             LogMethods(klass);
         }
-        classesNamesTypesToMethodsCache.insert({key, methodInfo});
+        classesNamesTypesToMethodsCache.emplace(key, methodInfo);
         return methodInfo;
     }
 
@@ -303,7 +305,7 @@ namespace il2cpp_utils {
             LogFields(klass);
             if (klass->parent != klass) field = FindField(klass->parent, fieldName);
         }
-        classesNamesToFieldsCache.insert({key, field});
+        classesNamesToFieldsCache.emplace(key, field);
         return field;
     }
 
@@ -323,7 +325,7 @@ namespace il2cpp_utils {
             LogProperties(klass);
             if (klass->parent != klass) prop = FindProperty(klass->parent, propName);
         }
-        classesNamesToPropertiesCache.insert({key, prop});
+        classesNamesToPropertiesCache.emplace(key, prop);
         return prop;
     }
 

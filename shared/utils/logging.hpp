@@ -83,8 +83,7 @@ log_file(lvl, __VA_ARGS__);} while(0);
 // From: https://codelab.wordpress.com/2014/11/03/how-to-use-standard-output-streams-for-logging-in-android-apps/
 static int pfd[2];
 static pthread_t thr;
-static void *thread_func(void*)
-{
+static void* thread_func(void*) {
     ssize_t rdsz;
     char buf[STD_BUFFER_SIZE];
     while((rdsz = read(pfd[0], buf, sizeof buf - 1)) > 0) {
