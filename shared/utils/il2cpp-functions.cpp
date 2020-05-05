@@ -3,7 +3,7 @@
 #include "utils.h"
 #include "il2cpp-functions.hpp"
 #include "instruction-parsing.hpp"
-#include "logging.h"
+#include "logging.hpp"
 
 // copies of the highly-inlinable functions
 const Il2CppTypeDefinition* il2cpp_functions::MetadataCache_GetTypeDefinitionFromIndex(TypeDefinitionIndex index) {

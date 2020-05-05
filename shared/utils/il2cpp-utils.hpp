@@ -7,7 +7,7 @@
 #include <optional>
 
 #include "il2cpp-functions.hpp"
-#include "logging.h"
+#include "logging.hpp"
 #include "utils.h"
 
 namespace il2cpp_utils {
