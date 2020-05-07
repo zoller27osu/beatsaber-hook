@@ -198,7 +198,7 @@ A64HookFunction((void*)getRealOffset(addr_ ## name),(void*) hook_ ## name, (void
 )
 
 #define INSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
-log(INFO, "Installing 64 bit offsetless hook: %s", #name); \
+log(INFO, "Installing 64 bit offsetless hook: %s at %lX", #name, asOffset(methodInfo->methodPointer)); \
 A64HookFunction((void*)methodInfo->methodPointer,(void*) hook_ ## name, (void**)&name); \
 )
 
@@ -245,7 +245,7 @@ inlineHook((uint32_t)getRealOffset(addr_ ## name)); \
 )
 
 #define INSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
-log(INFO, "Installing 32 bit offsetless hook!"); \
+log(INFO, "Installing 32 bit offsetless hook: %s at %lX", #name, asOffset(methodInfo->methodPointer)); \
 registerInlineHook((uint32_t)methodInfo->methodPointer, (uint32_t)hook_ ## name, (uint32_t **)&name); \
 inlineHook((uint32_t)methodInfo->methodPointer); \
 )

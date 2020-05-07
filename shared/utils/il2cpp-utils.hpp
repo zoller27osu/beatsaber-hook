@@ -469,10 +469,14 @@ namespace il2cpp_utils {
         RET_NULLOPT_UNLESS(field);
 
         TOut out;
-        if (instance) {
-            il2cpp_functions::field_get_value(instance, field, &out);
-        } else { // Fallback to perform a static field set
-            il2cpp_functions::field_static_get_value(field, &out);
+        if constexpr (std::is_convertible_v<TOut, Il2CppObject*>) {
+            out = static_cast<TOut>(il2cpp_functions::field_get_value_object(field, instance));
+        } else {
+            if (instance) {
+                il2cpp_functions::field_get_value(instance, field, &out);
+            } else { // Fallback to perform a static field set
+                il2cpp_functions::field_static_get_value(field, &out);
+            }
         }
         return out;
     }
