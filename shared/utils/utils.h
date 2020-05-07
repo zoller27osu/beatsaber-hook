@@ -198,7 +198,7 @@ A64HookFunction((void*)getRealOffset(addr_ ## name),(void*) hook_ ## name, (void
 )
 
 #define INSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
-log(INFO, "Installing 64 bit offsetless hook: %s", #name); \
+log(INFO, "Installing 64 bit offsetless hook: %s at %lX", #name, asOffset(methodInfo->methodPointer)); \
 A64HookFunction((void*)methodInfo->methodPointer,(void*) hook_ ## name, (void**)&name); \
 )
 
@@ -222,7 +222,7 @@ A64HookFunction((void*)getRealOffset(addr_ ## name),(void*)name, (void**)nullptr
 )
 
 #define UNINSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
-log(INFO, "Uninstalling 64 bit offsetless hook: %s", #name); \
+log(INFO, "Installing 64 bit offsetless hook: %s at %lX", #name, asOffset(methodInfo->methodPointer)); \
 A64HookFunction((void*)methodInfo->methodPointer,(void*)name, (void**)nullptr); \
 )
 
