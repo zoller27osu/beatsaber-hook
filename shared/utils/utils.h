@@ -16,7 +16,6 @@ namespace std {
 #else
 #error No string_view implementation available!
 #endif
-#include <unordered_map>
 #include <thread>
 
 // For use in SAFE_ABORT/CRASH_UNLESS (& RET_UNLESS if possible)

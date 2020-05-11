@@ -225,6 +225,7 @@ void setcsstr(Il2CppString* in, std::u16string_view str) {
         // Can assume that each char is only a single char (a single word --> double word)
         in->chars[i] = str[i];
     }
+    in->chars[in->length] = (Il2CppChar)'\u0000';
 }
 
 // Inspired by DaNike
