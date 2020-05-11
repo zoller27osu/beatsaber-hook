@@ -3,6 +3,7 @@
 #include <bitset>
 #include <optional>
 #include <stack>
+#include <unordered_map>
 
 class Register {
 public:

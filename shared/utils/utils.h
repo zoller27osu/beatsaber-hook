@@ -17,6 +17,7 @@ namespace std {
 #error No string_view implementation available!
 #endif
 #include <thread>
+#include <optional>
 
 // For use in SAFE_ABORT/CRASH_UNLESS (& RET_UNLESS if possible)
 #if __has_include(<source_location>)
