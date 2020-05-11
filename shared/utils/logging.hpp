@@ -8,6 +8,7 @@
 #include <dlfcn.h>
 #include <iostream>
 #include <unistd.h>
+#include <cmath> // Included to support cmath's definition of log
 
 #ifndef LOG_VERBOSE_TYPE
 #define LOG_VERBOSE_TYPE android_LogPriority
