@@ -20,7 +20,7 @@ using no_arg_get_t = decltype( std::declval<T&>().get() );
 template<typename T>
 constexpr bool has_no_arg_get = std::experimental::is_detected_v<no_arg_get_t, T>;
 #else
-#error No libraries for the implementation of has_get available!
+#error No libraries for the implementation of has_no_arg_get available!
 #endif
 
 #include "il2cpp-functions.hpp"
