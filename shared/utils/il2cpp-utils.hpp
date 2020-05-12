@@ -388,14 +388,6 @@ namespace il2cpp_utils {
             out = *reinterpret_cast<TOut*>(il2cpp_functions::object_unbox(ret));
         }
 
-        // By using this instead of ExtractType, we avoid unboxing because the ultimate type in that case would depend on the
-        // method in the first place
-        auto* outType = ExtractType<TOut>(std::move(out));
-        if (outType && !IsConvertible(outType, method->return_type)) {
-            log(WARNING, "User requested TOut %s does not match methodInfo's return_type of %s!",
-                TypeGetSimpleName(outType), TypeGetSimpleName(method->return_type));
-        }
-
         if (exp) {
             log(ERROR, "il2cpp_utils: RunMethod: %s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
                 il2cpp_utils::ExceptionToString(exp).c_str());
@@ -559,7 +551,7 @@ namespace il2cpp_utils {
                 // TODO: would orig = static_cast<Dt>(val); work?
                 *orig = *static_cast<Dt>(val);
             } else {
-                orig = *static_cast<Dt>(val);
+                orig = *static_cast<Dt*>(val);
             }
         }
         return true;
