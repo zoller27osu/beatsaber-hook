@@ -229,7 +229,11 @@ namespace il2cpp_utils {
 
     template<typename T>
     const Il2CppType* ExtractType(T&& arg) {
-        return il2cpp_type_check::il2cpp_arg_type<T>::get(arg);
+        auto* typ = il2cpp_type_check::il2cpp_arg_type<T>::get(arg);
+        if (!typ) {
+            log(ERROR, "ExtractType: failed to determine type! Tips: instead of nullptr, pass the Il2CppType* or Il2CppClass* of the argument instead!");
+        }
+        return typ;
     }
 
     inline auto ExtractTypes() {
@@ -240,11 +244,7 @@ namespace il2cpp_utils {
     std::vector<const Il2CppType*> ExtractTypes(T&& arg, TArgs&&... args) {
         auto* tFirst = ExtractType(arg);
         auto tOthers = ExtractTypes(args...);
-        if (tFirst) {
-            tOthers.insert(tOthers.begin(), tFirst);
-        } else {
-            log(ERROR, "ExtractTypes: failed to determine type! Tips: instead of nullptr, pass the Il2CppType* or Il2CppClass* of the argument instead!");
-        }
+        if (tFirst) tOthers.insert(tOthers.begin(), tFirst);
         return tOthers;
     }
 
@@ -583,9 +583,9 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         RET_0_UNLESS(field);
 
-        // TODO: especially test
+        // Ensure supplied value matches field's type
         auto* typ = ExtractType(value);
-        CRASH_UNLESS(IsConvertible(field->type, typ));
+        RET_0_UNLESS(IsConvertible(field->type, typ));
 
         void* val = ExtractValue(value);
         if (instance) {
