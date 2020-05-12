@@ -96,15 +96,17 @@ namespace il2cpp_utils {
         return il2cpp_functions::class_get_type(il2cpp_functions::class_from_il2cpp_type(type));
     }
 
-    bool IsConvertible(const Il2CppType* to, const Il2CppType* from) {
-        if (to->byref) {
-            if (!from->byref) {
-                log(DEBUG, "IsConvertible: to (%s, %p) is ref/out while from (%s, %p) is not. Not convertible.",
-                    TypeGetSimpleName(to), to, TypeGetSimpleName(from), from);
-                return false;
-            } else {
-                log(DEBUG, "IsConvertible: to (%s, %p) and from (%s, %p) are both ret/out. May be convertible.",
-                    TypeGetSimpleName(to), to, TypeGetSimpleName(from), from);
+    bool IsConvertible(const Il2CppType* to, const Il2CppType* from, bool asArgs) {
+        if (asArgs) {
+            if (to->byref) {
+                if (!from->byref) {
+                    log(DEBUG, "IsConvertible: to (%s, %p) is ref/out while from (%s, %p) is not. Not convertible.",
+                        TypeGetSimpleName(to), to, TypeGetSimpleName(from), from);
+                    return false;
+                } else {
+                    log(DEBUG, "IsConvertible: to (%s, %p) and from (%s, %p) are both ret/out. May be convertible.",
+                        TypeGetSimpleName(to), to, TypeGetSimpleName(from), from);
+                }
             }
         }
         auto classTo = il2cpp_functions::class_from_il2cpp_type(to);
@@ -276,6 +278,7 @@ namespace il2cpp_utils {
             ss << ") in class '" << ClassStandardName(klass) << "'!";
             log(ERROR, "%s", ss.str().c_str());
             LogMethods(klass);
+            if (multipleMatches) methodInfo = nullptr;
         }
         classesNamesTypesToMethodsCache.emplace(key, methodInfo);
         return methodInfo;
