@@ -247,11 +247,15 @@ namespace il2cpp_utils {
         }
 
         void* myIter = nullptr;
-        const MethodInfo* current;
         const MethodInfo* methodInfo = nullptr;
+        bool multipleMatches = false;
         // Does NOT automatically recurse through klass's parents
-        while ((current = il2cpp_functions::class_get_methods(klass, &myIter))) {
+        while (const MethodInfo* current = il2cpp_functions::class_get_methods(klass, &myIter)) {
             if ((methodName == current->name) && ParameterMatch(current, argTypes)) {
+                if (methodInfo) {
+                    multipleMatches = true;
+                    break;
+                }
                 methodInfo = current;
             }
         }
@@ -259,9 +263,10 @@ namespace il2cpp_utils {
             methodInfo = FindMethod(klass->parent, methodName, argTypes);
         }
 
-        if (!methodInfo) {
+        if (!methodInfo || multipleMatches) {
             std::stringstream ss;
-            ss << "could not find method " << methodName << "(";
+            ss << ((multipleMatches) ? "found multiple matches for" : "could not find");
+            ss << " method " << methodName << "(";
             bool first = true;
             for (auto t : argTypes) {
                 if (!first) ss << ", ";
@@ -644,9 +649,10 @@ namespace il2cpp_utils {
         auto* typ = il2cpp_functions::class_get_type(klass);
         if (typ) {
             log(DEBUG, "Type name: %s", il2cpp_functions::type_get_name(typ));
-            auto ch = il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_REFLECTION);
-            log(DEBUG, "Type reflection name: %s", ch);
-            // log(DEBUG, "Type full name: %s", il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_FULL_NAME));
+            if (auto* reflName = il2cpp_functions::Type_GetName(typ, IL2CPP_TYPE_NAME_FORMAT_REFLECTION)) {
+                log(DEBUG, "Type reflection name: %s", reflName);
+                il2cpp_functions::free(reflName);
+            }
             log(DEBUG, "Fully qualifed type name: %s", il2cpp_functions::type_get_assembly_qualified_name(typ));
         }
         log(DEBUG, "Rank: %i", il2cpp_functions::class_get_rank(klass));

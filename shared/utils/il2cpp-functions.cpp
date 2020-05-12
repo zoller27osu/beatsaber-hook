@@ -69,11 +69,13 @@ const TypeDefinitionIndex il2cpp_functions::MetadataCache_GetIndexForTypeDefinit
     return static_cast<TypeDefinitionIndex>(index);
 }
 
-const char* il2cpp_functions::Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format) {
+char* il2cpp_functions::Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format) {
     if (!il2cpp_functions::_Type_GetName_) return nullptr;
-    const auto& strRef = il2cpp_functions::_Type_GetName_(type, format);  // TODO figure out why this ref step is needed for 2019
-    const auto str = strRef;
-    return str.c_str();
+    // TODO debug the ref/lifetime weirdness with _Type_GetName_ to avoid the need for explicit allocation
+    const auto str = il2cpp_functions::_Type_GetName_(type, format);
+    char* buffer = static_cast<char*>(il2cpp_functions::alloc(str.length() + 1));
+    memcpy(buffer, str.c_str(), str.length() + 1);
+    return buffer;
 }
 
 #ifdef FILE_LOG
