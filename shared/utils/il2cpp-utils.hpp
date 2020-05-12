@@ -507,6 +507,13 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         RET_NULLOPT_UNLESS(field);
 
+        // Check that the TOut requested by the user matches the field.
+        auto* outType = ExtractIndependentType<TOut>();
+        if (outType && !IsConvertible(field->type, outType, false)) {
+            log(WARNING, "User requested TOut %s does not match the field's type, %s!",
+                TypeGetSimpleName(outType), TypeGetSimpleName(field->type));
+        }
+
         TOut out;
         if constexpr (std::is_convertible_v<TOut, Il2CppObject*>) {
             out = static_cast<TOut>(il2cpp_functions::field_get_value_object(field, instance));
