@@ -330,6 +330,10 @@ namespace il2cpp_utils {
         return prop;
     }
 
+    const PropertyInfo* FindProperty(std::string_view nameSpace, std::string_view className, std::string_view propertyName) {
+        return FindProperty(GetClassFromName(nameSpace, className), propertyName);
+    }
+
     Il2CppClass* GetParamClass(const MethodInfo* method, int paramIdx) {
         auto type = RET_0_UNLESS(il2cpp_functions::method_get_param(method, paramIdx));
         return il2cpp_functions::class_from_il2cpp_type(type);
