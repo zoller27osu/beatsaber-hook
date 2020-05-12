@@ -337,7 +337,7 @@ namespace il2cpp_utils {
 
     Il2CppClass* GetParamClass(const MethodInfo* method, int paramIdx);
     Il2CppClass* GetFieldClass(FieldInfo* field);
-    bool IsConvertible(const Il2CppType* to, const Il2CppType* from);
+    bool IsConvertible(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
 
     // Like ExtractType, but only returns an Il2CppType* if it can be extracted without an instance of T.
     template<class T>
@@ -365,6 +365,22 @@ namespace il2cpp_utils {
         Il2CppException* exp = nullptr;
         auto invokeParamsVec = ExtractValues(params...);
         auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParamsVec.data(), &exp);
+
+        // Check if the TOut that the user requested makes sense given the Il2CppObject* we actually got
+        if (ret) {
+            // By using this instead of ExtractType, we avoid unboxing because the ultimate type in that case would depend on the
+            // method in the first place
+            auto* outType = ExtractIndependentType<TOut>();
+            if (outType) {
+                auto* retType = ExtractType(ret);
+                if (!IsConvertible(retType, outType, false)) {
+                    log(WARNING, "User requested TOut %s does not match the method's return object of type %s!",
+                        TypeGetSimpleName(outType), TypeGetSimpleName(retType));
+                }
+            }
+        }
+
+        // Convert the Il2CppObject* we got from runtime_invoke to TOut.
         TOut out;
         if constexpr (std::is_pointer_v<TOut>) {
             out = reinterpret_cast<TOut>(ret);
