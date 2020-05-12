@@ -71,6 +71,7 @@ namespace il2cpp_utils {
         template<> \
         struct il2cpp_utils::il2cpp_type_check::il2cpp_arg_type_<type> { \
             static inline Il2CppType const* get(type arg) { \
+                il2cpp_functions::Init(); \
                 return il2cpp_functions::class_get_type(il2cpp_functions::defaults->fieldName##_class); \
             } \
         }
@@ -79,6 +80,7 @@ namespace il2cpp_utils {
         template<> \
         struct il2cpp_utils::il2cpp_type_check::il2cpp_arg_type_<type> { \
             static inline Il2CppType const* get(type arg) { \
+                il2cpp_functions::Init(); \
                 return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName(nameSpace, className)); \
             } \
         }
@@ -127,7 +129,7 @@ namespace il2cpp_utils {
             static inline Il2CppType const* get(Il2CppObject* arg) {
                 if (!arg) return nullptr;
                 il2cpp_functions::Init();
-                auto klass = RET_0_UNLESS(il2cpp_functions::object_get_class(arg));
+                auto* klass = RET_0_UNLESS(il2cpp_functions::object_get_class(arg));
                 return il2cpp_functions::class_get_type(klass);
             }
         };
@@ -145,7 +147,7 @@ namespace il2cpp_utils {
                 auto constexpr hasObj = has_obj<T, Il2CppObject>::value;
                 auto constexpr hasObject = has_object<T, Il2CppObject>::value;
                 // Double check inheritance here
-                if constexpr(std::is_convertible<T*, Il2CppObject*>::value) {
+                if constexpr(std::is_convertible_v<T*, Il2CppObject*>) {
                     return il2cpp_arg_type_<Il2CppObject*>::get(arg);
                 } else if constexpr(hasObj) {
                     return il2cpp_arg_type_<Il2CppObject*>::get(&arg->obj);
@@ -208,28 +210,34 @@ namespace il2cpp_utils {
 
     bool IsInterface(const Il2CppClass* klass);
 
+    template<typename T>
+    const Il2CppType* ExtractType(T&& arg) {
+        auto* typ = il2cpp_type_check::il2cpp_arg_type<T>::get(arg);
+        if (!typ) {
+            log(ERROR, "ExtractTypes: failed to determine type! Tips: instead of nullptr, pass the Il2CppType* or Il2CppClass* of the argument instead!");
+        }
+        return typ;
+    }
+
+    // should be called directly by RunMethod, and only in the no-arguments case
     inline auto ExtractTypes() {
         return std::vector<const Il2CppType*>();
     }
 
-    template<typename T>
+    template<class T>
     std::vector<const Il2CppType*> ExtractTypes(T&& arg) {
-        std::vector<const Il2CppType*> type;
-        auto typ = il2cpp_type_check::il2cpp_arg_type<T>::get(arg);
-        if (typ) {
-            type.push_back(typ);
-        } else {
-            log(ERROR, "ExtractTypes: failed to determine type! Tips: instead of nullptr, pass the Il2CppType* or Il2CppClass* of the argument instead!");
-        }
-        return type;
+        std::vector<const Il2CppType*> vec;
+        auto* typ = ExtractType(arg);
+        vec.push_back(typ);
+        return vec;
     }
 
     template<typename T, typename... TArgs>
     std::vector<const Il2CppType*> ExtractTypes(T&& arg, TArgs&&... args) {
-        auto base = ExtractTypes(arg);
-        auto rec = ExtractTypes(args...);
-        base.insert(base.end(), rec.begin(), rec.end());
-        return base;
+        auto* tFirst = ExtractType(arg);
+        auto tOthers = ExtractTypes(args...);
+        if (tFirst) tOthers.insert(tOthers.begin(), tFirst);
+        return tOthers;
     }
 
     // Returns if a given MethodInfo's parameters match the Il2CppType array provided as type_arr
@@ -278,15 +286,21 @@ namespace il2cpp_utils {
     const MethodInfo* FindMethodUnsafe(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount);
 
     // Returns the MethodInfo for the method on the given instance
-    template<class... TArgs>
-    const MethodInfo* FindMethod(Il2CppObject* instance, TArgs&&... params) {
-        auto klass = RET_0_UNLESS(il2cpp_functions::object_get_class(instance));
+    template<class T, class... TArgs>
+    std::enable_if_t<!std::is_convertible_v<T, std::string_view>, const MethodInfo*>
+    FindMethod(T&& instance, TArgs&&... params) {
+        il2cpp_functions::Init();
+
+        auto* typ = RET_0_UNLESS(ExtractType(instance));
+        auto* klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(typ));
         return FindMethod(klass, params...);
     }
     const MethodInfo* FindMethodUnsafe(Il2CppObject* instance, std::string_view methodName, int argsCount);
 
     template<class T>
     void* ExtractValue(T&& arg) {
+        il2cpp_functions::Init();
+
         using Dt = std::decay_t<T>;
         if constexpr (std::is_same_v<Dt, Il2CppType*> || std::is_same_v<Dt, Il2CppClass*>) {
             return nullptr;
@@ -295,7 +309,7 @@ namespace il2cpp_utils {
                 if (arg) {
                     auto* klass = il2cpp_functions::object_get_class(arg);
                     if (klass && klass->valuetype) {
-                        log(WARNING, "unboxing param %p", arg);
+                        // log(WARNING, "unboxing param %p", arg);
                         // Arg is an Il2CppObject* of a value type. It needs to be unboxed.
                         return il2cpp_functions::object_unbox(arg);
                     }
@@ -329,27 +343,20 @@ namespace il2cpp_utils {
 
     Il2CppClass* GetParamClass(const MethodInfo* method, int paramIdx);
     Il2CppClass* GetFieldClass(FieldInfo* field);
+    bool IsConvertible(const Il2CppType* to, const Il2CppType* from);
 
     template<class TOut = Il2CppObject*, class T, class... TArgs>
     // Runs a MethodInfo with the specified parameters and instance, with return type TOut.
     // Assumes a static method if instance == nullptr. May fail due to exception or wrong name, hence the std::optional.
-    std::optional<TOut> RunMethod(T* instance, const MethodInfo* method, TArgs&& ...params) {
-        il2cpp_functions::Init();
+    std::optional<TOut> RunMethod(T&& instance, const MethodInfo* method, TArgs&& ...params) {
         RET_NULLOPT_UNLESS(method);
-
-        // runtime_invoke will assume obj is unboxed and box it. We need to counter that for pre-boxed instances.
-        // Note: we could also just call Runtime::Invoke directly, but box non-Il2CppObject instances ourselves as method->klass
-        void* inst = instance;
-        if constexpr (std::is_base_of_v<Il2CppObject, T>) {
-            if (instance && method->klass->valuetype) {
-                // We assume that if the method is for a ValueType and instance is an Il2CppObject, then it was pre-boxed.
-                inst = il2cpp_functions::object_unbox(instance);
-            }
-        }
+        void* inst = ExtractValue(instance);
+        // TODO: check param types if and only if MethodInfo did NOT come from a SAFE FindMethod
+        // e.x. iff this was NOT called by another RunMethod?
 
         Il2CppException* exp = nullptr;
         auto invokeParamsVec = ExtractValues(params...);
-        auto ret = il2cpp_functions::runtime_invoke(method, inst, invokeParamsVec.data(), &exp);
+        auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParamsVec.data(), &exp);
         TOut out;
         if constexpr (std::is_pointer_v<TOut>) {
             out = reinterpret_cast<TOut>(ret);
@@ -368,12 +375,8 @@ namespace il2cpp_utils {
     template<class TOut = Il2CppObject*, class T, class... TArgs>
     // Runs a (static) method with the specified method name, with return type TOut.
     // Checks the types of the parameters against the candidate methods.
-    // TODO: define classOrInstance T's via a ClassOrInstance type if possible
-    std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, std::optional<TOut>>
-    RunMethod(T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
-        il2cpp_functions::Init();
-        RET_NULLOPT_UNLESS(classOrInstance);
-
+    std::enable_if_t<!std::is_convertible_v<T, std::string_view>, std::optional<TOut>>
+    RunMethod(T&& classOrInstance, std::string_view methodName, TArgs&& ...params) {
         auto types = ExtractTypes(params...);
         if (types.size() != sizeof...(TArgs)) {
             log(WARNING, "RunMethod: ExtractTypes for method %s failed!", methodName.data());
@@ -381,9 +384,6 @@ namespace il2cpp_utils {
         }
 
         auto method = RET_NULLOPT_UNLESS(FindMethod(classOrInstance, methodName, types));
-        if constexpr (std::is_base_of_v<Il2CppClass, T>) {
-            return RunMethod<TOut, void>(nullptr, method, params...);
-        }
         return RunMethod<TOut>(classOrInstance, method, params...);
     }
 
@@ -392,12 +392,10 @@ namespace il2cpp_utils {
     // DOES NOT PERFORM TYPE CHECKING.
     std::enable_if_t<std::is_base_of_v<Il2CppClass, T> || std::is_base_of_v<Il2CppObject, T>, std::optional<TOut>>
     RunMethodUnsafe(T* classOrInstance, std::string_view methodName, TArgs&& ...params) {
-        il2cpp_functions::Init();
         RET_NULLOPT_UNLESS(classOrInstance);
-
         auto method = RET_NULLOPT_UNLESS(FindMethodUnsafe(classOrInstance, methodName, sizeof...(TArgs)));
         if constexpr (std::is_base_of_v<Il2CppClass, T>) {
-            return RunMethod<TOut, void>(nullptr, method, params...);
+            return RunMethod<TOut>(nullptr, method, params...);
         }
         return RunMethod<TOut>(classOrInstance, method, params...);
     }
@@ -406,7 +404,7 @@ namespace il2cpp_utils {
     // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
     // The method also has return type TOut.
     std::optional<TOut> RunMethod(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
-        auto klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, klassName));
+        auto* klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, klassName));
         return RunMethod<TOut>(klass, methodName, params...);
     }
 
@@ -415,7 +413,7 @@ namespace il2cpp_utils {
     // The method also has return type TOut.
     // DOES NOT PERFORM TYPE CHECKING.
     std::optional<TOut> RunMethodUnsafe(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
-        auto klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, klassName));
+        auto* klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, klassName));
         return RunMethodUnsafe<TOut>(klass, methodName, params...);
     }
 
@@ -433,6 +431,14 @@ namespace il2cpp_utils {
     }
 
     template<typename TObj = Il2CppObject, typename... TArgs>
+    // Creates a new object of the class with the given nameSpace and className using the given constructor parameters and 
+    // casts it to TObj*. Will only run a .ctor whose parameter types match the given arguments.
+    TObj* New(std::string_view nameSpace, std::string_view className, TArgs const& ...args) {
+        auto* klass = RET_0_UNLESS(GetClassFromName(nameSpace, className));
+        return New(klass, args...);
+    }
+
+    template<typename TObj = Il2CppObject, typename... TArgs>
     // Creates a new object of the given class using the given constructor parameters and casts it to TObj*
     // DOES NOT PERFORM ARGUMENT TYPE CHECKING! Uses the first .ctor with the right number of parameters it sees.
     TObj* NewUnsafe(Il2CppClass* klass, TArgs* ...args) {
@@ -445,6 +451,14 @@ namespace il2cpp_utils {
         return reinterpret_cast<TObj*>(obj);
     }
 
+    template<typename TObj = Il2CppObject, typename... TArgs>
+    // Creates a new object of the class with the given nameSpace and className using the given constructor parameters and casts
+    // it to TObj*. DOES NOT PERFORM ARGUMENT TYPE CHECKING! Uses the first .ctor with the right number of parameters it sees.
+    TObj* NewUnsafe(std::string_view nameSpace, std::string_view className, TArgs* ...args) {
+        auto* klass = RET_0_UNLESS(GetClassFromName(nameSpace, className));
+        return NewUnsafe(klass, args...);
+    }
+
     // Returns the FieldInfo for the field of the given class with the given name
     // Created by zoller27osu
     FieldInfo* FindField(Il2CppClass* klass, std::string_view fieldName);
@@ -453,10 +467,14 @@ namespace il2cpp_utils {
     FieldInfo* FindField(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
         return FindField(GetClassFromName(nameSpace, className), params...);
     }
-    // Wrapper for FindField taking an Il2CppObject* in place of an Il2CppClass*
-    template<class... TArgs>
-    FieldInfo* FindField(Il2CppObject* instance, TArgs&&... params) {
-        auto klass = RET_0_UNLESS(il2cpp_functions::object_get_class(instance));
+    // Wrapper for FindField taking an instance to extract the Il2CppClass* from
+    template<class T, class... TArgs>
+    std::enable_if_t<!std::is_convertible_v<T, std::string_view>, FieldInfo*>
+    FindField(T&& instance, TArgs&&... params) {
+        il2cpp_functions::Init();
+
+        auto* typ = RET_0_UNLESS(ExtractType(instance));
+        auto* klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(typ));
         return FindField(klass, params...);
     }
 
@@ -481,38 +499,75 @@ namespace il2cpp_utils {
         return out;
     }
 
-    template<typename TOut = Il2CppObject*>
+    template<class T>
+    Il2CppObject* ExtractObject(T&& arg) {
+        il2cpp_functions::Init();
+
+        using Dt = std::decay_t<T>;
+        void* val;
+        if constexpr (std::is_same_v<Dt, Il2CppType*> || std::is_same_v<Dt, Il2CppClass*>) {
+            return nullptr;
+        } else if constexpr(std::is_convertible_v<Dt, Il2CppObject*>) {
+            return arg;
+        } else if constexpr (std::is_pointer_v<Dt>) {
+            val = arg;
+        } else {
+            val = const_cast<Dt*>(&arg);
+        }
+        auto* typ = RET_0_UNLESS(ExtractType(arg));
+        auto* klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(typ));
+        return il2cpp_functions::value_box(klass, val);
+    }
+
+    template<class T>
+    bool UnextractObject(T&& orig, Il2CppObject* modified) {
+        il2cpp_functions::Init();
+
+        using Dt = std::decay_t<T>;
+        if (modified) {
+            if constexpr(std::is_convertible_v<Dt, Il2CppObject*>) {
+                orig = modified;
+            } else {
+                void* val = RET_0_UNLESS(il2cpp_functions::object_unbox(modified));
+                if constexpr (std::is_pointer_v<Dt>) {
+                    // TODO: would orig = static_cast<Dt>(val); work?
+                    *orig = *static_cast<Dt>(val);
+                } else {
+                    orig = *static_cast<Dt>(val);
+                }
+            }
+        }
+        return true;
+    }
+
+    template<typename TOut = Il2CppObject*, typename T>
     // Gets the value of the field with type TOut and the given name from the given class
     // Adapted by zoller27osu
-    std::optional<TOut> GetFieldValue(Il2CppClass* klass, std::string_view fieldName) {
-        il2cpp_functions::Init();
-        RET_NULLOPT_UNLESS(klass);
-
-        auto field = RET_NULLOPT_UNLESS(FindField(klass, fieldName));
-        return GetFieldValue<TOut>(nullptr, field);
+    std::optional<TOut> GetFieldValue(T&& classOrInstance, std::string_view fieldName) {
+        auto* field = RET_NULLOPT_UNLESS(FindField(classOrInstance, fieldName));
+        Il2CppObject* obj = ExtractObject(classOrInstance);
+        return GetFieldValue<TOut>(obj, field);
     }
 
     template<typename TOut = Il2CppObject*>
-    // Gets a value from the given object instance and field name, with return type TOut
-    // Created by darknight1050, modified by Sc2ad and zoller27osu
-    std::optional<TOut> GetFieldValue(Il2CppObject* instance, std::string_view fieldName) {
-        il2cpp_functions::Init();
-        RET_NULLOPT_UNLESS(instance);
-
-        auto field = RET_NULLOPT_UNLESS(FindField(instance, fieldName));
-        return GetFieldValue<TOut>(instance, field);
+    // Gets the value of the static field with the given name from the class with the given nameSpace and className.
+    std::optional<TOut> GetFieldValue(std::string_view nameSpace, std::string_view className, std::string_view fieldName) {
+        auto* klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, className));
+        return GetFieldValue<TOut>(klass, fieldName);
     }
 
     // TODO: typecheck the Set[Field/Property]Value methods' value params?
 
-    // Sets the value of a given field, given an object instance and FieldInfo
-    // Unbox "value" before passing if it is an Il2CppObject but the field is a primitive or struct!
+    // Sets the value of a given field, given an object instance and the FieldInfo.
     // Returns false if it fails
     // Assumes static field if instance == nullptr
-    template<class T>
-    bool SetFieldValue(Il2CppObject* instance, FieldInfo* field, T&& value) {
+    template<class TArg>
+    bool SetFieldValue(Il2CppObject* instance, FieldInfo* field, TArg&& value) {
         il2cpp_functions::Init();
         RET_0_UNLESS(field);
+
+        // auto* typ = ExtractType(value);
+        // CRASH_UNLESS(IsConvertible(field->type, typ));
 
         void* val = ExtractValue(value);
         if (instance) {
@@ -523,108 +578,91 @@ namespace il2cpp_utils {
         return true;
     }
 
-    // Sets the value of a given field, given an object instance and field name
-    // Unbox "value" before passing if it is an Il2CppObject but the field is a primitive or struct!
+    // Sets the value of a given field, given a class or instance and the field name.
     // Returns false if it fails
-    // Adapted by zoller27osu
-    template<class T>
-    bool SetFieldValue(Il2CppClass* klass, std::string_view fieldName, T&& value) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(klass);
-
-        auto field = RET_0_UNLESS(FindField(klass, fieldName));
-        return SetFieldValue(nullptr, field, value);
+    template<class T, class TArg>
+    bool SetFieldValue(T&& classOrInstance, std::string_view fieldName, TArg&& value) {
+        auto* field = RET_0_UNLESS(FindField(classOrInstance, fieldName));
+        Il2CppObject* obj = ExtractObject(classOrInstance);
+        auto ret = SetFieldValue(obj, field, value);
+        RET_0_UNLESS(UnextractObject(classOrInstance, obj));
+        return ret;
     }
 
-    // Sets the value of a given field, given an object instance and field name
-    // Unbox "value" before passing if it is an Il2CppObject but the field is a primitive or struct!
+    // Sets the value of the static field with the given name on the class with the given nameSpace and className.
     // Returns false if it fails
-    template<class T>
-    bool SetFieldValue(Il2CppObject* instance, std::string_view fieldName, T&& value) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(instance);
-
-        auto field = RET_0_UNLESS(FindField(instance, fieldName));
-        return SetFieldValue(instance, field, value);
+    template<class TArg>
+    bool SetFieldValue(std::string_view nameSpace, std::string_view className, std::string_view fieldName, TArg&& value) {
+        auto* klass = RET_0_UNLESS(GetClassFromName(nameSpace, className));
+        return SetFieldValue(klass, fieldName, value);
     }
 
     // Returns the PropertyInfo for the property of the given class with the given name
     // Created by zoller27osu
     const PropertyInfo* FindProperty(Il2CppClass* klass, std::string_view propertyName);
     // Wrapper for FindProperty taking a namespace and class name in place of an Il2CppClass*
-    template<class... TArgs>
-    const PropertyInfo* FindProperty(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
-        return FindProperty(GetClassFromName(nameSpace, className), params...);
-    }
-    // Wrapper for FindProperty taking an Il2CppObject* in place of an Il2CppClass*
-    template<class... TArgs>
-    const PropertyInfo* FindProperty(Il2CppObject* instance, TArgs&&... params) {
-        auto klass = RET_0_UNLESS(il2cpp_functions::object_get_class(instance));
-        return FindProperty(klass, params...);
+    const PropertyInfo* FindProperty(std::string_view nameSpace, std::string_view className, std::string_view propertyName);
+    // Wrapper for FindProperty taking an instance to extract the Il2CppClass* from
+    template<class T>
+    const PropertyInfo* FindProperty(T&& instance, std::string_view propertyName) {
+        il2cpp_functions::Init();
+
+        auto* typ = RET_0_UNLESS(ExtractType(instance));
+        auto* klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(typ));
+        return FindProperty(klass, propertyName);
     }
 
     template<class TOut = Il2CppObject*, class T>
     // Gets a value from the given object instance, and PropertyInfo, with return type TOut.
     // Assumes a static property if instance == nullptr
-    std::optional<TOut> GetPropertyValue(T* instance, const PropertyInfo* prop) {
+    std::optional<TOut> GetPropertyValue(T&& classOrInstance, const PropertyInfo* prop) {
         il2cpp_functions::Init();
         RET_NULLOPT_UNLESS(prop);
-        auto getter = RET_NULLOPT_UNLESS(il2cpp_functions::property_get_get_method(prop));
-        return RunMethod<TOut>(instance, getter);
+
+        auto* getter = RET_NULLOPT_UNLESS(il2cpp_functions::property_get_get_method(prop));
+        return RunMethod<TOut>(classOrInstance, getter);
+    }
+
+    template<typename TOut = Il2CppObject*, typename T>
+    // Gets the value of the property with the given name from the given class or instance, and returns it as TOut.
+    std::optional<TOut> GetPropertyValue(T&& classOrInstance, std::string_view propName) {
+        auto* prop = RET_NULLOPT_UNLESS(FindProperty(classOrInstance, propName));
+        return GetPropertyValue<TOut>(classOrInstance, prop);
     }
 
     template<typename TOut = Il2CppObject*>
-    // Gets the value of the property with the given name from the given class, and returns it as TOut.
-    std::optional<TOut> GetPropertyValue(Il2CppClass* klass, std::string_view propName) {
-        il2cpp_functions::Init();
-        RET_NULLOPT_UNLESS(klass);
-        auto prop = RET_NULLOPT_UNLESS(FindProperty(klass, propName));
-        return GetPropertyValue<TOut, void>(nullptr, prop);
+    // Gets the value of the static property with the given name from the class with the given nameSpace and className.
+    std::optional<TOut> GetPropertyValue(std::string_view nameSpace, std::string_view className, std::string_view propName) {
+        auto* klass = RET_0_UNLESS(GetClassFromName(nameSpace, className));
+        return GetPropertyValue<TOut>(klass, propName);
     }
 
-    template<typename TOut = Il2CppObject*>
-    // Gets a value from the given object instance and property name, and returns it as TOut.
-    std::optional<TOut> GetPropertyValue(Il2CppObject* instance, std::string_view propName) {
-        il2cpp_functions::Init();
-        RET_NULLOPT_UNLESS(instance);
-        auto prop = RET_NULLOPT_UNLESS(FindProperty(instance, propName));
-        return GetPropertyValue<TOut>(instance, prop);
-    }
-
-    // Sets the value of a given property, given an object instance and PropertyInfo
-    // Unbox "value" before passing if it is an Il2CppObject but the property is a primitive or struct!
-    // Returns false if it fails
-    // Assumes static property if instance == nullptr
-    template<class ObjectOrNull, class T>
-    bool SetPropertyValue(ObjectOrNull* instance, const PropertyInfo* prop, T&& value) {
+    // Sets the value of a given property, given an object instance or class and PropertyInfo
+    // Returns false if it fails.
+    // Only static properties work with classOrInstance == nullptr
+    template<class T, class TArg>
+    bool SetPropertyValue(T&& classOrInstance, const PropertyInfo* prop, TArg&& value) {
         il2cpp_functions::Init();
         RET_0_UNLESS(prop);
-        auto setter = RET_0_UNLESS(il2cpp_functions::property_get_set_method(prop));
-        return (bool)RunMethod(instance, setter, value);
+
+        auto* setter = RET_0_UNLESS(il2cpp_functions::property_get_set_method(prop));
+        return (bool)RunMethod(classOrInstance, setter, value);
     }
 
-    // Sets the value of a given property, given an object instance and property name
-    // Unbox "value" before passing if it is an Il2CppObject but the property is a primitive or struct!
+    // Sets the value of a given property, given an object instance or class and property name
     // Returns false if it fails
-    template<class T>
-    bool SetPropertyValue(Il2CppClass* klass, std::string_view propName, T&& value) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(klass);
-
-        auto prop = RET_0_UNLESS(FindProperty(klass, propName));
-        return SetPropertyValue<void>(nullptr, prop, value);
+    template<class T, class TArg>
+    bool SetPropertyValue(T&& classOrInstance, std::string_view propName, TArg&& value) {
+        auto* prop = RET_0_UNLESS(FindProperty(classOrInstance, propName));
+        return SetPropertyValue(classOrInstance, prop, value);
     }
 
-    // Sets the value of a given property, given an object instance and property name
-    // Unbox "value" before passing if it is an Il2CppObject but the property is a primitive or struct!
+    // Sets the value of a given static property, given the class' namespace and name, and the property name and value.
     // Returns false if it fails
-    template<class T>
-    bool SetPropertyValue(Il2CppObject* instance, std::string_view propName, T&& value) {
-        il2cpp_functions::Init();
-        RET_0_UNLESS(instance);
-
-        auto prop = RET_0_UNLESS(FindProperty(instance, propName));
-        return SetPropertyValue(instance, prop, value);
+    template<class TArg>
+    bool SetPropertyValue(std::string_view nameSpace, std::string_view className, std::string_view propName, TArg&& value) {
+        auto* klass = RET_0_UNLESS(GetClassFromName(nameSpace, className));
+        return SetPropertyValue(klass, propName, value);
     }
 
     template<typename T = MulticastDelegate, typename TObj, typename R, typename... TArgs>
@@ -681,26 +719,26 @@ namespace il2cpp_utils {
     // Intializes an object (using the given args) fit to be passed to the given method at the given parameter index.
     template<typename... TArgs>
     Il2CppObject* CreateParam(const MethodInfo* method, int paramIdx, TArgs&& ...args) {
-        auto klass = RET_0_UNLESS(GetParamClass(method, paramIdx));
+        auto* klass = RET_0_UNLESS(GetParamClass(method, paramIdx));
         return il2cpp_utils::New(klass, args...);
     }
 
     template<typename... TArgs>
     Il2CppObject* CreateParamUnsafe(const MethodInfo* method, int paramIdx, TArgs&& ...args) {
-        auto klass = RET_0_UNLESS(GetParamClass(method, paramIdx));
+        auto* klass = RET_0_UNLESS(GetParamClass(method, paramIdx));
         return il2cpp_utils::NewUnsafe(klass, args...);
     }
 
     // Intializes an object (using the given args) fit to be assigned to the given field.
     template<typename... TArgs>
     Il2CppObject* CreateFieldValue(FieldInfo* field, TArgs&& ...args) {
-        auto klass = RET_0_UNLESS(GetFieldClass(field));
+        auto* klass = RET_0_UNLESS(GetFieldClass(field));
         return il2cpp_utils::New(klass, args...);
     }
 
     template<typename... TArgs>
     Il2CppObject* CreateFieldValueUnsafe(FieldInfo* field, TArgs&& ...args) {
-        auto klass = RET_0_UNLESS(GetFieldClass(field));
+        auto* klass = RET_0_UNLESS(GetFieldClass(field));
         return il2cpp_utils::NewUnsafe(klass, args...);
     }
 
