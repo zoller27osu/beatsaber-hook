@@ -332,7 +332,8 @@ class il2cpp_functions {
 #else
     inline static gnu_string (*_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
 #endif
-    static const char* Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format);
+    // You must il2cpp_functions::free the char* when you are done with it
+    static char* Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format);
 
     inline static Il2CppClass* (*GenericClass_GetClass)(Il2CppGenericClass* gclass);
 
