@@ -3,10 +3,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <dlfcn.h>
 #include <string>
-#include "typedefs.h"
+#include <string_view>
 
+class Il2CppString;
 #ifndef __cplusplus
 bool = uchar8_t;
 #endif /* __cplusplus */
