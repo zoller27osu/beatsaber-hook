@@ -839,9 +839,15 @@ namespace il2cpp_utils {
             AddNestedTypesToNametoClassHashTable(hashTable, namespaze, name, nestedClass);
     }
 
-    Il2CppString* createcsstr(std::string_view inp) {
+    Il2CppString* createcsstr(std::string_view inp, bool pinned) {
         il2cpp_functions::Init();
-        return il2cpp_functions::string_new_len(inp.data(), (uint32_t)inp.length());
+        auto* obj = il2cpp_functions::string_new_len(inp.data(), (uint32_t)inp.length());
+        if (!pinned) {
+            auto gchandle = il2cpp_functions::gchandle_new(&obj->object, pinned);
+            log(DEBUG, "gchandle created for string! handle ID: %u", gchandle);
+            // gchandle (probably) does not need to be returned here.
+        }
+        return obj;
     }
 
     [[nodiscard]] bool Match(const Il2CppObject* source, const Il2CppClass* klass) noexcept {
