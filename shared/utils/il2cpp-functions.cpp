@@ -632,8 +632,9 @@ void il2cpp_functions::Init() {
 
     // GenericClass::GetClass. offset 0x88DF64 in 1.5, 0xA34F20 in 1.7.0, 0xA6E4EC in 1.8.0b1
     Instruction cfit((const int32_t*)class_from_il2cpp_type);
-    Instruction Class_FromIl2CppType(CRASH_UNLESS(cfit.label));
-    auto caseStart = CRASH_UNLESS(EvalSwitch(Class_FromIl2CppType.addr, 1, 1, IL2CPP_TYPE_GENERICINST));
+    Instruction Class_FromIl2CppType_inst(CRASH_UNLESS(cfit.label));
+    Class_FromIl2CppType = (decltype(Class_FromIl2CppType))CRASH_UNLESS(Class_FromIl2CppType_inst.addr);
+    auto caseStart = CRASH_UNLESS(EvalSwitch(Class_FromIl2CppType_inst.addr, 1, 1, IL2CPP_TYPE_GENERICINST));
     auto j2GC_GC = CRASH_UNLESS(caseStart->findNthDirectBranchWithoutLink(1));
     log(DEBUG, "j2GC_GC: %s", j2GC_GC->toString().c_str());
     GenericClass_GetClass = (decltype(GenericClass_GetClass))CRASH_UNLESS(j2GC_GC->label);
