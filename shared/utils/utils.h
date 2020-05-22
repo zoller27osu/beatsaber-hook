@@ -211,7 +211,14 @@ A64HookFunction((void*)getRealOffset(addr_ ## name),(void*) hook_ ## name, (void
 )
 
 #define INSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
-log(INFO, "Installing 64 bit offsetless hook: %s at %lX", #name, asOffset(methodInfo->methodPointer)); \
+il2cpp_functions::CheckS_GlobalMetadata(); \
+auto offset = asOffset(methodInfo->methodPointer); \
+log(INFO, "Installing 64 bit offsetless hook: %s at %lX", #name, offset); \
+auto it = il2cpp_functions::methods.upper_bound(methodInfo->methodPointer); \
+if (it != il2cpp_functions::methods.end()) { \
+    auto nextOffset = asOffset(it->first); \
+    log(INFO, "Next method pointer: %lX (difference of %li)", nextOffset, (intptr_t)nextOffset - (intptr_t)offset); \
+} \
 A64HookFunction((void*)methodInfo->methodPointer,(void*) hook_ ## name, (void**)&name); \
 )
 

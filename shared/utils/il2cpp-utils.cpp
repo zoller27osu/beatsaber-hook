@@ -86,6 +86,7 @@ namespace il2cpp_utils {
     }
 
     const Il2CppType* MakeRef(const Il2CppType* type) {
+        CRASH_UNLESS(type);
         if (type->byref) return type;
         // could use Class::GetByrefType instead of &->this_arg but it does the same thing
         return &il2cpp_functions::class_from_il2cpp_type(type)->this_arg;
