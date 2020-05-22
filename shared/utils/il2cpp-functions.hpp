@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "typedefs.h"
 #include "logging.hpp"
+#include <map>
 
 #if __has_include("il2cpp-runtime-stats.h")
 #define UNITY_2019
@@ -345,21 +346,11 @@ class il2cpp_functions {
     inline static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataPtr)> s_GlobalMetadata = nullptr;
     inline static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataHeaderPtr)> s_GlobalMetadataHeader = nullptr;
     inline static const Il2CppDefaults* defaults;
+    inline static std::map<Il2CppMethodPointer, const MethodInfo*> methods;
 
+    // Initializes s_GlobalMetadataHeader & crew, unless they already were.
     // must be done on-demand because the pointers aren't necessarily correct at the time of il2cpp_functions::Init
-    inline static void CheckS_GlobalMetadata() {
-        if (!s_GlobalMetadataHeader) {
-            s_GlobalMetadata = *(il2cpp_functions::s_GlobalMetadataPtr);
-            s_GlobalMetadataHeader = *(il2cpp_functions::s_GlobalMetadataHeaderPtr);
-            log(DEBUG, "sanity: %X (should be 0xFAB11BAF)", s_GlobalMetadataHeader->sanity);
-            log(DEBUG, "version: %i", s_GlobalMetadataHeader->version);
-            assert(s_GlobalMetadataHeader->sanity == 0xFAB11BAF);
-            log(DEBUG, "typeDefinitionsOffset: %i", s_GlobalMetadataHeader->typeDefinitionsOffset);
-            log(DEBUG, "exportedTypeDefinitionsOffset: %i", s_GlobalMetadataHeader->exportedTypeDefinitionsOffset);
-            log(DEBUG, "nestedTypesOffset: %i", s_GlobalMetadataHeader->nestedTypesOffset);
-            // TODO: use il2cpp_functions::defaults to define the il2cpp_defaults variable mentioned in il2cpp-class-internals.h
-        }
-    }
+    static void CheckS_GlobalMetadata();
 
     // COPIES OF FREQUENTLY INLINED NON-API LIBIL2CPP FUNCTIONS:
     static const char* MetadataCache_GetStringFromIndex(StringIndex index);
