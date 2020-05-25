@@ -7,8 +7,12 @@
 #include <string_view>
 #include <memory>
 
+#ifndef VERSION
+#define VERSION "0.0.0"
+#endif
+
 const Logger* Logger::getLogger() {
-    static auto ptr = std::unique_ptr<const Logger>(new Logger("UtilsLogger"));
+    static auto ptr = std::unique_ptr<const Logger>(new Logger("UtilsLogger|v" VERSION));
     return ptr.get();
 }
 
