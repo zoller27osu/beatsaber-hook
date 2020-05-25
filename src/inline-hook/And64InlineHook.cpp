@@ -33,10 +33,10 @@
 #include <android/log.h>
 #include <errno.h>
 #include <string.h>
-#include "../utils/logging.hpp"
+#include "../../shared/utils/logging.hpp"
 #ifdef __aarch64__
 
-#include "And64InlineHook.hpp"
+#include "../../shared/inline-hook/And64InlineHook.hpp"
 #define   A64_MAX_INSTRUCTIONS 5
 #define   A64_MAX_REFERENCES   (A64_MAX_INSTRUCTIONS * 2)
 #define   A64_NOP              0xd503201fu

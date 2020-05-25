@@ -5,30 +5,28 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "config-utils.hpp"
+#include "../../shared/config/config-utils.hpp"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include "../../include/modloader.hpp"
 
 // CONFIG
 
-ConfigDocument Configuration::config;
 bool readJson = false;
+std::string Configuration::configPath;
+bool Configuration::configPathSet;
 
 using namespace rapidjson;
 
-// Loads the config for the given MOD_ID, if it doesn't exist, will leave it as an empty object.
+// Loads the config for the given mod, if it doesn't exist, will leave it as an empty object.
 void Configuration::Load() {
     if (readJson) {
         return;
     }
-    // document = {};
-    if (!direxists(CONFIG_PATH)) {
-        mkdir(CONFIG_PATH, 0700);
-    }
-    std::string filename = getconfigpath();
+    std::string filename = getconfigpath(info);
 
     if (!fileexists(filename.c_str())) {
         writefile(filename.c_str(), "{}");
@@ -43,9 +41,7 @@ void Configuration::Load() {
 }
 
 void Configuration::Reload() {
-    std::string filename = getconfigpath();
-
-    parsejsonfile(config, filename);
+    parsejsonfile(config, getconfigpath(info));
     if (!config.IsObject()) {
         config.SetObject();
     }
@@ -53,26 +49,19 @@ void Configuration::Reload() {
 }
 
 void Configuration::Write() {
-    if (!direxists(CONFIG_PATH)) {
-        mkdir(CONFIG_PATH, 0700);
-    }
     if (!config.IsObject()) {
         config.SetObject();
     }
-    std::string filename = getconfigpath();
-
     StringBuffer buf;
     PrettyWriter<StringBuffer> writer(buf);
     config.Accept(writer);
-    writefile(filename.c_str(), buf.GetString());
+    writefile(getconfigpath(info).c_str(), buf.GetString());
 }
 
 bool parsejsonfile(ConfigDocument& doc, std::string filename) {
     if (!fileexists(filename.c_str())) {
         return false;
     }
-    // FILE* fp = fopen(filename.c_str(), "r");
-
     std::ifstream is;
     is.open(filename.c_str());
 
@@ -91,8 +80,15 @@ bool parsejson(ConfigDocument& doc, std::string_view js) {
     return true;
 }
 
-std::string getconfigpath() {
-    return std::string(CONFIG_PATH) + MOD_ID + ".json";
+std::string getconfigpath(ModInfo info) {
+    if (!Configuration::configPathSet) {
+        Configuration::configPath = string_format(CONFIG_PATH_FORMAT, Modloader::getApplicationId().c_str());
+        Configuration::configPathSet = true;
+    }
+    if (direxists(Configuration::configPath.c_str())) {
+        mkpath(Configuration::configPath.data(), 0700);
+    }
+    return Configuration::configPath + info.id + ".json";
 }
 
 #endif /* CONFIG_DEFINED_H */

@@ -4,6 +4,8 @@
 #include <optional>
 #include <stack>
 #include <unordered_map>
+#include "logging.hpp"
+#include "utils.h"
 
 class Register {
 public:
@@ -124,7 +126,7 @@ public:
                 if (matches == n) return inst;
             } else if ((rets >= 0) && inst->isReturn()) {
                 if (rets == 0) {
-                    log(DEBUG, "Breaking on offset %lX", ((intptr_t)inst->addr) - getRealOffset(0));
+                    Logger::getLogger()->log_debug("Breaking on offset %lX", ((intptr_t)inst->addr) - getRealOffset(0));
                     break;
                 }
                 rets--;
@@ -133,7 +135,7 @@ public:
             if (inst != this) delete inst;
             inst = new Instruction(pc + 1);
         }
-        log(ERROR, "Only found %i instructions matching this predicate!", matches);
+        Logger::getLogger()->log_error("Only found %i instructions matching this predicate!", matches);
         usleep(10000);
         return nullptr;
     }
@@ -280,7 +282,7 @@ To Replicate(From bits, int M, int N = sizeof(To) * CHAR_BIT) {
     // The overlap should all match since N % M == 0 means that N - M*a % M == 0
     replicatedBits |= (replicatedBits << (N - repSize));
     if (N != M) {
-        log(DEBUG, "Replicate %s * %i = %s", std::bitset<sizeof(From)*CHAR_BIT>(bits).to_string().c_str(), N / M,
+        Logger::getLogger()->log_debug("Replicate %s * %i = %s", std::bitset<sizeof(From)*CHAR_BIT>(bits).to_string().c_str(), N / M,
             std::bitset<sizeof(To)*CHAR_BIT>(replicatedBits).to_string().c_str());
     }
     return replicatedBits;
@@ -322,7 +324,7 @@ T ROR(T x, int N, unsigned shift) {
     shift %= N;
     T ret = LSR(x, N, shift) | LSL(x, N, N - shift);
     if ((ret == 0) && (x != 0)) {
-        log(DEBUG, "%s ROR %i (-%i) returned %s!", std::bitset<sizeof(T)*CHAR_BIT>(x).to_string().c_str(), shift, N - shift,
+        Logger::getLogger()->log_debug("%s ROR %i (-%i) returned %s!", std::bitset<sizeof(T)*CHAR_BIT>(x).to_string().c_str(), shift, N - shift,
             std::bitset<sizeof(T)*CHAR_BIT>(ret).to_string().c_str());
         SAFE_ABORT();
     }

@@ -3,7 +3,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "utils.h"
+#include "../../shared/utils/utils.h"
 #include <unistd.h>
 #include <dlfcn.h>
 #include <iostream>
@@ -11,6 +11,7 @@
 #include <sstream>
 #include <unordered_set>
 #include "il2cpp-object-internals.h"
+#include "../../include/modloader.hpp"
 
 void safeAbort(const char* func, const char* file, int line) {
     #ifdef FILE_LOG
@@ -19,7 +20,7 @@ void safeAbort(const char* func, const char* file, int line) {
     // we REALLY want this to appear at least once in the log (for fastest fixing)
     for (int i = 0; i < 2; i++) {
         usleep(100000L);  // 0.1s
-        log(CRITICAL, "Aborting in %s at %s:%i", func, file, line);
+        Logger::getLogger()->log_critical("Aborting in %s at %s:%i", func, file, line);
     }
     usleep(100000L);  // 0.1s
     std::terminate();  // cleans things up and then calls abort
@@ -36,9 +37,9 @@ void tabs(std::ostream& os, int tabs, int spacesPerTab) {
     }
 }
 
-void print(std::stringstream& ss, LOG_VERBOSE_TYPE lvl) {
+void print(std::stringstream& ss, Logging::Level lvl) {
     ss << std::endl;
-    log(lvl, "%s", ss.str().c_str());
+    Logger::getLogger()->log(lvl, "%s", ss.str().c_str());
     resetSS(ss);
 }
 
@@ -158,9 +159,25 @@ intptr_t getRealOffset(const void* offset) // calculate dump.cs address + lib.so
     if (location == 0)
     {
         //arm
-        location = baseAddr(IL2CPP_SO_PATH); // replace the com.package.name with the package name of the app you are modding.
+        // TOOD: Lets get the instance via some sort of initialization function
+        // OR we make EVERYTHING on an instance level
+        location = baseAddr(Modloader::getLibIl2CppPath().c_str());
     }
     return location + (intptr_t)offset;
+}
+
+int mkpath(char* file_path, mode_t mode) {
+    for (char* p = strchr(file_path + 1, '/'); p; p = strchr(p + 1, '/')) {
+        *p = '\0';
+        if (mkdir(file_path, mode) == -1) {
+            if (errno != EEXIST) {
+                *p = '/';
+                return -1;
+            }
+        }
+        *p = '/';
+    }
+    return 0;
 }
 
 intptr_t findPattern(intptr_t dwAddress, const char* pattern, intptr_t dwSearchRangeLen) {
@@ -206,14 +223,14 @@ intptr_t findUniquePattern(bool& multiple, intptr_t dwAddress, const char* patte
     while (start > 0 && start < dwEnd && (newMatchAddr = findPattern(start, pattern, dwEnd - start))) {
         if (!firstMatchAddr) firstMatchAddr = newMatchAddr;
         matches++;
-        if (label) log(DEBUG, "Sigscan found possible \"%s\": offset 0x%lX, pointer 0x%lX", label, newMatchAddr - dwAddress, newMatchAddr);
+        if (label) Logger::getLogger()->log_debug("Sigscan found possible \"%s\": offset 0x%lX, pointer 0x%lX", label, newMatchAddr - dwAddress, newMatchAddr);
         start = newMatchAddr + 1;
-        log(DEBUG, "start = 0x%lX, end = 0x%lX", start, dwEnd);
+        Logger::getLogger()->log_debug("start = 0x%lX, end = 0x%lX", start, dwEnd);
         usleep(1000);
     }
     if (matches > 1) {
         multiple = true;
-        log(WARNING, "Multiple sig scan matches for \"%s\"!", label);
+        Logger::getLogger()->log_warning("Multiple sig scan matches for \"%s\"!", label);
     }
     return firstMatchAddr;
 }
@@ -255,11 +272,11 @@ std::u16string_view csstrtostr(Il2CppString* in)
 
 // Thanks DaNike!
 void dump(int before, int after, void* ptr) {
-    log(DEBUG, "Dumping Immediate Pointer: %p: %08x", ptr, *reinterpret_cast<int*>(ptr));
+    Logger::getLogger()->log_debug("Dumping Immediate Pointer: %p: %08x", ptr, *reinterpret_cast<int*>(ptr));
     auto begin = static_cast<int*>(ptr) - before;
     auto end = static_cast<int*>(ptr) + after;
     for (auto cur = begin; cur != end; ++cur) {
-        log(DEBUG, "%p: %08x", cur, *cur);
+        Logger::getLogger()->log_debug("%p: %08x", cur, *cur);
     }
 }
 

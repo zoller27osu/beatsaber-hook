@@ -351,12 +351,12 @@ class il2cpp_functions {
         if (!s_GlobalMetadataHeader) {
             s_GlobalMetadata = *(il2cpp_functions::s_GlobalMetadataPtr);
             s_GlobalMetadataHeader = *(il2cpp_functions::s_GlobalMetadataHeaderPtr);
-            log(DEBUG, "sanity: %X (should be 0xFAB11BAF)", s_GlobalMetadataHeader->sanity);
-            log(DEBUG, "version: %i", s_GlobalMetadataHeader->version);
+            Logger::getLogger()->log_debug("sanity: %X (should be 0xFAB11BAF)", s_GlobalMetadataHeader->sanity);
+            Logger::getLogger()->log_debug("version: %i", s_GlobalMetadataHeader->version);
             assert(s_GlobalMetadataHeader->sanity == 0xFAB11BAF);
-            log(DEBUG, "typeDefinitionsOffset: %i", s_GlobalMetadataHeader->typeDefinitionsOffset);
-            log(DEBUG, "exportedTypeDefinitionsOffset: %i", s_GlobalMetadataHeader->exportedTypeDefinitionsOffset);
-            log(DEBUG, "nestedTypesOffset: %i", s_GlobalMetadataHeader->nestedTypesOffset);
+            Logger::getLogger()->log_debug("typeDefinitionsOffset: %i", s_GlobalMetadataHeader->typeDefinitionsOffset);
+            Logger::getLogger()->log_debug("exportedTypeDefinitionsOffset: %i", s_GlobalMetadataHeader->exportedTypeDefinitionsOffset);
+            Logger::getLogger()->log_debug("nestedTypesOffset: %i", s_GlobalMetadataHeader->nestedTypesOffset);
             // TODO: use il2cpp_functions::defaults to define the il2cpp_defaults variable mentioned in il2cpp-class-internals.h
         }
     }

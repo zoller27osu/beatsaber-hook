@@ -15,3 +15,8 @@ shared/libil2cpp/
 *.pyc
 
 shared/dumps.json
+
+ndkpath.txt
+
+libs/
+obj/

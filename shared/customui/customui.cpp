@@ -13,24 +13,24 @@ int CustomUI::TextObject::counter = 0;
 namespace CustomUI {
     bool TextObject::create() {
         // gameobj = new GameObject("CustomTextUI");
-        log(DEBUG, "TextObject::create: Creating gameObject: %s (object number: %i)", name.data(), counter);
+        Logger::getLogger()->log_debug("TextObject::create: Creating gameObject: %s (object number: %i)", name.data(), counter);
         gameObj = New(GetClassFromName("UnityEngine", "GameObject"), createcsstr(name));
 
         // gameObj.SetActive(false);
-        log(DEBUG, "TextObject::create: Setting gameObject.active to false");
+        Logger::getLogger()->log_debug("TextObject::create: Setting gameObject.active to false");
         RET_0_UNLESS(RunMethod(gameObj, "SetActive", false));
 
         // gameObj.AddComponent<TextMeshProUGUI>();
-        log(DEBUG, "TextObject::create: Getting type of TMPro.TextMeshProUGUI");
+        Logger::getLogger()->log_debug("TextObject::create: Getting type of TMPro.TextMeshProUGUI");
         auto *type_tmpugui = GetSystemType("TMPro", "TextMeshProUGUI");
 
-        log(DEBUG, "TextObject::create: Adding component TMPro.TextMeshProUGUI");
+        Logger::getLogger()->log_debug("TextObject::create: Adding component TMPro.TextMeshProUGUI");
         textMesh = RET_0_UNLESS(RunMethod(gameObj, "AddComponent", type_tmpugui));
 
         // textMesh.font = GameObject.Instantiate(Resources.FindObjectsOfTypeAll<TMP_FontAsset>().First(t => t.name == "Teko-Medium SDF No Glow"));
-        log(DEBUG, "TextObject::create: Getting type of TMPro.TMP_FontAsset");
+        Logger::getLogger()->log_debug("TextObject::create: Getting type of TMPro.TMP_FontAsset");
         auto *type_fontasset = GetSystemType("TMPro", "TMP_FontAsset");
-        log(DEBUG, "TextObject::create: Gotten the type!");
+        Logger::getLogger()->log_debug("TextObject::create: Gotten the type!");
 
         // Find Objects of type TMP_fontAsset
         auto* allObjects = RET_0_UNLESS(RunMethod<Array<Il2CppObject*>*>("UnityEngine", "Resources", "FindObjectsOfTypeAll", type_fontasset));
@@ -46,55 +46,55 @@ namespace CustomUI {
         }
         RET_0_UNLESS(match != -1);
 
-        log(DEBUG, "TextObject::create: Instantiating the font");
+        Logger::getLogger()->log_debug("TextObject::create: Instantiating the font");
         auto* font = RET_0_UNLESS(RunMethod("UnityEngine", "Object", "Instantiate", allObjects->values[match]));
 
-        log(DEBUG, "TextObject::create: Setting the font");
+        Logger::getLogger()->log_debug("TextObject::create: Setting the font");
         RET_0_UNLESS(RunMethod(textMesh, "set_font", font));
 
         // textMesh.rectTransform.SetParent(parent, false);
-        log(DEBUG, "TextObject::create: Getting rectTransform");
+        Logger::getLogger()->log_debug("TextObject::create: Getting rectTransform");
         auto* rectTransform = RET_0_UNLESS(RunMethod(textMesh, "get_rectTransform"));
 
-        log(DEBUG, "TextObject::create: Setting Parent");
+        Logger::getLogger()->log_debug("TextObject::create: Setting Parent");
         if (!parentTransform) {
-            log(ERROR, "TextObject::create: parentTransform is null! Fix it!");
+            Logger::getLogger()->log_error("TextObject::create: parentTransform is null! Fix it!");
         }
         RET_0_UNLESS(RunMethodUnsafe(rectTransform, "SetParent", parentTransform, false));
 
         // textMesh.text = text;
-        log(DEBUG, "TextObject::create: Setting Text");
+        Logger::getLogger()->log_debug("TextObject::create: Setting Text");
         RET_0_UNLESS(RunMethod(textMesh, "set_text", createcsstr(text.data())));
 
         // textmesh.fontSize = fontSize;
-        log(DEBUG, "TextObject::create: Setting fontSize");
+        Logger::getLogger()->log_debug("TextObject::create: Setting fontSize");
         RET_0_UNLESS(RunMethod(textMesh, "set_fontSize", fontSize));
 
         // textMesh.color = Color.white;
-        log(DEBUG, "TextObject::create: Setting color");
+        Logger::getLogger()->log_debug("TextObject::create: Setting color");
         RET_0_UNLESS(RunMethod(textMesh, "set_color", color));
 
         // textMesh.rectTransform.anchorMin = anchorMin
-        log(DEBUG, "TextObject::create: Setting anchorMin");
+        Logger::getLogger()->log_debug("TextObject::create: Setting anchorMin");
         RET_0_UNLESS(RunMethod(rectTransform, "set_anchorMin", anchorMin));
 
         // textMesh.rectTransform.anchorMax = anchorMax
-        log(DEBUG, "TextObject::create: Setting anchorMax");
+        Logger::getLogger()->log_debug("TextObject::create: Setting anchorMax");
         RET_0_UNLESS(RunMethod(rectTransform, "set_anchorMax", anchorMax));
 
         // textMesh.rectTransform.sizeDelta = sizeDelta
-        log(DEBUG, "TextObject::create: Setting sizeDelta");
+        Logger::getLogger()->log_debug("TextObject::create: Setting sizeDelta");
         RET_0_UNLESS(RunMethod(rectTransform, "set_sizeDelta", sizeDelta));
 
         // textMesh.rectTransform.anchoredPosition = anchoredPosition
-        log(DEBUG, "TextObject::create: Setting anchoredPosition");
+        Logger::getLogger()->log_debug("TextObject::create: Setting anchoredPosition");
         RET_0_UNLESS(RunMethod(rectTransform, "set_anchoredPosition", anchoredPosition));
 
         // gameObj.SetActive(true);
-        log(DEBUG, "TextObject::create: Setting gameObject active to true");
+        Logger::getLogger()->log_debug("TextObject::create: Setting gameObject active to true");
         RET_0_UNLESS(RunMethod(gameObj, "SetActive", true));
 
-        log(DEBUG, "TextObject::create: Succesfully created gameObj: %s", name.c_str());
+        Logger::getLogger()->log_debug("TextObject::create: Succesfully created gameObj: %s", name.c_str());
         counter++;
         return true;
     }
@@ -119,7 +119,7 @@ namespace CustomUI {
     }
 
     void RawImageObject::monitorProgress(RawImageObject* obj) {
-        log(INFO, "monitorProgress start");
+        Logger::getLogger()->log_info("monitorProgress start");
         Il2CppObject* downloadHandler = RET_V_UNLESS(il2cpp_utils::GetFieldValue(obj->WWW, "m_DownloadHandler"));
         if (!downloadHandler) return;
 
@@ -135,9 +135,9 @@ namespace CustomUI {
                     auto dataLen = findDataSize(downloadHandler);
                     decltype(Array<int>::max_length) cap = std::round(((float)dataLen) / prog);
                     if (cap != prevCap || prog < prevProg) {
-                        log(INFO, "prog is %i / %i", dataLen, cap);
+                        Logger::getLogger()->log_info("prog is %i / %i", dataLen, cap);
                     }
-                    log(INFO, "wrAsyncOp progress: %f (raw = %p)", prog, *reinterpret_cast<void**>(&prog));
+                    Logger::getLogger()->log_info("wrAsyncOp progress: %f (raw = %p)", prog, *reinterpret_cast<void**>(&prog));
                     prevProg = prog;
                     recvLens.push_back(dataLen);
                     prevCap = cap;
@@ -153,20 +153,20 @@ namespace CustomUI {
             ss << ((float) r) / finalLen << " ";
         }
         ss << std::endl;
-        log(INFO, "real progs (out of %i): %s", finalLen, ss.str().c_str());
+        Logger::getLogger()->log_info("real progs (out of %i): %s", finalLen, ss.str().c_str());
 
-        log(INFO, "webRequest isDone.");
+        Logger::getLogger()->log_info("webRequest isDone.");
         auto* str = RET_V_UNLESS(RunMethod<Il2CppString*>(obj->WWW, "get_error"));
         if (str) {
-            log(ERROR, "webRequest error: %s", to_utf8(csstrtostr(str)).c_str());
+            Logger::getLogger()->log_error("webRequest error: %s", to_utf8(csstrtostr(str)).c_str());
         } else {
-            log(DEBUG, "webRequest had no error.");
+            Logger::getLogger()->log_debug("webRequest had no error.");
         }
     }
 
     bool RawImageObject::textureWebRequestComplete(RawImageObject* obj, Il2CppObject* asyncOp) {
         // Notes: The field named "<webRequest>k__BackingField" on asyncOp is a pointer that should match obj->WWW
-        log(DEBUG, "Entering textureWebRequestComplete!");
+        Logger::getLogger()->log_debug("Entering textureWebRequestComplete!");
 
         obj->recievedTexture2D = RET_0_UNLESS(RunMethod("UnityEngine.Networking", "DownloadHandlerTexture", "GetContent", obj->WWW));
 
@@ -177,28 +177,28 @@ namespace CustomUI {
 
         auto* rawImageRectTransform = RET_0_UNLESS(RunMethod(obj->rawImage, "get_rectTransform"));
         if (!obj->parentTransform) {
-            log(ERROR, "RawImageObject::textureWebRequestComplete: obj->parentTransform is null! Fix it!");
+            Logger::getLogger()->log_error("RawImageObject::textureWebRequestComplete: obj->parentTransform is null! Fix it!");
         }
         RET_0_UNLESS(RunMethodUnsafe(rawImageRectTransform, "SetParent", obj->parentTransform, false));
 
         // textMesh.rectTransform.anchorMin = anchorMin
-        log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchorMin");
+        Logger::getLogger()->log_debug("RawImageObject::textureWebRequestComplete: Setting anchorMin");
         RET_0_UNLESS(RunMethod(rawImageRectTransform, "set_anchorMin", obj->anchorMin));
 
         // textMesh.rectTransform.anchorMax = anchorMax
-        log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchorMax");
+        Logger::getLogger()->log_debug("RawImageObject::textureWebRequestComplete: Setting anchorMax");
         RET_0_UNLESS(RunMethod(rawImageRectTransform, "set_anchorMax", obj->anchorMax));
 
         // textMesh.rectTransform.sizeDelta = sizeDelta
-        log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting sizeDelta");
+        Logger::getLogger()->log_debug("RawImageObject::textureWebRequestComplete: Setting sizeDelta");
         RET_0_UNLESS(RunMethod(rawImageRectTransform, "set_sizeDelta", obj->sizeDelta));
 
         // textMesh.rectTransform.anchoredPosition = anchoredPosition
-        log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchoredPosition");
+        Logger::getLogger()->log_debug("RawImageObject::textureWebRequestComplete: Setting anchoredPosition");
         RET_0_UNLESS(RunMethod(rawImageRectTransform, "set_anchoredPosition", obj->anchoredPosition));
         RET_0_UNLESS(RunMethod(obj->gameObj, "SetActive", true));
 
-        log(DEBUG, "Callback success!");
+        Logger::getLogger()->log_debug("Callback success!");
         // TODO: if debug, play a sound?
         return true;
     }

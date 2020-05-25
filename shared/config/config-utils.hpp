@@ -6,21 +6,37 @@
 #include <stdlib.h>
 #include "../utils/utils-functions.h"
 #include "rapidjson-utils.hpp"
+#include "../../include/modloader.hpp"
 
 // typedef rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigDocument;
 // typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigValue;
 typedef rapidjson::Document ConfigDocument;
 typedef rapidjson::Value ConfigValue;
+
+#define CONFIG_PATH_FORMAT "/sdcard/Android/data/%s/files/mod_cfgs/"
+
+// Returns the config path for the current mod info
+std::string getconfigpath(ModInfo info);
+
 // You are responsible for Loading and Writing to it as necessary.
 class Configuration {
-public:    
-    static ConfigDocument config;
+public:
+    ModInfo info;
+    ConfigDocument config;
+    bool readJson = false;
+    Configuration(ModInfo info_) : info(info_) {
+        filePath = getconfigpath(info_);
+    }
     // Loads JSON config
-    static void Load();
+    void Load();
     // Reloads JSON config
-    static void Reload();
+    void Reload();
     // Writes JSON config
-    static void Write();
+    void Write();
+    static std::string configPath;
+    static bool configPathSet;
+private:
+    std::string filePath;
 };
 
 // SETTINGS
@@ -44,9 +60,5 @@ typedef enum JsonParseError {
 bool parsejsonfile(rapidjson::Document& doc, std::string filename);
 // Parses a JSON string, and returns whether it succeeded or not
 bool parsejson(ConfigDocument& doc, std::string_view js);
-// Returns the config path for the current mod
-std::string getconfigpath();
-
-#define CONFIG_PATH "/sdcard/Android/data/com.beatgames.beatsaber/files/mod_cfgs/"
 
 #endif /* CONFIG_UTILS_H */
