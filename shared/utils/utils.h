@@ -62,7 +62,7 @@ auto&& unwrap_optionals(T&& arg) {
 #define RET_UNLESS(retval, expr) ({ \
     auto&& __temp__ = (expr); \
     if (!__temp__) { \
-        Logger::getLogger()->log_error("%s (in %s at %s:%i) returned false!", #expr, __PRETTY_FUNCTION__, __FILE__, __LINE__); \
+        Logger::get().error("%s (in %s at %s:%i) returned false!", #expr, __PRETTY_FUNCTION__, __FILE__, __LINE__); \
         return retval; \
     } \
     unwrap_optionals(__temp__); })
@@ -207,22 +207,22 @@ retval hook_ ## name(__VA_ARGS__)
 #ifdef __aarch64__
 
 #define INSTALL_HOOK(name) MACRO_WRAP( \
-Logger::getLogger()->log_info("Installing 64 bit hook: %s", #name); \
+Logger::get().info("Installing 64 bit hook: %s", #name); \
 A64HookFunction((void*)getRealOffset(addr_ ## name),(void*) hook_ ## name, (void**)&name); \
 )
 
 #define INSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
-Logger::getLogger()->log_info("Installing 64 bit offsetless hook: %s at %lX", #name, asOffset(methodInfo->methodPointer)); \
+Logger::get().info("Installing 64 bit offsetless hook: %s at %lX", #name, asOffset(methodInfo->methodPointer)); \
 A64HookFunction((void*)methodInfo->methodPointer,(void*) hook_ ## name, (void**)&name); \
 )
 
 #define INSTALL_HOOK_NAT(name) MACRO_WRAP( \
-Logger::getLogger()->log_info("Installing 64 bit native hook: %s", #name); \
+Logger::get().info("Installing 64 bit native hook: %s", #name); \
 A64HookFunction((void*)(addr_ ## name),(void*) hook_ ## name, (void**)&name); \
 )
 
 #define INSTALL_HOOK_DIRECT(name, addr) MACRO_WRAP( \
-Logger::getLogger()->log_info("Installing 64 bit direct hook: %s", #name); \
+Logger::get().info("Installing 64 bit direct hook: %s", #name); \
 A64HookFunction((void*)addr, (void*) hook_ ## name, (void**)&name); \
 )
 
@@ -231,47 +231,47 @@ A64HookFunction((void*)addr, (void*) hook_ ## name, (void**)&name); \
 // No original trampoline is created when uninstalling a hook, hence the nullptr
 
 #define UNINSTALL_HOOK(name) MACRO_WRAP( \
-Logger::getLogger()->log_info("Uninstalling 64 bit hook: %s", #name); \
+Logger::get().info("Uninstalling 64 bit hook: %s", #name); \
 A64HookFunction((void*)getRealOffset(addr_ ## name),(void*)name, (void**)nullptr); \
 )
 
 #define UNINSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
-Logger::getLogger()->log_info("Uninstalling 64 bit offsetless hook: %s at %lX", #name, asOffset(methodInfo->methodPointer)); \
+Logger::get().info("Uninstalling 64 bit offsetless hook: %s at %lX", #name, asOffset(methodInfo->methodPointer)); \
 A64HookFunction((void*)methodInfo->methodPointer,(void*)name, (void**)nullptr); \
 )
 
 #define UNINSTALL_HOOK_NAT(name) MACRO_WRAP( \
-Logger::getLogger()->log_info("Uninstalling 64 bit native hook: %s", #name); \
+Logger::get().info("Uninstalling 64 bit native hook: %s", #name); \
 A64HookFunction((void*)(addr_ ## name),(void*)name, (void**)nullptr); \
 )
 
 #define UNINSTALL_HOOK_DIRECT(name, addr) MACRO_WRAP( \
-Logger::getLogger()->log_info("Uninstalling 64 bit direct hook: %s", #name); \
+Logger::get().info("Uninstalling 64 bit direct hook: %s", #name); \
 A64HookFunction((void*)addr, (void*)name, (void**)nullptr); \
 )
 
 #else
 
 #define INSTALL_HOOK(name) MACRO_WRAP( \
-Logger::getLogger()->log_info("Installing 32 bit hook!"); \
+Logger::get().info("Installing 32 bit hook!"); \
 registerInlineHook((uint32_t)getRealOffset(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name); \
 inlineHook((uint32_t)getRealOffset(addr_ ## name)); \
 )
 
 #define INSTALL_HOOK_OFFSETLESS(name, methodInfo) MACRO_WRAP( \
-Logger::getLogger()->log_info("Installing 32 bit offsetless hook: %s at %lX", #name, asOffset(methodInfo->methodPointer)); \
+Logger::get().info("Installing 32 bit offsetless hook: %s at %lX", #name, asOffset(methodInfo->methodPointer)); \
 registerInlineHook((uint32_t)methodInfo->methodPointer, (uint32_t)hook_ ## name, (uint32_t **)&name); \
 inlineHook((uint32_t)methodInfo->methodPointer); \
 )
 
 #define INSTALL_HOOK_NAT(name) MACRO_WRAP( \
-Logger::getLogger()->log_info("Installing 32 bit native hook!"); \
+Logger::get().info("Installing 32 bit native hook!"); \
 registerInlineHook((uint32_t)(addr_ ## name), (uint32_t)hook_ ## name, (uint32_t **)&name); \
 inlineHook((uint32_t)(addr_ ## name)); \
 )
 
 #define INSTALL_HOOK_DIRECT(name, addr) MACRO_WRAP( \
-Logger::getLogger()->log_info("Installing 32 bit offsetless hook!"); \
+Logger::get().info("Installing 32 bit offsetless hook!"); \
 registerInlineHook((uint32_t)addr, (uint32_t)hook_ ## name, (uint32_t **)&name); \
 inlineHook((uint32_t)addr); \
 )

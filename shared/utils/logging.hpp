@@ -103,13 +103,13 @@ class Logger {
         Logger(const ModInfo info);
         Logger(std::string_view tag_) : tag(tag_) {}
         void log(Logging::Level lvl, std::string_view fmt, ...) const;
-        void log_critical(std::string_view fmt, ...) const;
-        void log_error(std::string_view fmt, ...) const;
-        void log_warning(std::string_view fmt, ...) const;
-        void log_info(std::string_view fmt, ...) const;
-        void log_debug(std::string_view fmt, ...) const;
+        void critical(std::string_view fmt, ...) const;
+        void error(std::string_view fmt, ...) const;
+        void warning(std::string_view fmt, ...) const;
+        void info(std::string_view fmt, ...) const;
+        void debug(std::string_view fmt, ...) const;
         // Returns the logger that is used within the utils library. This function should not be used outside of the main library
-        static const Logger* getLogger();
+        static const Logger& get();
     private:
         std::string tag;
 };

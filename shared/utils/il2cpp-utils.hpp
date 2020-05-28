@@ -231,7 +231,7 @@ namespace il2cpp_utils {
     const Il2CppType* ExtractType(T&& arg) {
         auto* typ = il2cpp_type_check::il2cpp_arg_type<T>::get(arg);
         if (!typ) {
-            Logger::getLogger()->log_error("ExtractType: failed to determine type! Tips: instead of nullptr, pass the Il2CppType* or Il2CppClass* of the argument instead!");
+            Logger::get().error("ExtractType: failed to determine type! Tips: instead of nullptr, pass the Il2CppType* or Il2CppClass* of the argument instead!");
         }
         return typ;
     }
@@ -374,7 +374,7 @@ namespace il2cpp_utils {
             if (outType) {
                 auto* retType = ExtractType(ret);
                 if (!IsConvertible(retType, outType, false)) {
-                    Logger::getLogger()->log_warning("User requested TOut %s does not match the method's return object of type %s!",
+                    Logger::get().warning("User requested TOut %s does not match the method's return object of type %s!",
                         TypeGetSimpleName(outType), TypeGetSimpleName(retType));
                 }
             }
@@ -389,7 +389,7 @@ namespace il2cpp_utils {
         }
 
         if (exp) {
-            Logger::getLogger()->log_error("il2cpp_utils: RunMethod: %s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
+            Logger::get().error("il2cpp_utils: RunMethod: %s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
                 il2cpp_utils::ExceptionToString(exp).c_str());
             return std::nullopt;
         }
@@ -403,7 +403,7 @@ namespace il2cpp_utils {
     RunMethod(T&& classOrInstance, std::string_view methodName, TArgs&& ...params) {
         auto types = ExtractTypes(params...);
         if (types.size() != sizeof...(TArgs)) {
-            Logger::getLogger()->log_warning("RunMethod: ExtractTypes for method %s failed!", methodName.data());
+            Logger::get().warning("RunMethod: ExtractTypes for method %s failed!", methodName.data());
             return std::nullopt;
         }
 
@@ -510,7 +510,7 @@ namespace il2cpp_utils {
         // Check that the TOut requested by the user matches the field.
         auto* outType = ExtractIndependentType<TOut>();
         if (outType && !IsConvertible(field->type, outType, false)) {
-            Logger::getLogger()->log_warning("User requested TOut %s does not match the field's type, %s!",
+            Logger::get().warning("User requested TOut %s does not match the field's type, %s!",
                 TypeGetSimpleName(outType), TypeGetSimpleName(field->type));
         }
 
@@ -715,7 +715,7 @@ namespace il2cpp_utils {
         auto* action = il2cpp_utils::NewUnsafe<T>(actionClass, obj, &method);
         auto* asDelegate = reinterpret_cast<Delegate*>(action);
         if (asDelegate->method_ptr != (void*)callback) {
-            Logger::getLogger()->log_error("Created Action's method_ptr (%p) is incorrect (should be %p)!", asDelegate->method_ptr, callback);
+            Logger::get().error("Created Action's method_ptr (%p) is incorrect (should be %p)!", asDelegate->method_ptr, callback);
             return nullptr;
         }
         return action;
