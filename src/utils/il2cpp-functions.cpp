@@ -6,6 +6,298 @@
 #include "../../shared/utils/logging.hpp"
 #include "../../include/modloader.hpp"
 
+// All the fields...
+#ifdef UNITY_2019
+int (*il2cpp_functions::init)(const char* domain_name);
+int (*il2cpp_functions::init_utf16)(const Il2CppChar * domain_name);
+#else
+void (*il2cpp_functions::init)(const char* domain_name);
+void (*il2cpp_functions::init_utf16)(const Il2CppChar * domain_name);
+#endif
+void (*il2cpp_functions::shutdown)();
+void (*il2cpp_functions::set_config_dir)(const char *config_path);
+void (*il2cpp_functions::set_data_dir)(const char *data_path);
+void (*il2cpp_functions::set_temp_dir)(const char *temp_path);
+void (*il2cpp_functions::set_commandline_arguments)(int argc, const char* const argv[], const char* basedir);
+void (*il2cpp_functions::set_commandline_arguments_utf16)(int argc, const Il2CppChar * const argv[], const char* basedir);
+void (*il2cpp_functions::set_config_utf16)(const Il2CppChar * executablePath);
+void (*il2cpp_functions::set_config)(const char* executablePath);
+void (*il2cpp_functions::set_memory_callbacks)(Il2CppMemoryCallbacks * callbacks);
+const Il2CppImage* (*il2cpp_functions::get_corlib)();
+void (*il2cpp_functions::add_internal_call)(const char* name, Il2CppMethodPointer method);
+Il2CppMethodPointer (*il2cpp_functions::resolve_icall)(const char* name);
+void* (*il2cpp_functions::alloc)(size_t size);
+void (*il2cpp_functions::free)(void* ptr);
+Il2CppClass* (*il2cpp_functions::array_class_get)(Il2CppClass * element_class, uint32_t rank);
+uint32_t (*il2cpp_functions::array_length)(Il2CppArray * array);
+uint32_t (*il2cpp_functions::array_get_byte_length)(Il2CppArray * array);
+Il2CppArray* (*il2cpp_functions::array_new)(Il2CppClass * elementTypeInfo, il2cpp_array_size_t length);
+Il2CppArray* (*il2cpp_functions::array_new_specific)(Il2CppClass * arrayTypeInfo, il2cpp_array_size_t length);
+Il2CppArray* (*il2cpp_functions::array_new_full)(Il2CppClass * array_class, il2cpp_array_size_t * lengths, il2cpp_array_size_t * lower_bounds);
+Il2CppClass* (*il2cpp_functions::bounded_array_class_get)(Il2CppClass * element_class, uint32_t rank, bool bounded);
+int (*il2cpp_functions::array_element_size)(const Il2CppClass * array_class);
+const Il2CppImage* (*il2cpp_functions::assembly_get_image)(const Il2CppAssembly * assembly);
+#ifdef UNITY_2019
+void (*il2cpp_functions::class_for_each)(void(*klassReportFunc)(Il2CppClass* klass, void* userData), void* userData);
+#endif
+const Il2CppType* (*il2cpp_functions::class_enum_basetype)(Il2CppClass * klass);
+bool (*il2cpp_functions::class_is_generic)(const Il2CppClass * klass);
+bool (*il2cpp_functions::class_is_inflated)(const Il2CppClass * klass);
+bool (*il2cpp_functions::class_is_assignable_from)(Il2CppClass * klass, Il2CppClass * oklass);
+bool (*il2cpp_functions::class_is_subclass_of)(Il2CppClass * klass, Il2CppClass * klassc, bool check_interfaces);
+bool (*il2cpp_functions::class_has_parent)(Il2CppClass * klass, Il2CppClass * klassc);
+Il2CppClass* (*il2cpp_functions::class_from_il2cpp_type)(const Il2CppType * type);
+Il2CppClass* (*il2cpp_functions::class_from_name)(const Il2CppImage * image, const char* namespaze, const char *name);
+Il2CppClass* (*il2cpp_functions::class_from_system_type)(Il2CppReflectionType * type);
+Il2CppClass* (*il2cpp_functions::class_get_element_class)(Il2CppClass * klass);
+const EventInfo* (*il2cpp_functions::class_get_events)(Il2CppClass * klass, void* *iter);
+FieldInfo* (*il2cpp_functions::class_get_fields)(Il2CppClass * klass, void* *iter);
+Il2CppClass* (*il2cpp_functions::class_get_nested_types)(Il2CppClass * klass, void* *iter);
+Il2CppClass* (*il2cpp_functions::class_get_interfaces)(Il2CppClass * klass, void* *iter);
+const PropertyInfo* (*il2cpp_functions::class_get_properties)(Il2CppClass * klass, void* *iter);
+const PropertyInfo* (*il2cpp_functions::class_get_property_from_name)(Il2CppClass * klass, const char *name);
+FieldInfo* (*il2cpp_functions::class_get_field_from_name)(Il2CppClass * klass, const char *name);
+const MethodInfo* (*il2cpp_functions::class_get_methods)(Il2CppClass * klass, void* *iter);
+const MethodInfo* (*il2cpp_functions::class_get_method_from_name)(Il2CppClass * klass, const char* name, int argsCount);
+const char* (*il2cpp_functions::class_get_name)(Il2CppClass * klass);
+#ifdef UNITY_2019
+void (*il2cpp_functions::type_get_name_chunked)(const Il2CppType * type, void(*chunkReportFunc)(void* data, void* userData), void* userData);
+#endif
+const char* (*il2cpp_functions::class_get_namespace)(Il2CppClass * klass);
+Il2CppClass* (*il2cpp_functions::class_get_parent)(Il2CppClass * klass);
+Il2CppClass* (*il2cpp_functions::class_get_declaring_type)(Il2CppClass * klass);
+int32_t (*il2cpp_functions::class_instance_size)(Il2CppClass * klass);
+size_t (*il2cpp_functions::class_num_fields)(const Il2CppClass * enumKlass);
+bool (*il2cpp_functions::class_is_valuetype)(const Il2CppClass * klass);
+int32_t (*il2cpp_functions::class_value_size)(Il2CppClass * klass, uint32_t * align);
+bool (*il2cpp_functions::class_is_blittable)(const Il2CppClass * klass);
+int (*il2cpp_functions::class_get_flags)(const Il2CppClass * klass);
+bool (*il2cpp_functions::class_is_abstract)(const Il2CppClass * klass);
+bool (*il2cpp_functions::class_is_interface)(const Il2CppClass * klass);
+int (*il2cpp_functions::class_array_element_size)(const Il2CppClass * klass);
+Il2CppClass* (*il2cpp_functions::class_from_type)(const Il2CppType * type);
+const Il2CppType* (*il2cpp_functions::class_get_type)(Il2CppClass * klass);
+uint32_t (*il2cpp_functions::class_get_type_token)(Il2CppClass * klass);
+bool (*il2cpp_functions::class_has_attribute)(Il2CppClass * klass, Il2CppClass * attr_class);
+bool (*il2cpp_functions::class_has_references)(Il2CppClass * klass);
+bool (*il2cpp_functions::class_is_enum)(const Il2CppClass * klass);
+const Il2CppImage* (*il2cpp_functions::class_get_image)(Il2CppClass * klass);
+const char* (*il2cpp_functions::class_get_assemblyname)(const Il2CppClass * klass);
+int (*il2cpp_functions::class_get_rank)(const Il2CppClass * klass);
+#ifdef UNITY_2019
+uint32_t (*il2cpp_functions::class_get_data_size)(const Il2CppClass * klass);
+void* (*il2cpp_functions::class_get_static_field_data)(const Il2CppClass * klass);
+#endif
+size_t (*il2cpp_functions::class_get_bitmap_size)(const Il2CppClass * klass);
+void (*il2cpp_functions::class_get_bitmap)(Il2CppClass * klass, size_t * bitmap);
+bool (*il2cpp_functions::stats_dump_to_file)(const char *path);
+uint64_t (*il2cpp_functions::stats_get_value)(Il2CppStat stat);
+Il2CppDomain* (*il2cpp_functions::domain_get)();
+const Il2CppAssembly* (*il2cpp_functions::domain_assembly_open)(Il2CppDomain * domain, const char* name);
+const Il2CppAssembly** (*il2cpp_functions::domain_get_assemblies)(const Il2CppDomain * domain, size_t * size);
+#ifdef UNITY_2019
+void (*il2cpp_functions::raise_exception)(Il2CppException*);
+#endif
+Il2CppException* (*il2cpp_functions::exception_from_name_msg)(const Il2CppImage * image, const char *name_space, const char *name, const char *msg);
+Il2CppException* (*il2cpp_functions::get_exception_argument_null)(const char *arg);
+void (*il2cpp_functions::format_exception)(const Il2CppException * ex, char* message, int message_size);
+void (*il2cpp_functions::format_stack_trace)(const Il2CppException * ex, char* output, int output_size);
+void (*il2cpp_functions::unhandled_exception)(Il2CppException*);
+int (*il2cpp_functions::field_get_flags)(FieldInfo * field);
+const char* (*il2cpp_functions::field_get_name)(FieldInfo * field);
+Il2CppClass* (*il2cpp_functions::field_get_parent)(FieldInfo * field);
+size_t (*il2cpp_functions::field_get_offset)(FieldInfo * field);
+const Il2CppType* (*il2cpp_functions::field_get_type)(FieldInfo * field);
+void (*il2cpp_functions::field_get_value)(Il2CppObject * obj, FieldInfo * field, void *value);
+Il2CppObject* (*il2cpp_functions::field_get_value_object)(FieldInfo * field, Il2CppObject * obj);
+bool (*il2cpp_functions::field_has_attribute)(FieldInfo * field, Il2CppClass * attr_class);
+void (*il2cpp_functions::field_set_value)(Il2CppObject * obj, FieldInfo * field, void *value);
+void (*il2cpp_functions::field_static_get_value)(FieldInfo * field, void *value);
+void (*il2cpp_functions::field_static_set_value)(FieldInfo * field, void *value);
+void (*il2cpp_functions::field_set_value_object)(Il2CppObject * instance, FieldInfo * field, Il2CppObject * value);
+#ifdef UNITY_2019
+bool (*il2cpp_functions::field_is_literal)(FieldInfo * field);
+#endif
+void (*il2cpp_functions::gc_collect)(int maxGenerations);
+int32_t (*il2cpp_functions::gc_collect_a_little)();
+void (*il2cpp_functions::gc_disable)();
+void (*il2cpp_functions::gc_enable)();
+bool (*il2cpp_functions::gc_is_disabled)();
+#ifdef UNITY_2019
+int64_t (*il2cpp_functions::gc_get_max_time_slice_ns)();
+void (*il2cpp_functions::gc_set_max_time_slice_ns)(int64_t maxTimeSlice);
+bool (*il2cpp_functions::gc_is_incremental)();
+#endif
+int64_t (*il2cpp_functions::gc_get_used_size)();
+int64_t (*il2cpp_functions::gc_get_heap_size)();
+void (*il2cpp_functions::gc_wbarrier_set_field)(Il2CppObject * obj, void **targetAddress, void *object);
+#ifdef UNITY_2019
+bool (*il2cpp_functions::gc_has_strict_wbarriers)();
+void (*il2cpp_functions::gc_set_external_allocation_tracker)(void(*func)(void*, size_t, int));
+void (*il2cpp_functions::gc_set_external_wbarrier_tracker)(void(*func)(void**));
+void (*il2cpp_functions::gc_foreach_heap)(void(*func)(void* data, void* userData), void* userData);
+void (*il2cpp_functions::stop_gc_world)();
+void (*il2cpp_functions::start_gc_world)();
+#endif
+uint32_t (*il2cpp_functions::gchandle_new)(Il2CppObject * obj, bool pinned);
+uint32_t (*il2cpp_functions::gchandle_new_weakref)(Il2CppObject * obj, bool track_resurrection);
+Il2CppObject* (*il2cpp_functions::gchandle_get_target)(uint32_t gchandle);
+void (*il2cpp_functions::gchandle_free)(uint32_t gchandle);
+#ifdef UNITY_2019
+void (*il2cpp_functions::gchandle_foreach_get_target)(void(*func)(void* data, void* userData), void* userData);
+uint32_t (*il2cpp_functions::object_header_size)();
+uint32_t (*il2cpp_functions::array_object_header_size)();
+uint32_t (*il2cpp_functions::offset_of_array_length_in_array_object_header)();
+uint32_t (*il2cpp_functions::offset_of_array_bounds_in_array_object_header)();
+uint32_t (*il2cpp_functions::allocation_granularity)();
+#endif
+void* (*il2cpp_functions::unity_liveness_calculation_begin)(Il2CppClass * filter, int max_object_count, il2cpp_register_object_callback callback, void* userdata, il2cpp_WorldChangedCallback onWorldStarted, il2cpp_WorldChangedCallback onWorldStopped);
+void (*il2cpp_functions::unity_liveness_calculation_end)(void* state);
+void (*il2cpp_functions::unity_liveness_calculation_from_root)(Il2CppObject * root, void* state);
+void (*il2cpp_functions::unity_liveness_calculation_from_statics)(void* state);
+const Il2CppType* (*il2cpp_functions::method_get_return_type)(const MethodInfo * method);
+Il2CppClass* (*il2cpp_functions::method_get_declaring_type)(const MethodInfo * method);
+const char* (*il2cpp_functions::method_get_name)(const MethodInfo * method);
+const MethodInfo* (*il2cpp_functions::method_get_from_reflection)(const Il2CppReflectionMethod * method);
+Il2CppReflectionMethod* (*il2cpp_functions::method_get_object)(const MethodInfo * method, Il2CppClass * refclass);
+bool (*il2cpp_functions::method_is_generic)(const MethodInfo * method);
+bool (*il2cpp_functions::method_is_inflated)(const MethodInfo * method);
+bool (*il2cpp_functions::method_is_instance)(const MethodInfo * method);
+uint32_t (*il2cpp_functions::method_get_param_count)(const MethodInfo * method);
+const Il2CppType* (*il2cpp_functions::method_get_param)(const MethodInfo * method, uint32_t index);
+Il2CppClass* (*il2cpp_functions::method_get_class)(const MethodInfo * method);
+bool (*il2cpp_functions::method_has_attribute)(const MethodInfo * method, Il2CppClass * attr_class);
+uint32_t (*il2cpp_functions::method_get_flags)(const MethodInfo * method, uint32_t * iflags);
+uint32_t (*il2cpp_functions::method_get_token)(const MethodInfo * method);
+const char* (*il2cpp_functions::method_get_param_name)(const MethodInfo * method, uint32_t index);
+
+// ONLY IF THE PROFILER EXISTS FOR UNITY_2019
+void (*il2cpp_functions::profiler_install)(Il2CppProfiler * prof, Il2CppProfileFunc shutdown_callback);
+void (*il2cpp_functions::profiler_set_events)(Il2CppProfileFlags events);
+void (*il2cpp_functions::profiler_install_enter_leave)(Il2CppProfileMethodFunc enter, Il2CppProfileMethodFunc fleave);
+void (*il2cpp_functions::profiler_install_allocation)(Il2CppProfileAllocFunc callback);
+void (*il2cpp_functions::profiler_install_gc)(Il2CppProfileGCFunc callback, Il2CppProfileGCResizeFunc heap_resize_callback);
+void (*il2cpp_functions::profiler_install_fileio)(Il2CppProfileFileIOFunc callback);
+void (*il2cpp_functions::profiler_install_thread)(Il2CppProfileThreadFunc start, Il2CppProfileThreadFunc end);
+
+uint32_t (*il2cpp_functions::property_get_flags)(const PropertyInfo * prop);
+const MethodInfo* (*il2cpp_functions::property_get_get_method)(const PropertyInfo * prop);
+const MethodInfo* (*il2cpp_functions::property_get_set_method)(const PropertyInfo * prop);
+const char* (*il2cpp_functions::property_get_name)(const PropertyInfo * prop);
+Il2CppClass* (*il2cpp_functions::property_get_parent)(const PropertyInfo * prop);
+Il2CppClass* (*il2cpp_functions::object_get_class)(Il2CppObject * obj);
+uint32_t (*il2cpp_functions::object_get_size)(Il2CppObject * obj);
+const MethodInfo* (*il2cpp_functions::object_get_virtual_method)(Il2CppObject * obj, const MethodInfo * method);
+Il2CppObject* (*il2cpp_functions::object_new)(const Il2CppClass * klass);
+// Always returns (void*)(obj + 1)
+void* (*il2cpp_functions::object_unbox)(Il2CppObject * obj);
+// If klass is not a ValueType, returns (Il2CppObject*)(*il2cpp_functions::data), else boxes
+Il2CppObject* (*il2cpp_functions::value_box)(Il2CppClass * klass, void* data);
+void (*il2cpp_functions::monitor_enter)(Il2CppObject * obj);
+bool (*il2cpp_functions::monitor_try_enter)(Il2CppObject * obj, uint32_t timeout);
+void (*il2cpp_functions::monitor_exit)(Il2CppObject * obj);
+void (*il2cpp_functions::monitor_pulse)(Il2CppObject * obj);
+void (*il2cpp_functions::monitor_pulse_all)(Il2CppObject * obj);
+void (*il2cpp_functions::monitor_wait)(Il2CppObject * obj);
+bool (*il2cpp_functions::monitor_try_wait)(Il2CppObject * obj, uint32_t timeout);
+Il2CppObject* (*il2cpp_functions::runtime_invoke)(const MethodInfo * method, void *obj, void **params, Il2CppException **exc);
+Il2CppObject* (*il2cpp_functions::runtime_invoke_convert_args)(const MethodInfo * method, void *obj, Il2CppObject **params, int paramCount, Il2CppException **exc);
+void (*il2cpp_functions::runtime_class_init)(Il2CppClass * klass);
+void (*il2cpp_functions::runtime_object_init)(Il2CppObject * obj);
+void (*il2cpp_functions::runtime_object_init_exception)(Il2CppObject * obj, Il2CppException** exc);
+void (*il2cpp_functions::runtime_unhandled_exception_policy_set)(Il2CppRuntimeUnhandledExceptionPolicy value);
+int32_t (*il2cpp_functions::string_length)(Il2CppString * str);
+Il2CppChar* (*il2cpp_functions::string_chars)(Il2CppString * str);
+Il2CppString* (*il2cpp_functions::string_new)(const char* str);
+Il2CppString* (*il2cpp_functions::string_new_len)(const char* str, uint32_t length);
+Il2CppString* (*il2cpp_functions::string_new_utf16)(const Il2CppChar * text, int32_t len);
+Il2CppString* (*il2cpp_functions::string_new_wrapper)(const char* str);
+Il2CppString* (*il2cpp_functions::string_intern)(Il2CppString * str);
+Il2CppString* (*il2cpp_functions::string_is_interned)(Il2CppString * str);
+Il2CppThread* (*il2cpp_functions::thread_current)();
+Il2CppThread* (*il2cpp_functions::thread_attach)(Il2CppDomain * domain);
+void (*il2cpp_functions::thread_detach)(Il2CppThread * thread);
+Il2CppThread** (*il2cpp_functions::thread_get_all_attached_threads)(size_t * size);
+bool (*il2cpp_functions::is_vm_thread)(Il2CppThread * thread);
+void (*il2cpp_functions::current_thread_walk_frame_stack)(Il2CppFrameWalkFunc func, void* user_data);
+void (*il2cpp_functions::thread_walk_frame_stack)(Il2CppThread * thread, Il2CppFrameWalkFunc func, void* user_data);
+bool (*il2cpp_functions::current_thread_get_top_frame)(Il2CppStackFrameInfo * frame);
+bool (*il2cpp_functions::thread_get_top_frame)(Il2CppThread * thread, Il2CppStackFrameInfo * frame);
+bool (*il2cpp_functions::current_thread_get_frame_at)(int32_t offset, Il2CppStackFrameInfo * frame);
+bool (*il2cpp_functions::thread_get_frame_at)(Il2CppThread * thread, int32_t offset, Il2CppStackFrameInfo * frame);
+int32_t (*il2cpp_functions::current_thread_get_stack_depth)();
+int32_t (*il2cpp_functions::thread_get_stack_depth)(Il2CppThread * thread);
+#ifdef UNITY_2019
+void (*il2cpp_functions::override_stack_backtrace)(Il2CppBacktraceFunc stackBacktraceFunc);
+#endif
+Il2CppObject* (*il2cpp_functions::type_get_object)(const Il2CppType * type);
+int (*il2cpp_functions::type_get_type)(const Il2CppType * type);
+Il2CppClass* (*il2cpp_functions::type_get_class_or_element_class)(const Il2CppType * type);
+char* (*il2cpp_functions::type_get_name)(const Il2CppType * type);
+bool (*il2cpp_functions::type_is_byref)(const Il2CppType * type);
+uint32_t (*il2cpp_functions::type_get_attrs)(const Il2CppType * type);
+bool (*il2cpp_functions::type_equals)(const Il2CppType * type, const Il2CppType * otherType);
+char* (*il2cpp_functions::type_get_assembly_qualified_name)(const Il2CppType * type);
+#ifdef UNITY_2019
+bool (*il2cpp_functions::type_is_static)(const Il2CppType * type);
+bool (*il2cpp_functions::type_is_pointer_type)(const Il2CppType * type);
+#endif
+const Il2CppAssembly* (*il2cpp_functions::image_get_assembly)(const Il2CppImage * image);
+const char* (*il2cpp_functions::image_get_name)(const Il2CppImage * image);
+const char* (*il2cpp_functions::image_get_filename)(const Il2CppImage * image);
+const MethodInfo* (*il2cpp_functions::image_get_entry_point)(const Il2CppImage * image);
+size_t (*il2cpp_functions::image_get_class_count)(const Il2CppImage * image);
+const Il2CppClass* (*il2cpp_functions::image_get_class)(const Il2CppImage * image, size_t index);
+Il2CppManagedMemorySnapshot* (*il2cpp_functions::capture_memory_snapshot)();
+void (*il2cpp_functions::free_captured_memory_snapshot)(Il2CppManagedMemorySnapshot * snapshot);
+void (*il2cpp_functions::set_find_plugin_callback)(Il2CppSetFindPlugInCallback method);
+void (*il2cpp_functions::register_log_callback)(Il2CppLogCallback method);
+void (*il2cpp_functions::debugger_set_agent_options)(const char* options);
+bool (*il2cpp_functions::is_debugger_attached)();
+#ifdef UNITY_2019
+void (*il2cpp_functions::register_debugger_agent_transport)(Il2CppDebuggerTransport * debuggerTransport);
+bool (*il2cpp_functions::debug_get_method_info)(const MethodInfo*, Il2CppMethodDebugInfo * methodDebugInfo);
+#endif
+void (*il2cpp_functions::unity_install_unitytls_interface)(const void* unitytlsInterfaceStruct);
+Il2CppCustomAttrInfo* (*il2cpp_functions::custom_attrs_from_class)(Il2CppClass * klass);
+Il2CppCustomAttrInfo* (*il2cpp_functions::custom_attrs_from_method)(const MethodInfo * method);
+Il2CppObject* (*il2cpp_functions::custom_attrs_get_attr)(Il2CppCustomAttrInfo * ainfo, Il2CppClass * attr_klass);
+bool (*il2cpp_functions::custom_attrs_has_attr)(Il2CppCustomAttrInfo * ainfo, Il2CppClass * attr_klass);
+Il2CppArray* (*il2cpp_functions::custom_attrs_construct)(Il2CppCustomAttrInfo * cinfo);
+void (*il2cpp_functions::custom_attrs_free)(Il2CppCustomAttrInfo * ainfo);
+#ifdef UNITY_2019
+void (*il2cpp_functions::class_set_userdata)(Il2CppClass * klass, void* userdata);
+int (*il2cpp_functions::class_get_userdata_offset)();
+#endif
+
+// MANUALLY DEFINED CONST DEFINITIONS
+const Il2CppType* (*il2cpp_functions::class_get_type_const)(const Il2CppClass * klass);
+const char* (*il2cpp_functions::class_get_name_const)(const Il2CppClass * klass);
+
+// SELECT NON-API LIBIL2CPP FUNCTIONS:
+bool (*il2cpp_functions::Class_Init)(Il2CppClass* klass);
+
+Il2CppClass* (*il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex)(TypeDefinitionIndex index);
+Il2CppClass* (*il2cpp_functions::MetadataCache_GetTypeInfoFromTypeIndex)(TypeIndex index);
+
+#ifdef UNITY_2019
+std::string (*il2cpp_functions::_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
+#else
+gnu_string (*il2cpp_functions::_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
+#endif
+
+Il2CppClass* (*il2cpp_functions::Class_FromIl2CppType)(Il2CppType* typ);
+Il2CppClass* (*il2cpp_functions::GenericClass_GetClass)(Il2CppGenericClass* gclass);
+
+const Il2CppMetadataRegistration** il2cpp_functions::s_Il2CppMetadataRegistrationPtr;
+const void** il2cpp_functions::s_GlobalMetadataPtr;
+const Il2CppGlobalMetadataHeader** il2cpp_functions::s_GlobalMetadataHeaderPtr;
+
+std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataPtr)> il2cpp_functions::s_GlobalMetadata;
+std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataHeaderPtr)> il2cpp_functions::s_GlobalMetadataHeader;
+const Il2CppDefaults* il2cpp_functions::defaults;
+bool il2cpp_functions::initialized;
+
 // copies of the highly-inlinable functions
 const Il2CppTypeDefinition* il2cpp_functions::MetadataCache_GetTypeDefinitionFromIndex(TypeDefinitionIndex index) {
     CheckS_GlobalMetadata();
