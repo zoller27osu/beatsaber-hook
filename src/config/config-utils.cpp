@@ -16,54 +16,51 @@
 // CONFIG
 
 bool readJson = false;
-std::string Configuration::configPath;
-bool Configuration::configPathSet;
+decltype(Configuration::configDir) Configuration::configDir;
 
 using namespace rapidjson;
+
+bool Configuration::ensureObject() {
+    if (!config.IsObject()) {
+        Logger::getLogger()->log_warning("Config data for mod %s was invalid! Clearing.");
+        config.SetObject();
+        return false;
+    }
+    return true;
+}
 
 // Loads the config for the given mod, if it doesn't exist, will leave it as an empty object.
 void Configuration::Load() {
     if (readJson) {
         return;
     }
-    std::string filename = getconfigpath(info);
 
-    if (!fileexists(filename.c_str())) {
-        writefile(filename.c_str(), "{}");
+    if (!fileexists(filePath)) {
+        writefile(filePath, "{}");
     }
-    if (!parsejsonfile(config, filename)) {
-        readJson = false;
-    }
-    if (!config.IsObject()) {
-        config.SetObject();
-    }
-    readJson = true;
+    Configuration::Reload();
 }
 
 void Configuration::Reload() {
-    parsejsonfile(config, getconfigpath(info));
-    if (!config.IsObject()) {
-        config.SetObject();
-    }
-    readJson = true;
+    readJson = parsejsonfile(config, filePath);
+    ensureObject();
 }
 
 void Configuration::Write() {
-    if (!config.IsObject()) {
-        config.SetObject();
-    }
+    ensureObject();
+
     StringBuffer buf;
     PrettyWriter<StringBuffer> writer(buf);
     config.Accept(writer);
-    writefile(getconfigpath(info).c_str(), buf.GetString());
+    writefile(filePath, buf.GetString());
 }
 
-bool parsejsonfile(ConfigDocument& doc, std::string filename) {
-    if (!fileexists(filename.c_str())) {
+bool parsejsonfile(ConfigDocument& doc, std::string_view filename) {
+    if (!fileexists(filename.data())) {
         return false;
     }
     std::ifstream is;
-    is.open(filename.c_str());
+    is.open(filename.data());
 
     IStreamWrapper wrapper {is};
     
@@ -80,15 +77,14 @@ bool parsejson(ConfigDocument& doc, std::string_view js) {
     return true;
 }
 
-std::string getconfigpath(ModInfo info) {
-    if (!Configuration::configPathSet) {
-        Configuration::configPath = string_format(CONFIG_PATH_FORMAT, Modloader::getApplicationId().c_str());
-        Configuration::configPathSet = true;
+std::string Configuration::getConfigFilePath(const ModInfo& info) {
+    if (!Configuration::configDir) {
+        Configuration::configDir = string_format(CONFIG_PATH_FORMAT, Modloader::getApplicationId().c_str());
+        if (!direxists(Configuration::configDir->c_str())) {
+            mkpath(Configuration::configDir->data(), 0700);
+        }
     }
-    if (direxists(Configuration::configPath.c_str())) {
-        mkpath(Configuration::configPath.data(), 0700);
-    }
-    return Configuration::configPath + info.id + ".json";
+    return *Configuration::configDir + info.id + ".json";
 }
 
 #endif /* CONFIG_DEFINED_H */
