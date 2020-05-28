@@ -11,9 +11,9 @@
 #define VERSION "0.0.0"
 #endif
 
-const Logger* Logger::getLogger() {
-    static auto ptr = std::unique_ptr<const Logger>(new Logger("UtilsLogger|v" VERSION));
-    return ptr.get();
+const Logger& Logger::get() {
+    static Logger utilsLogger("UtilsLogger|v" VERSION);
+    return utilsLogger;
 }
 
 Logger::Logger(ModInfo info) {
@@ -27,35 +27,35 @@ void Logger::log(Logging::Level lvl, std::string_view fmt, ...) const {
     va_end(args);
 }
 
-void Logger::log_critical(std::string_view fmt, ...) const {
+void Logger::critical(std::string_view fmt, ...) const {
     va_list args;
     va_start(args, fmt);
     __android_log_vprint(Logging::CRITICAL, tag.c_str(), fmt.data(), args);
     va_end(args);
 }
 
-void Logger::log_error(std::string_view fmt, ...) const {
+void Logger::error(std::string_view fmt, ...) const {
     va_list args;
     va_start(args, fmt);
     __android_log_vprint(Logging::ERROR, tag.c_str(), fmt.data(), args);
     va_end(args);
 }
 
-void Logger::log_warning(std::string_view fmt, ...) const {
+void Logger::warning(std::string_view fmt, ...) const {
     va_list args;
     va_start(args, fmt);
     __android_log_vprint(Logging::WARNING, tag.c_str(), fmt.data(), args);
     va_end(args);
 }
 
-void Logger::log_info(std::string_view fmt, ...) const {
+void Logger::info(std::string_view fmt, ...) const {
     va_list args;
     va_start(args, fmt);
     __android_log_vprint(Logging::INFO, tag.c_str(), fmt.data(), args);
     va_end(args);
 }
 
-void Logger::log_debug(std::string_view fmt, ...) const {
+void Logger::debug(std::string_view fmt, ...) const {
     va_list args;
     va_start(args, fmt);
     __android_log_vprint(Logging::DEBUG, tag.c_str(), fmt.data(), args);

@@ -20,7 +20,7 @@ void safeAbort(const char* func, const char* file, int line) {
     // we REALLY want this to appear at least once in the log (for fastest fixing)
     for (int i = 0; i < 2; i++) {
         usleep(100000L);  // 0.1s
-        Logger::getLogger()->log_critical("Aborting in %s at %s:%i", func, file, line);
+        Logger::get().critical("Aborting in %s at %s:%i", func, file, line);
     }
     usleep(100000L);  // 0.1s
     std::terminate();  // cleans things up and then calls abort
@@ -39,7 +39,7 @@ void tabs(std::ostream& os, int tabs, int spacesPerTab) {
 
 void print(std::stringstream& ss, Logging::Level lvl) {
     ss << std::endl;
-    Logger::getLogger()->log(lvl, "%s", ss.str().c_str());
+    Logger::get().log(lvl, "%s", ss.str().c_str());
     resetSS(ss);
 }
 
@@ -223,14 +223,14 @@ intptr_t findUniquePattern(bool& multiple, intptr_t dwAddress, const char* patte
     while (start > 0 && start < dwEnd && (newMatchAddr = findPattern(start, pattern, dwEnd - start))) {
         if (!firstMatchAddr) firstMatchAddr = newMatchAddr;
         matches++;
-        if (label) Logger::getLogger()->log_debug("Sigscan found possible \"%s\": offset 0x%lX, pointer 0x%lX", label, newMatchAddr - dwAddress, newMatchAddr);
+        if (label) Logger::get().debug("Sigscan found possible \"%s\": offset 0x%lX, pointer 0x%lX", label, newMatchAddr - dwAddress, newMatchAddr);
         start = newMatchAddr + 1;
-        Logger::getLogger()->log_debug("start = 0x%lX, end = 0x%lX", start, dwEnd);
+        Logger::get().debug("start = 0x%lX, end = 0x%lX", start, dwEnd);
         usleep(1000);
     }
     if (matches > 1) {
         multiple = true;
-        Logger::getLogger()->log_warning("Multiple sig scan matches for \"%s\"!", label);
+        Logger::get().warning("Multiple sig scan matches for \"%s\"!", label);
     }
     return firstMatchAddr;
 }
@@ -272,11 +272,11 @@ std::u16string_view csstrtostr(Il2CppString* in)
 
 // Thanks DaNike!
 void dump(int before, int after, void* ptr) {
-    Logger::getLogger()->log_debug("Dumping Immediate Pointer: %p: %08x", ptr, *reinterpret_cast<int*>(ptr));
+    Logger::get().debug("Dumping Immediate Pointer: %p: %08x", ptr, *reinterpret_cast<int*>(ptr));
     auto begin = static_cast<int*>(ptr) - before;
     auto end = static_cast<int*>(ptr) + after;
     for (auto cur = begin; cur != end; ++cur) {
-        Logger::getLogger()->log_debug("%p: %08x", cur, *cur);
+        Logger::get().debug("%p: %08x", cur, *cur);
     }
 }
 
