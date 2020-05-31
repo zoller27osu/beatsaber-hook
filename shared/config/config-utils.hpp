@@ -16,15 +16,15 @@ typedef rapidjson::Value ConfigValue;
 #define CONFIG_PATH_FORMAT "/sdcard/Android/data/%s/files/mod_cfgs/"
 
 // Returns the config path for the current mod info
-std::string getconfigpath(ModInfo info);
+std::string getconfigpath(const ModInfo& info);
 
 // You are responsible for Loading and Writing to it as necessary.
 class Configuration {
 public:
-    ModInfo info;
+    const ModInfo info;
     ConfigDocument config;
     bool readJson = false;
-    Configuration(ModInfo info_) : info(info_) {
+    Configuration(const ModInfo& info_) : info(info_) {
         filePath = getconfigpath(info_);
     }
     // Loads JSON config

@@ -15,7 +15,6 @@
 
 // CONFIG
 
-bool readJson = false;
 std::string Configuration::configPath;
 bool Configuration::configPathSet;
 
@@ -27,6 +26,7 @@ void Configuration::Load() {
         return;
     }
     std::string filename = getconfigpath(info);
+    Logger::get().info("Loading config from path: %s", filename.c_str());
 
     if (!fileexists(filename.c_str())) {
         writefile(filename.c_str(), "{}");
@@ -71,8 +71,9 @@ bool parsejsonfile(ConfigDocument& doc, std::string filename) {
 }
 
 bool parsejson(ConfigDocument& doc, std::string_view js) {
-    char temp[js.length()];
+    char temp[js.length() + 1];
     memcpy(temp, js.data(), js.length());
+    temp[js.length()] = '\0';
 
     if (doc.ParseInsitu(temp).HasParseError()) {
         return false;
@@ -80,13 +81,13 @@ bool parsejson(ConfigDocument& doc, std::string_view js) {
     return true;
 }
 
-std::string getconfigpath(ModInfo info) {
+std::string getconfigpath(const ModInfo& info) {
     if (!Configuration::configPathSet) {
         Configuration::configPath = string_format(CONFIG_PATH_FORMAT, Modloader::getApplicationId().c_str());
+        if (!direxists(Configuration::configPath.c_str())) {
+            mkpath(Configuration::configPath.data(), 0700);
+        }
         Configuration::configPathSet = true;
-    }
-    if (direxists(Configuration::configPath.c_str())) {
-        mkpath(Configuration::configPath.data(), 0700);
     }
     return Configuration::configPath + info.id + ".json";
 }
