@@ -31,10 +31,10 @@ public:
     void Reload();
     // Writes JSON config
     void Write();
-private:
-    static std::optional<std::string> configDir;
     // Returns the config path for the given mod info
     static std::string getConfigFilePath(const ModInfo& info);
+private:
+    static std::optional<std::string> configDir;
     bool ensureObject();
     std::string filePath;
 };
