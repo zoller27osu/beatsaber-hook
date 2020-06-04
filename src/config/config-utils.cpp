@@ -68,8 +68,9 @@ bool parsejsonfile(ConfigDocument& doc, std::string_view filename) {
 }
 
 bool parsejson(ConfigDocument& doc, std::string_view js) {
-    char temp[js.length()];
+    char temp[js.length() + 1];
     memcpy(temp, js.data(), js.length());
+    temp[js.length()] = '\0';
 
     if (doc.ParseInsitu(temp).HasParseError()) {
         return false;
