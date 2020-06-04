@@ -2,6 +2,7 @@
 #define CONFIG_UTILS_H
 // Provides helper functions for configuration.
 
+#include <optional>
 #include <stdio.h>
 #include <stdlib.h>
 #include "../utils/utils-functions.h"
@@ -15,9 +16,6 @@ typedef rapidjson::Value ConfigValue;
 
 #define CONFIG_PATH_FORMAT "/sdcard/Android/data/%s/files/mod_cfgs/"
 
-// Returns the config path for the current mod info
-std::string getconfigpath(const ModInfo& info);
-
 // You are responsible for Loading and Writing to it as necessary.
 class Configuration {
 public:
@@ -25,7 +23,7 @@ public:
     ConfigDocument config;
     bool readJson = false;
     Configuration(const ModInfo& info_) : info(info_) {
-        filePath = getconfigpath(info_);
+        filePath = getConfigFilePath(info_);
     }
     // Loads JSON config
     void Load();
@@ -33,9 +31,11 @@ public:
     void Reload();
     // Writes JSON config
     void Write();
-    static std::string configPath;
-    static bool configPathSet;
+    // Returns the config path for the given mod info
+    static std::string getConfigFilePath(const ModInfo& info);
 private:
+    static std::optional<std::string> configDir;
+    bool ensureObject();
     std::string filePath;
 };
 
@@ -57,8 +57,8 @@ typedef enum JsonParseError {
 
 // CONFIG
 // Parses the JSON of the filename, and returns whether it succeeded or not
-bool parsejsonfile(rapidjson::Document& doc, std::string filename);
+static bool parsejsonfile(rapidjson::Document& doc, std::string_view filename);
 // Parses a JSON string, and returns whether it succeeded or not
-bool parsejson(ConfigDocument& doc, std::string_view js);
+static bool parsejson(ConfigDocument& doc, std::string_view js);
 
 #endif /* CONFIG_UTILS_H */

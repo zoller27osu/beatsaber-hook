@@ -21,8 +21,7 @@
 ################################################################################################################
 
 LOCAL_PATH := $(call my-dir)
-
-TARGET_ARCH_ABI := arm64-v8a
+TARGET_ARCH_ABI := $(APP_ABI)
 
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
@@ -49,7 +48,6 @@ LOCAL_CFLAGS     := -D'VERSION="0.1.0"' -I'c:/Program Files/Unity/Editor/Data/il
 # TODO: This will eventually be a parameter specifyable.
 # LOCAL_CFLAGS	 += -D'SUPPRESS_MACRO_LOGS'
 LOCAL_MODULE     := beatsaber-hook
-LOCAL_CPPFLAGS   := -std=c++2a
 LOCAL_C_INCLUDES := ./include
 # Add inline-hook
 LOCAL_SRC_FILES  := $(call rwildcard,src/inline-hook,*.c) $(call rwildcard,src/inline-hook,*.cpp)
