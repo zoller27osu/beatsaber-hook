@@ -112,7 +112,7 @@ namespace CustomUI {
         return true;
     }
 
-    static auto findDataSize(Il2CppObject* downloadHandler) {
+    static il2cpp_array_size_t findDataSize(Il2CppObject* downloadHandler) {
         auto* data = RET_0_UNLESS(il2cpp_utils::RunMethod<Array<uint8_t>*>(
             "UnityEngine.Networking", "DownloadHandler", "InternalGetByteArray", downloadHandler));
         return data->Length();
@@ -135,7 +135,7 @@ namespace CustomUI {
                     auto dataLen = findDataSize(downloadHandler);
                     decltype(Array<int>::max_length) cap = std::round(((float)dataLen) / prog);
                     if (cap != prevCap || prog < prevProg) {
-                        log(INFO, "prog is %i / %i", dataLen, cap);
+                        log(INFO, "prog is %lu / %lu", dataLen, cap);
                     }
                     log(INFO, "wrAsyncOp progress: %f (raw = %p)", prog, *reinterpret_cast<void**>(&prog));
                     prevProg = prog;
@@ -153,7 +153,7 @@ namespace CustomUI {
             ss << ((float) r) / finalLen << " ";
         }
         ss << std::endl;
-        log(INFO, "real progs (out of %i): %s", finalLen, ss.str().c_str());
+        log(INFO, "real progs (out of %lu): %s", finalLen, ss.str().c_str());
 
         log(INFO, "webRequest isDone.");
         auto* str = RET_V_UNLESS(RunMethod<Il2CppString*>(obj->WWW, "get_error"));
