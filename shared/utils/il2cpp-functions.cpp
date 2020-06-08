@@ -682,6 +682,13 @@ void il2cpp_functions::Init() {
     log(DEBUG, "GenericClass::GetClass found? offset: %lX", ((intptr_t)GenericClass_GetClass) - getRealOffset(0));
     usleep(1000);  // 0.001s
 
+    auto ptrCase = CRASH_UNLESS(EvalSwitch(Class_FromIl2CppType_inst.addr, 1, 1, IL2CPP_TYPE_PTR));
+    auto j2C_GPC = CRASH_UNLESS(ptrCase->findNthDirectBranchWithoutLink(1));
+    log(DEBUG, "j2C_GPC: %s", j2C_GPC->toString().c_str());
+    Class_GetPtrClass = (decltype(Class_GetPtrClass))CRASH_UNLESS(j2C_GPC->label);
+    log(DEBUG, "Class::GetPtrClass(Il2CppClass*) found? offset: %lX", ((intptr_t)Class_GetPtrClass) - getRealOffset(0));
+    usleep(1000);  // 0.001s
+
     Instruction iu16((const int32_t*)init_utf16);
     auto j2R_I = CRASH_UNLESS(iu16.findNthCall(3));
     Instruction Runtime_Init(CRASH_UNLESS(j2R_I->label));

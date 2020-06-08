@@ -337,6 +337,7 @@ class il2cpp_functions {
     static char* Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format);
 
     inline static Il2CppClass* (*Class_FromIl2CppType)(Il2CppType* typ);
+    inline static Il2CppClass* (*Class_GetPtrClass)(Il2CppClass* elementClass);
     inline static Il2CppClass* (*GenericClass_GetClass)(Il2CppGenericClass* gclass);
 
     inline static const Il2CppMetadataRegistration** s_Il2CppMetadataRegistrationPtr;

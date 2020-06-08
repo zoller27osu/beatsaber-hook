@@ -227,7 +227,7 @@ namespace il2cpp_utils {
                     il2cpp_functions::CheckS_GlobalMetadata();
                     return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);
                 } else {
-                    auto* eClass = RET_0_UNLESS(il2cpp_arg_class<TArg>::get());
+                    Il2CppClass* eClass = RET_0_UNLESS(il2cpp_arg_class<TArg>::get());
                     return il2cpp_functions::array_class_get(eClass, 1);
                 }
             }
@@ -254,6 +254,13 @@ namespace il2cpp_utils {
                 } else if constexpr(hasObject) {
                     return il2cpp_arg_class<Il2CppObject*>::get(&arg->object);
                 } else {
+                    #ifdef NEED_UNSAFE_CSHARP
+                    using arg_class = il2cpp_arg_class<T>;
+                    if constexpr (has_no_arg_get<arg_class>) {
+                        Il2CppClass* elementClass = arg_class::get();
+                        return il2cpp_functions::Class_GetPtrClass(elementClass);
+                    } else
+                    #endif
                     static_assert(false_t<T*>, "Turning this kind of pointer into an Il2CppClass is not implemented! "
                         "Please pass primitives and structs as themselves instead of taking their address. "
                         "If the pointer should be treatable as Il2CppObject*, please file an issue on sc2ad/beatsaber-hook.");
@@ -270,7 +277,7 @@ namespace il2cpp_utils {
         struct il2cpp_arg_type<T&> {
             static inline const Il2CppType* get(T& arg) {
                 // A method can store a result back to a non-const ref! Make the type byref!
-                const Il2CppClass* klass = il2cpp_arg_class<T>::get(arg);
+                Il2CppClass* klass = il2cpp_arg_class<T>::get(arg);
                 return &klass->this_arg;
             }
         };
@@ -279,7 +286,7 @@ namespace il2cpp_utils {
         struct il2cpp_arg_type<const T&> {
             static inline const Il2CppType* get(const T& arg) {
                 // A method cannot store a result back to a const ref. It is not a C# ref.
-                const Il2CppClass* klass = il2cpp_arg_class<T>::get(arg);
+                const Il2CppClass* klass = il2cpp_arg_class<const T>::get(arg);
                 return &klass->byval_arg;
             }
         };
@@ -287,7 +294,7 @@ namespace il2cpp_utils {
         template<typename T>
         struct il2cpp_arg_type<T&&> {
             static inline const Il2CppType* get(T&& arg) {
-                const Il2CppClass* klass = il2cpp_arg_class<T>::get(arg);
+                Il2CppClass* klass = il2cpp_arg_class<T>::get(arg);
                 return &klass->byval_arg;
             }
         };
