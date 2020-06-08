@@ -77,29 +77,29 @@ namespace il2cpp_utils {
     // Framework provided by DaNike
     // TODO: rewrite these to il2cpp_arg_class with il2cpp_arg_type wrappers? Should make many cases faster.
     namespace il2cpp_type_check {
-        // To fix "no member named 'get' in il2cpp_type_check::il2cpp_arg_type<Blah>", define il2cpp_arg_type<Blah>!
-        // When the Il2CppType* would depend only on the type of T (not its value), just use DEFINE_IL2CPP_ARG_TYPE!
+        // To fix "no member named 'get' in il2cpp_type_check::il2cpp_arg_class<Blah>", define il2cpp_arg_class<Blah>!
+        // When the Il2CppClass* would depend only on the type of T (not its value), just use DEFINE_IL2CPP_ARG_TYPE!
         template<typename T>
-        struct il2cpp_arg_type { };
+        struct il2cpp_arg_class { };
 
         #define DEFINE_IL2CPP_DEFAULT_TYPE(type, fieldName) \
         template<> \
-        struct il2cpp_utils::il2cpp_type_check::il2cpp_arg_type<type> { \
-            static inline Il2CppType const* get() { \
+        struct il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<type> { \
+            static inline Il2CppClass* get() { \
                 il2cpp_functions::Init(); \
-                return il2cpp_functions::class_get_type(il2cpp_functions::defaults->fieldName##_class); \
+                return il2cpp_functions::defaults->fieldName##_class; \
             } \
-            static inline Il2CppType const* get(type arg) { return get(); } \
+            static inline Il2CppClass* get(type arg) { return get(); } \
         }
 
         #define DEFINE_IL2CPP_ARG_TYPE(type, nameSpace, className) \
         template<> \
-        struct il2cpp_utils::il2cpp_type_check::il2cpp_arg_type<type> { \
-            static inline Il2CppType const* get() { \
+        struct il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<type> { \
+            static inline Il2CppClass* get() { \
                 il2cpp_functions::Init(); \
-                return il2cpp_functions::class_get_type(il2cpp_utils::GetClassFromName(nameSpace, className)); \
+                return il2cpp_utils::GetClassFromName(nameSpace, className); \
             } \
-            static inline Il2CppType const* get(type arg) { return get(); } \
+            static inline Il2CppClass* get(type arg) { return get(); } \
         }
 
         DEFINE_IL2CPP_DEFAULT_TYPE(int8_t, sbyte);
@@ -127,27 +127,46 @@ namespace il2cpp_utils {
         DEFINE_IL2CPP_ARG_TYPE(Scene, "UnityEngine.SceneManagement", "Scene");
 
         template<>
-        struct il2cpp_arg_type<Il2CppType*> {
-            static inline Il2CppType const* get(Il2CppType* arg) {
+        struct il2cpp_arg_class<Il2CppClass*> {
+            static inline Il2CppClass* get(Il2CppClass* arg) {
                 return arg;
             }
         };
 
         template<>
-        struct il2cpp_arg_type<Il2CppClass*> {
-            static inline Il2CppType const* get(Il2CppClass* arg) {
+        struct il2cpp_arg_class<Il2CppType*> {
+            static inline Il2CppClass* get(Il2CppType* arg) {
+                RET_0_UNLESS(arg);
                 il2cpp_functions::Init();
-                return il2cpp_functions::class_get_type(arg);
+                return il2cpp_functions::class_from_il2cpp_type(arg);
             }
         };
 
         template<>
-        struct il2cpp_arg_type<Il2CppObject*> {
-            static inline Il2CppType const* get(Il2CppObject* arg) {
-                if (!arg) return nullptr;
+        struct il2cpp_arg_class<Il2CppObject*> {
+            static inline Il2CppClass* get(Il2CppObject* arg) {
+                RET_0_UNLESS(arg);
                 il2cpp_functions::Init();
-                auto* klass = RET_0_UNLESS(il2cpp_functions::object_get_class(arg));
-                return il2cpp_arg_type<Il2CppClass*>::get(klass);
+                return RET_0_UNLESS(il2cpp_functions::object_get_class(arg));
+            }
+        };
+
+        template<typename TArg>
+        struct il2cpp_arg_class<Array<TArg>*> {
+            static inline Il2CppClass* get(Array<TArg>* arg) {
+                RET_0_UNLESS(arg);
+                il2cpp_functions::Init();
+                // try {
+                //     auto* klass = il2cpp_functions::object_get_class(arg);
+                //     if (klass && klass->klass == klass) return klass;
+                // } catch () {}
+                if constexpr (std::is_same_v<std::decay_t<TArg>, Il2CppObject*>) {
+                    il2cpp_functions::CheckS_GlobalMetadata();
+                    return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);
+                } else {
+                    Il2CppClass* eClass = RET_0_UNLESS(il2cpp_arg_class<TArg>::get());
+                    return il2cpp_functions::array_class_get(eClass, 1);
+                }
             }
         };
 
@@ -157,21 +176,29 @@ namespace il2cpp_utils {
         DEFINE_MEMBER_CHECKER(obj)
         DEFINE_MEMBER_CHECKER(object)
         template<typename T>
-        struct il2cpp_arg_type<T*> {
-            static inline Il2CppType const* get(T* arg) {
+        struct il2cpp_arg_class<T*> {
+            static inline Il2CppClass* get(T* arg) {
+                RET_0_UNLESS(arg);
                 // These first 2 conditions handle Il2CppObject subclasses that were created
                 //   in libil2cpp via composition instead of inheritance
                 auto constexpr hasObj = has_obj<T, Il2CppObject>::value;
                 auto constexpr hasObject = has_object<T, Il2CppObject>::value;
                 // Double check inheritance here
                 if constexpr(std::is_convertible_v<T*, Il2CppObject*>) {
-                    return il2cpp_arg_type<Il2CppObject*>::get(arg);
+                    return il2cpp_arg_class<Il2CppObject*>::get(arg);
                 } else if constexpr(hasObj) {
-                    return il2cpp_arg_type<Il2CppObject*>::get(&arg->obj);
+                    return il2cpp_arg_class<Il2CppObject*>::get(&arg->obj);
                 } else if constexpr(hasObject) {
-                    return il2cpp_arg_type<Il2CppObject*>::get(&arg->object);
+                    return il2cpp_arg_class<Il2CppObject*>::get(&arg->object);
                 } else {
-                    static_assert(false_t<T*>, "Turning this kind of pointer into an Il2CppType is not implemented! "
+                    #ifdef NEED_UNSAFE_CSHARP
+                    using arg_class = il2cpp_arg_class<T>;
+                    if constexpr (has_no_arg_get<arg_class>) {
+                        Il2CppClass* elementClass = arg_class::get();
+                        return il2cpp_functions::Class_GetPtrClass(elementClass);
+                    } else
+                    #endif
+                    static_assert(false_t<T*>, "Turning this kind of pointer into an Il2CppClass is not implemented! "
                         "Please pass primitives and structs as themselves instead of taking their address. "
                         "If the pointer should be treatable as Il2CppObject*, please file an issue on sc2ad/beatsaber-hook.");
                 }
@@ -181,19 +208,31 @@ namespace il2cpp_utils {
         #undef has_object
 
         template<typename T>
+        struct il2cpp_arg_type { };
+
+        template<typename T>
         struct il2cpp_arg_type<T&> {
-            static inline Il2CppType const* get(T& arg) {
+            static inline const Il2CppType* get(T& arg) {
                 // A method can store a result back to a non-const ref! Make the type byref!
-                auto* base = il2cpp_arg_type<T>::get(arg);
-                return MakeRef(base);
+                Il2CppClass* klass = il2cpp_arg_class<T>::get(arg);
+                return &klass->this_arg;
             }
         };
 
         template<typename T>
         struct il2cpp_arg_type<const T&> {
-            static inline Il2CppType const* get(const T& arg) {
+            static inline const Il2CppType* get(const T& arg) {
                 // A method cannot store a result back to a const ref. It is not a C# ref.
-                return il2cpp_arg_type<T>::get(arg);
+                const Il2CppClass* klass = il2cpp_arg_class<const T>::get(arg);
+                return &klass->byval_arg;
+            }
+        };
+
+        template<typename T>
+        struct il2cpp_arg_type<T&&> {
+            static inline const Il2CppType* get(T&& arg) {
+                Il2CppClass* klass = il2cpp_arg_class<T>::get(arg);
+                return &klass->byval_arg;
             }
         };
 
@@ -228,8 +267,17 @@ namespace il2cpp_utils {
     bool IsInterface(const Il2CppClass* klass);
 
     template<typename T>
+    Il2CppClass* ExtractClass(T&& arg) {
+        Il2CppClass* klass = il2cpp_type_check::il2cpp_arg_class<std::decay_t<T>>::get(arg);
+        if (!klass) {
+            Logger::get().error("ExtractClass: failed to determine class! Tips: instead of nullptr, pass the Il2CppType* or Il2CppClass* of the argument instead!");
+        }
+        return klass;
+    }
+
+    template<typename T>
     const Il2CppType* ExtractType(T&& arg) {
-        auto* typ = il2cpp_type_check::il2cpp_arg_type<T>::get(arg);
+        const Il2CppType* typ = il2cpp_type_check::il2cpp_arg_type<T>::get(arg);
         if (!typ) {
             Logger::get().error("ExtractType: failed to determine type! Tips: instead of nullptr, pass the Il2CppType* or Il2CppClass* of the argument instead!");
         }
@@ -284,8 +332,7 @@ namespace il2cpp_utils {
             static_assert(false_t<TArgs...>,
                 "FindMethod using argCount is invalid! If argCount is 0 then remove it; otherwise use FindMethodUnsafe!");
         } else {
-            auto* typ = RET_0_UNLESS(ExtractType(classOrInstance));
-            auto* klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(typ));
+            auto* klass = RET_0_UNLESS(ExtractClass(classOrInstance));
             if constexpr (sizeof...(TArgs) == 0) {
                 return FindMethodUnsafe(klass, methodName, 0);
             } else {
@@ -494,8 +541,7 @@ namespace il2cpp_utils {
     FindField(T&& instance, TArgs&&... params) {
         il2cpp_functions::Init();
 
-        auto* typ = RET_0_UNLESS(ExtractType(instance));
-        auto* klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(typ));
+        auto* klass = RET_0_UNLESS(ExtractClass(instance));
         return FindField(klass, params...);
     }
 
@@ -632,8 +678,7 @@ namespace il2cpp_utils {
     const PropertyInfo* FindProperty(T&& instance, std::string_view propertyName) {
         il2cpp_functions::Init();
 
-        auto* typ = RET_0_UNLESS(ExtractType(instance));
-        auto* klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(typ));
+        auto* klass = RET_0_UNLESS(ExtractClass(instance));
         return FindProperty(klass, propertyName);
     }
 

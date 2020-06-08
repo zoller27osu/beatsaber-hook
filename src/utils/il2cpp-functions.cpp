@@ -287,6 +287,7 @@ gnu_string (*il2cpp_functions::_Type_GetName_)(const Il2CppType *type, Il2CppTyp
 #endif
 
 Il2CppClass* (*il2cpp_functions::Class_FromIl2CppType)(Il2CppType* typ);
+Il2CppClass* (*il2cpp_functions::Class_GetPtrClass)(Il2CppClass* elementClass);
 Il2CppClass* (*il2cpp_functions::GenericClass_GetClass)(Il2CppGenericClass* gclass);
 
 const Il2CppMetadataRegistration** il2cpp_functions::s_Il2CppMetadataRegistrationPtr;
@@ -933,6 +934,14 @@ void il2cpp_functions::Init() {
     Logger::get().debug("j2GC_GC: %s", j2GC_GC->toString().c_str());
     GenericClass_GetClass = (decltype(GenericClass_GetClass))CRASH_UNLESS(j2GC_GC->label);
     Logger::get().debug("GenericClass::GetClass found? offset: %lX", ((intptr_t)GenericClass_GetClass) - getRealOffset(0));
+    usleep(1000);  // 0.001s
+
+    // Class::GetPtrClass.
+    auto ptrCase = CRASH_UNLESS(EvalSwitch(Class_FromIl2CppType_inst.addr, 1, 1, IL2CPP_TYPE_PTR));
+    auto j2C_GPC = CRASH_UNLESS(ptrCase->findNthDirectBranchWithoutLink(1));
+    Logger::get().debug("j2C_GPC: %s", j2C_GPC->toString().c_str());
+    Class_GetPtrClass = (decltype(Class_GetPtrClass))CRASH_UNLESS(j2C_GPC->label);
+    Logger::get().debug("Class::GetPtrClass(Il2CppClass*) found? offset: %lX", ((intptr_t)Class_GetPtrClass) - getRealOffset(0));
     usleep(1000);  // 0.001s
 
     Instruction iu16((const int32_t*)init_utf16);
