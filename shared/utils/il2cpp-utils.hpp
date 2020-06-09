@@ -165,6 +165,16 @@ namespace il2cpp_utils {
             static inline Il2CppClass* get(type arg) { return get(); } \
         }
 
+        #define DEFINE_IL2CPP_ARG_TYPE_GENERIC(type, postfix, nameSpace, className) \
+        template<typename... TArgs> \
+        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<type<TArgs...>postfix> { \
+            static inline Il2CppClass* get() { \
+                auto* klass = il2cpp_utils::GetClassFromName(nameSpace, className); \
+                return il2cpp_utils::MakeGeneric(klass, {il2cpp_arg_class<TArgs>::get()...}); \
+            } \
+            static inline Il2CppClass* get(type<TArgs...>postfix arg) { return get(); } \
+        }
+
         DEFINE_IL2CPP_DEFAULT_TYPE(int8_t, sbyte);
         DEFINE_IL2CPP_DEFAULT_TYPE(uint8_t, byte);
         DEFINE_IL2CPP_DEFAULT_TYPE(int16_t, int16);  // "short"
