@@ -27,7 +27,7 @@
 template<class T, class Enable = void>
 struct is_value_type : std::integral_constant< 
     bool,
-    (std::is_arithmetic_v<T> || std::is_enum_v<T> || std::is_pointer_v<T>) && !std::is_base_of_v<Il2CppObject, T>
+    (std::is_arithmetic_v<T> || std::is_enum_v<T> || std::is_pointer_v<T> || std::is_pod_v<T>) && !std::is_base_of_v<Il2CppObject, T>
 > {};
 template<class _T> using is_value_type_v = typename is_value_type<_T>::value;
 
