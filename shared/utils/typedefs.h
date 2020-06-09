@@ -24,7 +24,7 @@
 #include "utils/StringUtils.h"
 
 #ifdef __cplusplus
-template<class T>
+template<class T, class Enable = void>
 struct is_value_type : std::integral_constant< 
     bool,
     (std::is_arithmetic_v<T> || std::is_enum_v<T> || std::is_pointer_v<T>) && !std::is_base_of_v<Il2CppObject, T>
