@@ -222,6 +222,12 @@ namespace il2cpp_utils {
                 il2cpp_functions::Init();
                 return RET_0_UNLESS(il2cpp_functions::object_get_class(arg));
             }
+            #ifdef NEED_UNSAFE_CSHARP
+            static inline Il2CppClass* get() {
+                il2cpp_functions::Init();
+                return il2cpp_functions::defaults->object_class;
+            }
+            #endif
         };
 
         template<typename TArg>
@@ -503,7 +509,12 @@ namespace il2cpp_utils {
         // Convert the Il2CppObject* we got from runtime_invoke to TOut.
         TOut out;
         if constexpr (std::is_pointer_v<TOut>) {
-            out = reinterpret_cast<TOut>(ret);
+            using Dt = std::decay_t<TOut>;
+            if constexpr (std::is_base_of_v<Il2CppObject, std::remove_pointer_t<Dt>>) {
+                out = static_cast<TOut>(ret);
+            } else {
+                out = reinterpret_cast<TOut>(ret);
+            }
         } else {
             out = *reinterpret_cast<TOut*>(il2cpp_functions::object_unbox(ret));
         }
