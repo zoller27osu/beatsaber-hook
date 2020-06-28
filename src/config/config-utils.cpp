@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 
 #include "../../shared/config/config-utils.hpp"
-#include <string.h>
+#include <string>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>

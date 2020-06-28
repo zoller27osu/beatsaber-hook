@@ -8,6 +8,7 @@
 #include "../utils/utils-functions.h"
 #include "rapidjson-utils.hpp"
 #include "../../include/modloader.hpp"
+#include <string>
 
 // typedef rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigDocument;
 // typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> ConfigValue;
@@ -19,11 +20,13 @@ typedef rapidjson::Value ConfigValue;
 // You are responsible for Loading and Writing to it as necessary.
 class Configuration {
 public:
+    // Returns the config path for the given mod info
+    static std::string getConfigFilePath(const ModInfo& info);
     const ModInfo info;
     ConfigDocument config;
     bool readJson = false;
     Configuration(const ModInfo& info_) : info(info_) {
-        filePath = getConfigFilePath(info_);
+        filePath = Configuration::getConfigFilePath(info_);
     }
     // Loads JSON config
     void Load();
@@ -31,8 +34,6 @@ public:
     void Reload();
     // Writes JSON config
     void Write();
-    // Returns the config path for the given mod info
-    static std::string getConfigFilePath(const ModInfo& info);
 private:
     static std::optional<std::string> configDir;
     bool ensureObject();

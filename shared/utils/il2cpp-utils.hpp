@@ -68,6 +68,10 @@ namespace il2cpp_utils {
     // Returns the first matching class from the given namespace and typeName by searching through all assemblies that are loaded.
     Il2CppClass* GetClassFromName(std::string_view name_space, std::string_view type_name);
 
+    // Function made by zoller27osu, modified by Sc2ad
+    // PLEASE don't use, there are easier ways to get generics (see CreateParam, CreateFieldValue)
+    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
+
     // Seriously, don't un-const the returned Type
     const Il2CppType* MakeRef(const Il2CppType* type);
 
@@ -819,10 +823,6 @@ namespace il2cpp_utils {
 
     // Calls the System.RuntimeType.MakeGenericType(System.Type gt, System.Type[] types) function
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types);
-
-    // Function made by zoller27osu, modified by Sc2ad
-    // PLEASE don't use, there are easier ways to get generics (see CreateParam, CreateFieldValue)
-    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
 
     // Function made by zoller27osu, modified by Sc2ad
     // Logs information about the given MethodInfo* as log(DEBUG)

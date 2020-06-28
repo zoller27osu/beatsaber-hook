@@ -50,9 +50,9 @@ LOCAL_CFLAGS     := -D'VERSION="0.1.0"' -I'c:/Program Files/Unity/Editor/Data/il
 LOCAL_MODULE     := beatsaber-hook
 LOCAL_C_INCLUDES := ./include
 # Add inline-hook
-LOCAL_SRC_FILES  := $(call rwildcard,src/inline-hook,*.c) $(call rwildcard,src/inline-hook,*.cpp)
+# LOCAL_SRC_FILES  := $(call rwildcard,src/inline-hook,*.c) $(call rwildcard,src/inline-hook,*.cpp)
 # Add utils
-LOCAL_SRC_FILES  += $(call rwildcard,src/utils,*.cpp)
+LOCAL_SRC_FILES  := $(call rwildcard,src/utils,*.cpp)
 # Add config
 LOCAL_SRC_FILES  += $(call rwildcard,src/config,*.cpp)
 include $(BUILD_SHARED_LIBRARY)
