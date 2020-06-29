@@ -173,15 +173,18 @@ namespace il2cpp_utils {
 
         template<typename TArg>
         struct il2cpp_arg_class<Array<TArg>*> {
-            static inline Il2CppClass* get(Array<TArg>* arg) {
-                RET_0_UNLESS(arg);
+            static inline Il2CppClass* get() {
                 il2cpp_functions::Init();
-                // try {
-                //     auto* klass = il2cpp_functions::object_get_class(arg);
-                //     if (klass && klass->klass == klass) return klass;
-                // } catch () {}
-                Il2CppClass* eClass = RET_0_UNLESS(il2cpp_arg_class<TArg>::get());
-                return il2cpp_functions::array_class_get(eClass, 1);
+                if constexpr (std::is_same_v<std::decay_t<TArg>, Il2CppObject*>) {
+                    il2cpp_functions::CheckS_GlobalMetadata();
+                    return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);
+                } else {
+                    Il2CppClass* eClass = RET_0_UNLESS(il2cpp_arg_class<TArg>::get());
+                    return il2cpp_functions::array_class_get(eClass, 1);
+                }
+            }
+            static inline Il2CppClass* get(Array<TArg>* arg) {
+                return get();
             }
         };
 
@@ -208,7 +211,10 @@ namespace il2cpp_utils {
                 } else {
                     #ifdef NEED_UNSAFE_CSHARP
                     using arg_class = il2cpp_arg_class<T>;
-                    if constexpr (has_no_arg_get<arg_class>) {
+                    if constexpr (std::is_same_v<std::decay_t<T*>, void*>) {
+                        Il2CppClass* voidClass = il2cpp_functions::defaults->void_class;
+                        return il2cpp_functions::Class_GetPtrClass(voidClass);
+                    } else if constexpr (has_no_arg_get<arg_class>) {
                         Il2CppClass* elementClass = arg_class::get();
                         return il2cpp_functions::Class_GetPtrClass(elementClass);
                     } else
