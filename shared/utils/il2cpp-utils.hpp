@@ -270,7 +270,10 @@ namespace il2cpp_utils {
                 } else {
                     #ifdef NEED_UNSAFE_CSHARP
                     using arg_class = il2cpp_arg_class<T>;
-                    if constexpr (has_no_arg_get<arg_class>) {
+                    if constexpr (std::is_same_v<std::decay_t<T*>, void*>) {
+                        Il2CppClass* voidClass = il2cpp_functions::defaults->void_class;
+                        return il2cpp_functions::Class_GetPtrClass(voidClass);
+                    } else if constexpr (has_no_arg_get<arg_class>) {
                         Il2CppClass* elementClass = arg_class::get();
                         return il2cpp_functions::Class_GetPtrClass(elementClass);
                     } else
