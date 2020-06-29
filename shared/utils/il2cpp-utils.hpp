@@ -232,13 +232,8 @@ namespace il2cpp_utils {
 
         template<typename TArg>
         struct il2cpp_arg_class<Array<TArg>*> {
-            static inline Il2CppClass* get(Array<TArg>* arg) {
-                RET_0_UNLESS(arg);
+            static inline Il2CppClass* get() {
                 il2cpp_functions::Init();
-                // try {
-                //     auto* klass = il2cpp_functions::object_get_class(arg);
-                //     if (klass && klass->klass == klass) return klass;
-                // } catch () {}
                 if constexpr (std::is_same_v<std::decay_t<TArg>, Il2CppObject*>) {
                     il2cpp_functions::CheckS_GlobalMetadata();
                     return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);
@@ -246,6 +241,9 @@ namespace il2cpp_utils {
                     Il2CppClass* eClass = RET_0_UNLESS(il2cpp_arg_class<TArg>::get());
                     return il2cpp_functions::array_class_get(eClass, 1);
                 }
+            }
+            static inline Il2CppClass* get(Array<TArg>* arg) {
+                return get();
             }
         };
 
