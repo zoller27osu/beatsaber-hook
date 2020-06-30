@@ -317,7 +317,7 @@ namespace il2cpp_utils {
         struct il2cpp_gen_class_arg_class;
 
         template<typename... TArgs, template<typename... ST> class S>
-        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<S<TArgs...>> {
+        struct il2cpp_arg_class<S<TArgs...>> {
             static inline Il2CppClass* get() {
                 auto* klass = il2cpp_gen_struct_arg_class<S>::get();
                 return il2cpp_utils::MakeGeneric(klass, {il2cpp_arg_class<TArgs>::get()...});
@@ -326,7 +326,7 @@ namespace il2cpp_utils {
         };
 
         template<typename... TArgs, template<typename... ST> class S>
-        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<S<TArgs...>*> {
+        struct il2cpp_arg_class<S<TArgs...>*> {
             static inline Il2CppClass* get() {
                 Il2CppClass* genTemplate;
                 bool isStruct = false;
