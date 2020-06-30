@@ -80,6 +80,7 @@ namespace il2cpp_utils {
     // Function made by zoller27osu, modified by Sc2ad
     // PLEASE don't use, there are easier ways to get generics (see CreateParam, CreateFieldValue)
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
+    Il2CppClass* MakeGeneric(const Il2CppClass* klass, const Il2CppType** types, uint32_t numTypes);
 
     // Function made by zoller27osu, modified by Sc2ad
     // Logs information about the given MethodInfo* as log(DEBUG)
@@ -148,14 +149,32 @@ namespace il2cpp_utils {
         struct il2cpp_arg_class {
             // TODO: make this work on any class with a `using declaring_type`, then remove NestedType
             static inline std::enable_if_t<std::is_base_of_v<NestedType, T>, Il2CppClass*> get() {
+                il2cpp_functions::Init();
                 Il2CppClass* declaring = il2cpp_arg_class<typename T::declaring_type>::get();
-                void* myIter = nullptr;
-                log(INFO, "type_name: %s", type_name<T>().c_str());
-                while (Il2CppClass* nested = il2cpp_functions::class_get_nested_types(declaring, &myIter)) {
-                    if (type_name<T>() == nested->name) return nested;
+                Il2CppClass* classWithNested = declaring;
+                if (declaring->generic_class) {
+                    classWithNested = CRASH_UNLESS(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(declaring->generic_class->typeDefinitionIndex));
                 }
-                CRASH_UNLESS(false);
-                return nullptr;
+                std::string typeName = type_name<T>();
+                auto idx = typeName.find_last_of(':');
+                if (idx >= 0) typeName = typeName.substr(idx+1);
+
+                // log(INFO, "type_name: %s", typeName.c_str());
+                void* myIter = nullptr;
+                Il2CppClass* found = nullptr;
+                while (Il2CppClass* nested = il2cpp_functions::class_get_nested_types(classWithNested, &myIter)) {
+                    // log(INFO, "nested->name: %s", nested->name);
+                    if (typeName == nested->name) {
+                        found = nested;
+                        break;
+                    }
+                }
+                CRASH_UNLESS(found);
+                if (declaring->generic_class) {
+                    const Il2CppGenericInst* genInst = declaring->generic_class->context.class_inst;
+                    found = CRASH_UNLESS(il2cpp_utils::MakeGeneric(found, genInst->type_argv, genInst->type_argc));
+                }
+                return found;
             }
         };
 
@@ -391,6 +410,7 @@ namespace il2cpp_utils {
 
     // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for an Il2CppClass*
     Il2CppReflectionType* GetSystemType(const Il2CppClass* klass);
+    Il2CppReflectionType* GetSystemType(const Il2CppType* typ);
 
     // Gets the System.Type Il2CppObject* (actually an Il2CppReflectionType*) for the class with the given namespace and name
     Il2CppReflectionType* GetSystemType(std::string_view nameSpace, std::string_view className);
