@@ -1,6 +1,7 @@
 #ifndef UTILS_H_INCLUDED
 #define UTILS_H_INCLUDED
 
+#include <cxxabi.h>
 #if __has_include(<string_view>)
 #include <string_view>
 #elif __has_include(<experimental/string_view>)
@@ -88,6 +89,20 @@ auto&& unwrap_optionals(T&& arg) {
         typename std::enable_if_t< \
             std::is_same_v<decltype(T::member), U>> \
         > : std::true_type { };
+
+template<typename T>
+std::string type_name() {
+	std::string tname = typeid(T).name();
+	#if defined(__clang__) || defined(__GNUG__)
+	int status;
+	char *demangled_name = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+	if (status == 0) {
+		tname = demangled_name;
+		std::free(demangled_name);
+	}
+	#endif
+	return tname;
+}
 
 // For use in fire-if-compiled asserts e.g. static_assert(false_t<T>, "message")
 template <class...> constexpr std::false_type false_t{};
