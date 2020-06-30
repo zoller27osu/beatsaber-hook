@@ -140,14 +140,28 @@ namespace il2cpp_utils {
     // Framework provided by DaNike
     // TODO: rewrite these to il2cpp_arg_class with il2cpp_arg_type wrappers? Should make many cases faster.
     namespace il2cpp_type_check {
+        // You should extend this class for any nested/inner type of a generic type, and also put a `using declaring_type = Blah;`
+        class NestedType {};
         // To fix "no member named 'get' in il2cpp_type_check::il2cpp_arg_class<Blah>", define il2cpp_arg_class<Blah>!
         // When the Il2CppClass* would depend only on the type of T (not its value), just use DEFINE_IL2CPP_ARG_TYPE!
         template<typename T>
-        struct il2cpp_arg_class { };
+        struct il2cpp_arg_class {
+            // TODO: make this work on any class with a `using declaring_type`, then remove NestedType
+            static inline std::enable_if_t<std::is_base_of_v<NestedType, T>, Il2CppClass*> get() {
+                Il2CppClass* declaring = il2cpp_arg_class<typename T::declaring_type>::get();
+                void* myIter = nullptr;
+                log(INFO, "type_name: %s", type_name<T>().c_str());
+                while (Il2CppClass* nested = il2cpp_functions::class_get_nested_types(declaring, &myIter)) {
+                    if (type_name<T>() == nested->name) return nested;
+                }
+                CRASH_UNLESS(false);
+                return nullptr;
+            }
+        };
 
         #define DEFINE_IL2CPP_DEFAULT_TYPE(type, fieldName) \
         template<> \
-        struct il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<type> { \
+        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<type> { \
             static inline Il2CppClass* get() { \
                 il2cpp_functions::Init(); \
                 return il2cpp_functions::defaults->fieldName##_class; \
@@ -157,22 +171,12 @@ namespace il2cpp_utils {
 
         #define DEFINE_IL2CPP_ARG_TYPE(type, nameSpace, className) \
         template<> \
-        struct il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<type> { \
+        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<type> { \
             static inline Il2CppClass* get() { \
                 il2cpp_functions::Init(); \
                 return il2cpp_utils::GetClassFromName(nameSpace, className); \
             } \
             static inline Il2CppClass* get(type arg) { return get(); } \
-        }
-
-        #define DEFINE_IL2CPP_ARG_TYPE_GENERIC(type, postfix, nameSpace, className) \
-        template<typename... TArgs> \
-        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<type<TArgs...>postfix> { \
-            static inline Il2CppClass* get() { \
-                auto* klass = il2cpp_utils::GetClassFromName(nameSpace, className); \
-                return il2cpp_utils::MakeGeneric(klass, {il2cpp_arg_class<TArgs>::get()...}); \
-            } \
-            static inline Il2CppClass* get(type<TArgs...>postfix arg) { return get(); } \
         }
 
         DEFINE_IL2CPP_DEFAULT_TYPE(int8_t, sbyte);
@@ -309,9 +313,11 @@ namespace il2cpp_utils {
                 bool isStruct = false;
                 if constexpr (has_no_arg_get<il2cpp_gen_class_arg_class<S>>) {
                     genTemplate = il2cpp_gen_class_arg_class<S>::get();
-                } else {
+                } else if constexpr (has_no_arg_get<il2cpp_gen_struct_arg_class<S>>) {
                     genTemplate = il2cpp_gen_struct_arg_class<S>::get();
                     isStruct = true;
+                } else {
+                    static_assert(false_t<S<TArgs...>>);
                 }
                 auto* genInst = il2cpp_utils::MakeGeneric(genTemplate, {il2cpp_arg_class<TArgs>::get()...});
                 if (isStruct) {
@@ -354,7 +360,7 @@ namespace il2cpp_utils {
         struct il2cpp_arg_type<const T&> {
             static inline const Il2CppType* get(const T& arg) {
                 // A method cannot store a result back to a const ref. It is not a C# ref.
-                const Il2CppClass* klass = il2cpp_arg_class<const T>::get(arg);
+                const Il2CppClass* klass = il2cpp_arg_class<T>::get(arg);
                 return &klass->byval_arg;
             }
         };
