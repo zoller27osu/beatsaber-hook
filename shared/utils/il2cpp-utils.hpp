@@ -176,6 +176,9 @@ namespace il2cpp_utils {
                 }
                 return found;
             }
+            static inline std::enable_if_t<std::is_base_of_v<NestedType, T>, Il2CppClass*> get(T arg) {
+                return get();
+            }
         };
 
         #define DEFINE_IL2CPP_DEFAULT_TYPE(type, fieldName) \
