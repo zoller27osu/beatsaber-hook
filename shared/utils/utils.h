@@ -90,6 +90,7 @@ auto&& unwrap_optionals(T&& arg) {
             std::is_same_v<decltype(T::member), U>> \
         > : std::true_type { };
 
+// from https://stackoverflow.com/questions/1055452/c-get-name-of-type-in-template#comment77016419_19123821 (https://ideone.com/sqFWir)
 template<typename T>
 std::string type_name() {
 	std::string tname = typeid(T).name();
