@@ -398,12 +398,46 @@ namespace il2cpp_utils {
         return ret;
     }
 
+    Il2CppClass* MakeGeneric(const Il2CppClass* klass, const Il2CppType** types, uint32_t numTypes) {
+        il2cpp_functions::Init();
+
+        auto typ = RET_0_UNLESS(il2cpp_functions::defaults->systemtype_class);
+        auto klassType = RET_0_UNLESS(GetSystemType(klass));
+
+        // Call Type.MakeGenericType on it
+        auto arr = il2cpp_functions::array_new_specific(typ, numTypes);
+        if (!arr) {
+            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to make new array with length: %u", numTypes);
+            return nullptr;
+        }
+
+        int i = 0;
+        for (int i = 0; i < numTypes; i++) {
+            const Il2CppType* arg = types[i];
+            auto* o = GetSystemType(arg);
+            if (!o) {
+                log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get system type for %s", il2cpp_functions::type_get_name(arg));
+                return nullptr;
+            }
+            il2cpp_array_set(arr, void*, i, reinterpret_cast<void*>(o));
+        }
+
+        auto* reflection_type = RET_0_UNLESS(MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), arr));
+        auto* ret = RET_0_UNLESS(il2cpp_functions::class_from_system_type(reflection_type));
+        log(DEBUG, "il2cpp_utils: MakeGeneric: returning '%s'", ClassStandardName(ret).c_str());
+        return ret;
+    }
+
+    Il2CppReflectionType* GetSystemType(const Il2CppType* typ) {
+        return reinterpret_cast<Il2CppReflectionType*>(il2cpp_functions::type_get_object(typ));
+    }
+
     Il2CppReflectionType* GetSystemType(const Il2CppClass* klass) {
         il2cpp_functions::Init();
         RET_0_UNLESS(klass);
 
         auto* typ = il2cpp_functions::class_get_type_const(klass);
-        return reinterpret_cast<Il2CppReflectionType*>(il2cpp_functions::type_get_object(typ));
+        return GetSystemType(typ);
     }
 
     Il2CppReflectionType* GetSystemType(std::string_view nameSpace, std::string_view className) {
