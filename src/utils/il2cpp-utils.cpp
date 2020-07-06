@@ -407,7 +407,7 @@ namespace il2cpp_utils {
         // Call Type.MakeGenericType on it
         auto arr = il2cpp_functions::array_new_specific(typ, numTypes);
         if (!arr) {
-            log(ERROR, "il2cpp_utils: MakeGeneric: Failed to make new array with length: %u", numTypes);
+            Logger::get().error("il2cpp_utils: MakeGeneric: Failed to make new array with length: %u", numTypes);
             return nullptr;
         }
 
@@ -416,7 +416,7 @@ namespace il2cpp_utils {
             const Il2CppType* arg = types[i];
             auto* o = GetSystemType(arg);
             if (!o) {
-                log(ERROR, "il2cpp_utils: MakeGeneric: Failed to get system type for %s", il2cpp_functions::type_get_name(arg));
+                Logger::get().error("il2cpp_utils: MakeGeneric: Failed to get system type for %s", il2cpp_functions::type_get_name(arg));
                 return nullptr;
             }
             il2cpp_array_set(arr, void*, i, reinterpret_cast<void*>(o));
@@ -424,7 +424,7 @@ namespace il2cpp_utils {
 
         auto* reflection_type = RET_0_UNLESS(MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), arr));
         auto* ret = RET_0_UNLESS(il2cpp_functions::class_from_system_type(reflection_type));
-        log(DEBUG, "il2cpp_utils: MakeGeneric: returning '%s'", ClassStandardName(ret).c_str());
+        Logger::get().debug("il2cpp_utils: MakeGeneric: returning '%s'", ClassStandardName(ret).c_str());
         return ret;
     }
 
