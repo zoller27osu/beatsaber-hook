@@ -296,17 +296,18 @@ namespace il2cpp_utils {
                     using ptr_arg_class = il2cpp_no_arg_class<T*>;
                     if constexpr (has_no_arg_get<ptr_arg_class>) {
                         return ptr_arg_class::get();
+                    } else {
+                        #ifdef NEED_UNSAFE_CSHARP
+                        using element_arg_class = il2cpp_no_arg_class<T>;
+                        if constexpr (has_no_arg_get<element_arg_class>) {
+                            Il2CppClass* elementClass = element_arg_class::get();
+                            return il2cpp_functions::Class_GetPtrClass(elementClass);
+                        } else
+                        #endif
+                        static_assert(false_t<T*>, "Turning this kind of pointer into an Il2CppClass is not implemented! "
+                            "Please pass primitives and structs as themselves instead of taking their address. "
+                            "If the pointer should be treatable as Il2CppObject*, please file an issue on sc2ad/beatsaber-hook.");
                     }
-                    #ifdef NEED_UNSAFE_CSHARP
-                    using element_arg_class = il2cpp_no_arg_class<T>;
-                    if constexpr (has_no_arg_get<element_arg_class>) {
-                        Il2CppClass* elementClass = element_arg_class::get();
-                        return il2cpp_functions::Class_GetPtrClass(elementClass);
-                    }
-                    #endif
-                    static_assert(false_t<T*>, "Turning this kind of pointer into an Il2CppClass is not implemented! "
-                        "Please pass primitives and structs as themselves instead of taking their address. "
-                        "If the pointer should be treatable as Il2CppObject*, please file an issue on sc2ad/beatsaber-hook.");
                 }
             }
         };
