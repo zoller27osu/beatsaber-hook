@@ -281,7 +281,6 @@ namespace il2cpp_utils {
         template<typename T>
         struct il2cpp_arg_class<T*> {
             static inline Il2CppClass* get(T* arg) {
-                RET_0_UNLESS(arg);
                 // These first 2 conditions handle Il2CppObject subclasses that were created
                 //   in libil2cpp via composition instead of inheritance
                 auto constexpr hasObj = has_obj<T, Il2CppObject>::value;
@@ -294,12 +293,16 @@ namespace il2cpp_utils {
                 } else if constexpr(hasObject) {
                     return il2cpp_arg_class<Il2CppObject*>::get(&arg->object);
                 } else {
+                    using ptr_arg_class = il2cpp_no_arg_class<T*>;
+                    if constexpr (has_no_arg_get<ptr_arg_class>) {
+                        return ptr_arg_class::get();
+                    }
                     #ifdef NEED_UNSAFE_CSHARP
-                    using no_arg_class = il2cpp_no_arg_class<T>;
-                    if constexpr (has_no_arg_get<no_arg_class>) {
-                        Il2CppClass* elementClass = no_arg_class::get();
+                    using element_arg_class = il2cpp_no_arg_class<T>;
+                    if constexpr (has_no_arg_get<element_arg_class>) {
+                        Il2CppClass* elementClass = element_arg_class::get();
                         return il2cpp_functions::Class_GetPtrClass(elementClass);
-                    } else
+                    }
                     #endif
                     static_assert(false_t<T*>, "Turning this kind of pointer into an Il2CppClass is not implemented! "
                         "Please pass primitives and structs as themselves instead of taking their address. "
