@@ -15,7 +15,7 @@ constexpr bool has_no_arg_get = requires(const T& t) {
 #elif __has_include(<experimental/type_traits>)
 #include <experimental/type_traits>
 template<typename T>
-using no_arg_get_t = decltype( std::declval<T&>().get() );
+using no_arg_get_t = decltype( T::get() );
 
 template<typename T>
 constexpr bool has_no_arg_get = std::experimental::is_detected_v<no_arg_get_t, T>;
@@ -84,14 +84,18 @@ namespace il2cpp_utils {
     namespace il2cpp_type_check {
         // You should extend this class for any nested/inner type of a generic type, and also put a `using declaring_type = Blah;`
         class NestedType {};
-        // To fix "no member named 'get' in il2cpp_type_check::il2cpp_arg_class<Blah>", define il2cpp_arg_class<Blah>!
-        // When the Il2CppClass* would depend only on the type of T (not its value), just use DEFINE_IL2CPP_ARG_TYPE!
+        // To fix "no member named 'get' in il2cpp_type_check::il2cpp_arg_class<Blah>", just define il2cpp_no_arg_class<Blah>!
+        // The macros like DEFINE_IL2CPP_ARG_TYPE make this easy! The only reason to define an il2cpp_arg_class struct is if,
+        // given a value of Blah, the class returned should depend on the value, and not in the same way as Blah's base class.
+        template<typename T, class Enable = void>
+        struct il2cpp_no_arg_class { };
+
         template<typename T>
-        struct il2cpp_arg_class {
+        struct il2cpp_no_arg_class<T, typename std::enable_if_t<std::is_base_of_v<NestedType, T>>> {
             // TODO: make this work on any class with a `using declaring_type`, then remove NestedType
-            static inline std::enable_if_t<std::is_base_of_v<NestedType, T>, Il2CppClass*> get() {
+            static inline Il2CppClass* get() {
                 il2cpp_functions::Init();
-                Il2CppClass* declaring = il2cpp_arg_class<typename T::declaring_type>::get();
+                Il2CppClass* declaring = il2cpp_no_arg_class<typename T::declaring_type>::get();
                 Il2CppClass* classWithNested = declaring;
                 if (declaring->generic_class) {
                     // Class::GetNestedTypes refuses to work on generic instances, so get the generic template instead
@@ -118,29 +122,31 @@ namespace il2cpp_utils {
                 }
                 return found;
             }
-            static inline std::enable_if_t<std::is_base_of_v<NestedType, T>, Il2CppClass*> get(T arg) {
-                return get();
+        };
+
+        template<typename T>
+        struct il2cpp_arg_class {
+            static inline Il2CppClass* get(T arg) {
+                return il2cpp_no_arg_class<T>::get();
             }
         };
 
         #define DEFINE_IL2CPP_DEFAULT_TYPE(type, fieldName) \
         template<> \
-        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<type> { \
+        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<type> { \
             static inline Il2CppClass* get() { \
                 il2cpp_functions::Init(); \
                 return il2cpp_functions::defaults->fieldName##_class; \
             } \
-            static inline Il2CppClass* get(type arg) { return get(); } \
         }
 
         #define DEFINE_IL2CPP_ARG_TYPE(type, nameSpace, className) \
         template<> \
-        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<type> { \
+        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<type> { \
             static inline Il2CppClass* get() { \
                 il2cpp_functions::Init(); \
                 return il2cpp_utils::GetClassFromName(nameSpace, className); \
             } \
-            static inline Il2CppClass* get(type arg) { return get(); } \
         }
 
         DEFINE_IL2CPP_DEFAULT_TYPE(int8_t, sbyte);
@@ -158,6 +164,11 @@ namespace il2cpp_utils {
         DEFINE_IL2CPP_DEFAULT_TYPE(bool, boolean);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppChar, char);
 
+        #ifdef NEED_UNSAFE_CSHARP
+        DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppObject*, object);
+        #endif
+        DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppString*, string);
+
         DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
         DEFINE_IL2CPP_ARG_TYPE(Color, "UnityEngine", "Color");
         DEFINE_IL2CPP_ARG_TYPE(Vector2, "UnityEngine", "Vector2");
@@ -166,6 +177,20 @@ namespace il2cpp_utils {
         DEFINE_IL2CPP_ARG_TYPE(Quaternion, "UnityEngine", "Quaternion");
         DEFINE_IL2CPP_ARG_TYPE(Rect, "UnityEngine", "Rect");
         DEFINE_IL2CPP_ARG_TYPE(Scene, "UnityEngine.SceneManagement", "Scene");
+
+        template<typename TArg>
+        struct il2cpp_no_arg_class<Array<TArg>*> {
+            static inline Il2CppClass* get() {
+                il2cpp_functions::Init();
+                if constexpr (std::is_same_v<std::decay_t<TArg>, Il2CppObject*>) {
+                    il2cpp_functions::CheckS_GlobalMetadata();
+                    return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);
+                } else {
+                    Il2CppClass* eClass = RET_0_UNLESS(il2cpp_no_arg_class<TArg>::get());
+                    return il2cpp_functions::array_class_get(eClass, 1);
+                }
+            }
+        };
 
         template<>
         struct il2cpp_arg_class<Il2CppClass*> {
@@ -190,40 +215,13 @@ namespace il2cpp_utils {
                 il2cpp_functions::Init();
                 return RET_0_UNLESS(il2cpp_functions::object_get_class(arg));
             }
-            #ifdef NEED_UNSAFE_CSHARP
-            static inline Il2CppClass* get() {
-                il2cpp_functions::Init();
-                return il2cpp_functions::defaults->object_class;
-            }
-            #endif
         };
-
-        template<typename TArg>
-        struct il2cpp_arg_class<Array<TArg>*> {
-            static inline Il2CppClass* get() {
-                il2cpp_functions::Init();
-                if constexpr (std::is_same_v<std::decay_t<TArg>, Il2CppObject*>) {
-                    il2cpp_functions::CheckS_GlobalMetadata();
-                    return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);
-                } else {
-                    Il2CppClass* eClass = RET_0_UNLESS(il2cpp_arg_class<TArg>::get());
-                    return il2cpp_functions::array_class_get(eClass, 1);
-                }
-            }
-            static inline Il2CppClass* get(Array<TArg>* arg) {
-                return get();
-            }
-        };
-
-        // Unlike many Il2CppObject*, this has no real subclasses to worry about
-        DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppString*, string);
 
         DEFINE_MEMBER_CHECKER(obj)
         DEFINE_MEMBER_CHECKER(object)
         template<typename T>
         struct il2cpp_arg_class<T*> {
             static inline Il2CppClass* get(T* arg) {
-                RET_0_UNLESS(arg);
                 // These first 2 conditions handle Il2CppObject subclasses that were created
                 //   in libil2cpp via composition instead of inheritance
                 auto constexpr hasObj = has_obj<T, Il2CppObject>::value;
@@ -236,19 +234,21 @@ namespace il2cpp_utils {
                 } else if constexpr(hasObject) {
                     return il2cpp_arg_class<Il2CppObject*>::get(&arg->object);
                 } else {
-                    #ifdef NEED_UNSAFE_CSHARP
-                    using arg_class = il2cpp_arg_class<T>;
-                    if constexpr (std::is_same_v<std::decay_t<T*>, void*>) {
-                        Il2CppClass* voidClass = il2cpp_functions::defaults->void_class;
-                        return il2cpp_functions::Class_GetPtrClass(voidClass);
-                    } else if constexpr (has_no_arg_get<arg_class>) {
-                        Il2CppClass* elementClass = arg_class::get();
-                        return il2cpp_functions::Class_GetPtrClass(elementClass);
-                    } else
-                    #endif
-                    static_assert(false_t<T*>, "Turning this kind of pointer into an Il2CppClass is not implemented! "
-                        "Please pass primitives and structs as themselves instead of taking their address. "
-                        "If the pointer should be treatable as Il2CppObject*, please file an issue on sc2ad/beatsaber-hook.");
+                    using ptr_arg_class = il2cpp_no_arg_class<T*>;
+                    if constexpr (has_no_arg_get<ptr_arg_class>) {
+                        return ptr_arg_class::get();
+                    } else {
+                        #ifdef NEED_UNSAFE_CSHARP
+                        using element_arg_class = il2cpp_no_arg_class<T>;
+                        if constexpr (has_no_arg_get<element_arg_class>) {
+                            Il2CppClass* elementClass = element_arg_class::get();
+                            return il2cpp_functions::Class_GetPtrClass(elementClass);
+                        } else
+                        #endif
+                        static_assert(false_t<T*>, "Turning this kind of pointer into an Il2CppClass is not implemented! "
+                            "Please pass primitives and structs as themselves instead of taking their address. "
+                            "If the pointer should be treatable as Il2CppObject*, please file an issue on sc2ad/beatsaber-hook.");
+                    }
                 }
             }
         };
@@ -256,45 +256,43 @@ namespace il2cpp_utils {
         #undef has_object
 
         template<template<typename... ST> class S>
-        struct il2cpp_gen_struct_arg_class;
+        struct il2cpp_gen_struct_no_arg_class;
 
         template<template<typename... ST> class S>
-        struct il2cpp_gen_class_arg_class;
+        struct il2cpp_gen_class_no_arg_class;
 
         template<typename... TArgs, template<typename... ST> class S>
-        struct il2cpp_arg_class<S<TArgs...>> {
+        struct il2cpp_no_arg_class<S<TArgs...>> {
             static inline Il2CppClass* get() {
-                auto* klass = il2cpp_gen_struct_arg_class<S>::get();
-                return il2cpp_utils::MakeGeneric(klass, {il2cpp_arg_class<TArgs>::get()...});
+                auto* klass = il2cpp_gen_struct_no_arg_class<S>::get();
+                return il2cpp_utils::MakeGeneric(klass, {il2cpp_no_arg_class<TArgs>::get()...});
             }
-            static inline Il2CppClass* get(S<TArgs...> arg) { return get(); }
         };
 
         template<typename... TArgs, template<typename... ST> class S>
-        struct il2cpp_arg_class<S<TArgs...>*> {
+        struct il2cpp_no_arg_class<S<TArgs...>*> {
             static inline Il2CppClass* get() {
                 Il2CppClass* genTemplate;
                 bool isStruct = false;
-                if constexpr (has_no_arg_get<il2cpp_gen_class_arg_class<S>>) {
-                    genTemplate = il2cpp_gen_class_arg_class<S>::get();
-                } else if constexpr (has_no_arg_get<il2cpp_gen_struct_arg_class<S>>) {
-                    genTemplate = il2cpp_gen_struct_arg_class<S>::get();
+                if constexpr (has_no_arg_get<il2cpp_gen_class_no_arg_class<S>>) {
+                    genTemplate = il2cpp_gen_class_no_arg_class<S>::get();
+                } else if constexpr (has_no_arg_get<il2cpp_gen_struct_no_arg_class<S>>) {
+                    genTemplate = il2cpp_gen_struct_no_arg_class<S>::get();
                     isStruct = true;
                 } else {
                     static_assert(false_t<S<TArgs...>>);
                 }
-                auto* genInst = il2cpp_utils::MakeGeneric(genTemplate, {il2cpp_arg_class<TArgs>::get()...});
+                auto* genInst = il2cpp_utils::MakeGeneric(genTemplate, {il2cpp_no_arg_class<TArgs>::get()...});
                 if (isStruct) {
                     return il2cpp_functions::Class_GetPtrClass(genInst);
                 }
                 return genInst;
             }
-            static inline Il2CppClass* get(S<TArgs...>* arg) { return get(); }
         };
 
         #define DEFINE_IL2CPP_ARG_TYPE_GENERIC_STRUCT(templateType, nameSpace, className) \
         template<> \
-        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_gen_struct_arg_class<templateType> { \
+        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_gen_struct_no_arg_class<templateType> { \
             static inline Il2CppClass* get() { \
                 return il2cpp_utils::GetClassFromName(nameSpace, className); \
             } \
@@ -302,7 +300,7 @@ namespace il2cpp_utils {
 
         #define DEFINE_IL2CPP_ARG_TYPE_GENERIC_CLASS(templateType, nameSpace, className) \
         template<> \
-        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_gen_class_arg_class<templateType> { \
+        struct ::il2cpp_utils::il2cpp_type_check::il2cpp_gen_class_no_arg_class<templateType> { \
             static inline Il2CppClass* get() { \
                 return il2cpp_utils::GetClassFromName(nameSpace, className); \
             } \
@@ -491,9 +489,11 @@ namespace il2cpp_utils {
     // Like ExtractType, but only returns an Il2CppType* if it can be extracted without an instance of T.
     template<class T>
     const Il2CppType* ExtractIndependentType() {
-        using arg_type = il2cpp_type_check::il2cpp_arg_type<T>;
-        if constexpr (has_no_arg_get<arg_type>) {
-            return arg_type::get();
+        using arg_class = il2cpp_type_check::il2cpp_no_arg_class<T>;
+        if constexpr (has_no_arg_get<arg_class>) {
+            il2cpp_functions::Init();
+            auto* klass = CRASH_UNLESS(arg_class::get());
+            return il2cpp_functions::class_get_type(klass);
         }
         return nullptr;
     }
