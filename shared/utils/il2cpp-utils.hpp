@@ -163,9 +163,9 @@ namespace il2cpp_utils {
 
         DEFINE_IL2CPP_DEFAULT_TYPE(bool, boolean);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppChar, char);
-        DEFINE_IL2CPP_DEFAULT_TYPE(void, void);
 
         #ifdef NEED_UNSAFE_CSHARP
+        DEFINE_IL2CPP_DEFAULT_TYPE(void, void);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppObject*, object);
         #endif
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppString*, string);
