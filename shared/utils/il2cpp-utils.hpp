@@ -218,43 +218,19 @@ namespace il2cpp_utils {
             }
         };
 
-        DEFINE_MEMBER_CHECKER(obj)
-        DEFINE_MEMBER_CHECKER(object)
         template<typename T>
         struct il2cpp_arg_class<T*> {
             static inline Il2CppClass* get(T* arg) {
-                // These first 2 conditions handle Il2CppObject subclasses that were created
-                //   in libil2cpp via composition instead of inheritance
-                auto constexpr hasObj = has_obj<T, Il2CppObject>::value;
-                auto constexpr hasObject = has_object<T, Il2CppObject>::value;
-                // Double check inheritance here
-                if constexpr(std::is_convertible_v<T*, Il2CppObject*>) {
-                    return il2cpp_arg_class<Il2CppObject*>::get(arg);
-                } else if constexpr(hasObj) {
-                    return il2cpp_arg_class<Il2CppObject*>::get(&arg->obj);
-                } else if constexpr(hasObject) {
-                    return il2cpp_arg_class<Il2CppObject*>::get(&arg->object);
+                using ptr_arg_class = il2cpp_no_arg_class<T*>;
+                using element_arg_class = il2cpp_no_arg_class<T>;
+                if constexpr (has_no_arg_get<element_arg_class> && !has_no_arg_get<ptr_arg_class>) {
+                    Il2CppClass* elementClass = element_arg_class::get();
+                    return il2cpp_functions::Class_GetPtrClass(elementClass);
                 } else {
-                    using ptr_arg_class = il2cpp_no_arg_class<T*>;
-                    if constexpr (has_no_arg_get<ptr_arg_class>) {
-                        return ptr_arg_class::get();
-                    } else {
-                        #ifdef NEED_UNSAFE_CSHARP
-                        using element_arg_class = il2cpp_no_arg_class<T>;
-                        if constexpr (has_no_arg_get<element_arg_class>) {
-                            Il2CppClass* elementClass = element_arg_class::get();
-                            return il2cpp_functions::Class_GetPtrClass(elementClass);
-                        } else
-                        #endif
-                        static_assert(false_t<T*>, "Turning this kind of pointer into an Il2CppClass is not implemented! "
-                            "Please pass primitives and structs as themselves instead of taking their address. "
-                            "If the pointer should be treatable as Il2CppObject*, please file an issue on sc2ad/beatsaber-hook.");
-                    }
+                    return il2cpp_arg_class<Il2CppObject*>::get(reinterpret_cast<Il2CppObject*>(arg));
                 }
             }
         };
-        #undef has_obj
-        #undef has_object
 
         template<template<typename... ST> class S>
         struct il2cpp_gen_struct_no_arg_class;

@@ -200,7 +200,7 @@ namespace il2cpp_utils {
                 return klass;
             }
         }
-        Logger::get().error("il2cpp_utils: GetClassFromName: Could not find class with namepace: %s and name: %s",
+        Logger::get().error("il2cpp_utils: GetClassFromName: could not find class with namepace: %s and name: %s",
             name_space.data(), type_name.data());
         return nullptr;
     }
