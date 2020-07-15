@@ -16,8 +16,12 @@ const Logger& Logger::get() {
     return utilsLogger;
 }
 
+Logger::Logger(std::string_view tag_) {
+    tag = std::string("QuestHook[") + tag_.data() + "]";
+}
+
 Logger::Logger(ModInfo info) {
-    tag = info.id + "|v" + info.version;
+    tag = "QuestHook[" + info.id + "|v" + info.version + "]";
 }
 
 void Logger::log(Logging::Level lvl, std::string_view fmt, ...) const {
