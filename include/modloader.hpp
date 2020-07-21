@@ -1,4 +1,6 @@
 #pragma once
+#ifndef MODLOADER_DEF
+#define MODLOADER_DEF
 
 #include <stdlib.h>
 #include <vector>
@@ -59,3 +61,4 @@ class Mod
         bool load_loaded = false;
         void (*load_func)(void) = NULL;
 };
+#endif /* MODLOADER_DEF */
