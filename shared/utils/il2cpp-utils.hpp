@@ -73,6 +73,26 @@ namespace il2cpp_utils {
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, const Il2CppType** types, uint32_t numTypes);
 
+    /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses.
+    /// @details This method will not crash.
+    /// @return MethodInfo* for RunMethod calls, will be nullptr on failure
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::initializer_list<Il2CppClass*> types) noexcept;
+
+    /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses and invokes it.
+    /// @n This method will not crash.
+    /// @tparam TOut The return type of the method to invoke
+    /// @tparam T Instance type
+    /// @tparam TArgs Parameters to RunMethod
+    /// @param info Generic MethodInfo* to invoke
+    /// @param types Types to instantiate the generic MethodInfo* with
+    /// @param instance Instance to RunMethod
+    /// @param args Parameters to RunMethod
+    template<class TOut = Il2CppObject*, class T, class... TArgs>
+    std::optional<TOut> RunGenericMethod(const MethodInfo* info, std::initializer_list<Il2CppClass*> types, T&& instance, TArgs ...args) noexcept {
+        auto* createdMethod = RET_0_UNLESS(MakeGenericMethod(info, types));
+        return RunMethod(instance, createdMethod, args...);
+    }
+
     // Seriously, don't un-const the returned Type
     const Il2CppType* MakeRef(const Il2CppType* type);
 

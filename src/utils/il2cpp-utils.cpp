@@ -429,6 +429,49 @@ namespace il2cpp_utils {
         return ret;
     }
 
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::initializer_list<Il2CppClass*> types) noexcept {
+        il2cpp_functions::Init();
+        // Ensure it exists and is generic
+        RET_0_UNLESS(info);
+        RET_0_UNLESS(il2cpp_functions::method_is_generic(info));
+        static auto* typeClass = RET_0_UNLESS(il2cpp_functions::defaults->systemtype_class);
+        // Create the Il2CppReflectionMethod* from the MethodInfo* using the MethodInfo's type
+        auto* infoObj = il2cpp_functions::method_get_object(info, nullptr);
+        if (!infoObj) {
+            Logger::get().error("il2cpp_utils: MakeGenericMethod: Failed to get MonoMethod from MethodInfo: %p", info);
+            return nullptr;
+        }
+        // Populate generic parameters into array
+        auto* arr = reinterpret_cast<Array<Il2CppReflectionType*>*>(il2cpp_functions::array_new(typeClass, types.size()));
+        if (!arr) {
+            Logger::get().error("il2cpp_utils: MakeGenericMethod: Failed to create array of length: %u", types.size());
+            return nullptr;
+        }
+        int i = 0;
+        for (auto* klass : types) {
+            auto* typeObj = GetSystemType(klass);
+            if (!typeObj) {
+                Logger::get().error("il2cpp_utils: MakeGenericMethod: Failed to get type object from class: %s", il2cpp_functions::class_get_name_const(klass));
+                return nullptr;
+            }
+            arr->values[i] = typeObj;
+            i++;
+        }
+        // Call instance function on infoObj to MakeGeneric
+        const auto* returnedInfoObj = (Il2CppReflectionMethod*)RET_0_UNLESS(il2cpp_utils::RunMethod<Il2CppObject*>(infoObj, "MakeGenericMethod", arr));
+        if (!returnedInfoObj) {
+            Logger::get().error("il2cpp_utils: MakeGenericMethod: Failed to get Il2CppReflectionMethod from MakeGenericMethod!");
+            return nullptr;
+        }
+        // Get MethodInfo* back from generic instantiated method
+        const auto* inflatedInfo = il2cpp_functions::method_get_from_reflection(returnedInfoObj);
+        if (!inflatedInfo) {
+            Logger::get().error("il2cpp_utils: MakeGenericMethod: Got null MethodInfo* from Il2CppReflectionMethod: %p", returnedInfoObj);
+        }
+        // Return method to be invoked by caller
+        return inflatedInfo;
+    }
+
     Il2CppReflectionType* GetSystemType(const Il2CppType* typ) {
         return reinterpret_cast<Il2CppReflectionType*>(il2cpp_functions::type_get_object(typ));
     }
