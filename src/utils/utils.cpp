@@ -106,10 +106,9 @@ intptr_t baseAddr(const char *soname)  // credits to https://github.com/ikoz/And
     void *imagehandle = dlopen(soname, RTLD_LOCAL | RTLD_LAZY);
     if (soname == NULL)
         return (intptr_t)NULL;
-    if (imagehandle == NULL){
+    if (imagehandle == NULL)
         return (intptr_t)NULL;
-    }
-    uintptr_t * irc = NULL;
+
     FILE *f = NULL;
     char line[200] = {0};
     char *state = NULL;

@@ -126,7 +126,7 @@ namespace il2cpp_utils {
 
         template<typename T>
         struct il2cpp_arg_class {
-            static inline Il2CppClass* get(T arg) {
+            static inline Il2CppClass* get([[maybe_unused]] T arg) {
                 return il2cpp_no_arg_class<T>::get();
             }
         };
@@ -576,9 +576,9 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
 
         // object_new call
-        auto obj = il2cpp_functions::object_new(klass);
+        auto* obj = RET_0_UNLESS(il2cpp_functions::object_new(klass));
         // runtime_invoke constructor with right type(s) of arguments, return null if constructor errors
-        if (!RunMethod(obj, ".ctor", args...)) return nullptr;
+        RET_0_UNLESS(RunMethod(obj, ".ctor", args...));
         return reinterpret_cast<TObj*>(obj);
     }
 
@@ -589,9 +589,9 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
 
         // object_new call
-        auto obj = il2cpp_functions::object_new(klass);
+        auto* obj = RET_0_UNLESS(il2cpp_functions::object_new(klass));
         // runtime_invoke constructor with right number of args, return null if constructor errors
-        if (!RunMethodUnsafe(obj, ".ctor", args...)) return nullptr;
+        RET_0_UNLESS(RunMethodUnsafe(obj, ".ctor", args...));
         return reinterpret_cast<TObj*>(obj);
     }
 
