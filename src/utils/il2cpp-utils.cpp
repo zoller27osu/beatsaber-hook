@@ -111,12 +111,14 @@ namespace il2cpp_utils {
         }
         auto classTo = il2cpp_functions::class_from_il2cpp_type(to);
         auto classFrom = il2cpp_functions::class_from_il2cpp_type(from);
-        auto ret = il2cpp_functions::class_is_assignable_from(classTo, classFrom);
-        Logger::get().debug("IsConvertible: class_is_assignable_from(%s, %s) returned %s",
-            ClassStandardName(classTo).c_str(), ClassStandardName(classFrom).c_str(), ret ? "true" : "false");
-        if (!ret && il2cpp_functions::class_is_enum(classTo)) {
-            Logger::get().debug("IsConvertible: but classTo is enum! Comparing against class_enum_basetype.");
-            ret = IsConvertible(il2cpp_functions::class_enum_basetype(classTo), from);
+        bool ret = il2cpp_functions::class_is_assignable_from(classTo, classFrom);
+        if (!ret) {
+            Logger::get().debug("IsConvertible: class_is_assignable_from(%s, %s) returned %s",
+                ClassStandardName(classTo).c_str(), ClassStandardName(classFrom).c_str(), ret ? "true" : "false");
+            if (il2cpp_functions::class_is_enum(classTo)) {
+                Logger::get().debug("IsConvertible: but classTo is enum! Comparing against class_enum_basetype.");
+                ret = IsConvertible(il2cpp_functions::class_enum_basetype(classTo), from);
+            }
         }
         return ret;
     }
@@ -187,7 +189,7 @@ namespace il2cpp_utils {
         size_t assemb_count;
         const Il2CppAssembly** allAssemb = il2cpp_functions::domain_get_assemblies(dom, &assemb_count);
 
-        for (int i = 0; i < assemb_count; i++) {
+        for (size_t i = 0; i < assemb_count; i++) {
             auto assemb = allAssemb[i];
             auto img = il2cpp_functions::assembly_get_image(assemb);
             if (!img) {
@@ -291,7 +293,7 @@ namespace il2cpp_utils {
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass) {
         std::vector<const Il2CppType*> argTypes;
-        for (int i = 0; i < argSpaceClass.size() - 1; i += 2) {
+        for (size_t i = 0; i < argSpaceClass.size() - 1; i += 2) {
             auto clazz = GetClassFromName(argSpaceClass[i].data(), argSpaceClass[i+1].data());
             argTypes.push_back(il2cpp_functions::class_get_type(clazz));
         }
@@ -411,8 +413,7 @@ namespace il2cpp_utils {
             return nullptr;
         }
 
-        int i = 0;
-        for (int i = 0; i < numTypes; i++) {
+        for (size_t i = 0; i < numTypes; i++) {
             const Il2CppType* arg = types[i];
             auto* o = GetSystemType(arg);
             if (!o) {
@@ -460,7 +461,7 @@ namespace il2cpp_utils {
         auto methodName = il2cpp_functions::method_get_name(method);
         methodName = methodName ? methodName : "__noname__";
         std::stringstream paramStream;
-        for (int i = 0; i < il2cpp_functions::method_get_param_count(method); i++) {
+        for (size_t i = 0; i < il2cpp_functions::method_get_param_count(method); i++) {
             if (i > 0) paramStream << ", ";
             auto* argType = il2cpp_functions::method_get_param(method, i);
             if (il2cpp_functions::type_is_byref(argType)) {
@@ -560,7 +561,7 @@ namespace il2cpp_utils {
         }
         if (genInst) {
             os << "<";
-            for (int i = 0; i < genInst->type_argc; i++) {
+            for (size_t i = 0; i < genInst->type_argc; i++) {
                 auto typ = genInst->type_argv[i];
                 if (i > 0) os << ", ";
                 const char* typName = TypeGetSimpleName(typ);
@@ -725,8 +726,6 @@ namespace il2cpp_utils {
             Logger::get().debug("genericContainerIndex: %i", klass->genericContainerIndex);
         }
 
-        auto* typDef = klass->typeDefinition;
-
         Logger::get().debug("%i =========METHODS=========", indent);
         LogMethods(klass);
         Logger::get().debug("%i =======END METHODS=======", indent);
@@ -815,7 +814,6 @@ namespace il2cpp_utils {
                 }
             }
 
-            auto length = img->nameToClassHashTable->size();
             for (auto itr = img->nameToClassHashTable->begin(); itr != img->nameToClassHashTable->end(); ++itr) {
                 // ->first is a KeyWrapper(pair(namespaceName, className))
                 // ->second is TypeDefinitionIndex

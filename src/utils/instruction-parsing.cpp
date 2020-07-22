@@ -207,7 +207,7 @@ Instruction::Instruction(const int32_t* inst) {
     // 2. (a | [1's where pattern has x])     == [pattern with x's as 1]
     //   2. is usually the shorter option when x's are mostly on the right, otherwise 1.
     if (top0 <= 3) {
-        for (int i = 0; i < sizeof(kind) / sizeof(kind[0]); i++) {
+        for (size_t i = 0; i < sizeof(kind) / sizeof(kind[0]); i++) {
             kind[parseLevel++] = "Invalid instruction";
             valid = false;
         }
@@ -375,9 +375,9 @@ Instruction::Instruction(const int32_t* inst) {
                 RdCanBeSP = Rs0CanBeSP = false;
                 numSourceRegisters = 2;
                 Rd = bits(code, 4, 0);
-                auto Rn = Rs[0] = bits(code, 9, 5);
+                Rs[0] = bits(code, 9, 5);  // Rn
                 cond = bits(code, 15, 12);
-                auto Rm = Rs[1] = bits(code, 20, 16);
+                Rs[1] = bits(code, 20, 16);  // Rm
 
                 bool op = op0;
                 bool S = bits(code, 29, 29);
@@ -404,8 +404,8 @@ Instruction::Instruction(const int32_t* inst) {
                 RdCanBeSP = Rs0CanBeSP = false;
                 numSourceRegisters = 3;
                 Rd = bits(code, 4, 0);
-                auto Rn = Rs[0] = bits(code, 9, 5);
-                auto Rm = Rs[1] = bits(code, 20, 16);
+                Rs[0] = bits(code, 9, 5);  // Rn
+                Rs[1] = bits(code, 20, 16);  // Rm
                 auto Ra = Rs[2] = bits(code, 14, 10);
                 if (Ra == RZR) {
                     numSourceRegisters = 2;
@@ -698,13 +698,13 @@ Instruction::Instruction(const int32_t* inst) {
             if (op0 == 0b10) {
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#movewide
                 kind[parseLevel++] = "Move wide (immediate)";
-                auto opc = bits(code, 30, 29);  // op21 for Extract
+                // auto opc = bits(code, 30, 29);  // op21 for Extract
             } else {  // op0 == 11
                 assert(op0 == 0b11);  // logic error, there should be no other options!
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/data-processing-immediate#extract
                 kind[parseLevel++] = "Extract";
-                bool N = bits(code, 22, 22);
-                auto op21 = bits(code, 30, 29);
+                // bool N = bits(code, 22, 22);
+                // auto op21 = bits(code, 30, 29);
             }
         }
     } else if ((top0 | 0b1) == 0b1011) {  // 101x
@@ -817,7 +817,7 @@ Instruction::Instruction(const int32_t* inst) {
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions#compbranch
                 kind[parseLevel++] = "Compare and branch (immediate)";
                 numSourceRegisters = 1;
-                auto Rt = Rs[0] = bits(code, 4, 0);
+                Rs[0] = bits(code, 4, 0);  // Rt
 
                 bool sf = bits(code, 31, 31);
                 bool op = bits(code, 24, 24);
@@ -833,7 +833,7 @@ Instruction::Instruction(const int32_t* inst) {
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/branches-exception-generating-and-system-instructions#testbranch
                 kind[parseLevel++] = "Test and branch (immediate)";
                 numSourceRegisters = 1;
-                auto Rt = Rs[0] = bits(code, 4, 0);
+                Rs[0] = bits(code, 4, 0);  // Rt
 
                 bool b5 = bits(code, 31, 31);
                 bool op = bits(code, 24, 24);
@@ -900,7 +900,7 @@ Instruction::Instruction(const int32_t* inst) {
                     // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores#ldst_regoff
                     kind[parseLevel++] = "Load/store register (register offset)";
                     numSourceRegisters = 2;
-                    auto Rm = Rs[1] = bits(code, 20, 16);  // cannot be SP
+                    Rs[1] = bits(code, 20, 16);  // Rm, cannot be SP
 
                     extendType = static_cast<ExtendType>(bits(code, 15, 13));  // <extend>, encoded in "option"
                     bool S = bits(code, 12, 12);
@@ -1032,6 +1032,10 @@ Instruction::Instruction(const int32_t* inst) {
             uint_fast8_t Rn = bits(code, 9, 5);  // can be SP
             uint_fast8_t Rt2 = bits(code, 14, 10);  // cannot be SP
 
+            static constexpr int scaleArr[] = {2, 4, 3};
+            int scale = scaleArr[opc];
+            imm = SignExtend<int64_t>(imm7, 7) << scale;
+
             if (op2 == 0) {
                 // https://developer.arm.com/docs/ddi0596/a/top-level-encodings-for-a64/loads-and-stores#ldstnapair_offs
                 kind[parseLevel++] = "Load/store no-allocate pair (offset)";
@@ -1125,7 +1129,7 @@ void ProcessRegisterDependencies(Instruction* inst, uint_fast8_t Rd, decltype(Pa
     auto newDeps = decltype(ParseState::dependencyMap)::value_type();  // storage for the dependencies of a single register
     for (uint_fast8_t i = 0; i < inst->numSourceRegisters; i++) {
         auto Rs = inst->Rs[i];
-        if ((Rs < 0) || (Rs >= depMap.max_size())) {
+        if ((Rs < 0) || ((size_t)Rs >= depMap.max_size())) {
             Logger::get().critical("Instruction is wrong! numSourceRegisters = %i but Rs[%i] = %i\n%s", inst->numSourceRegisters, i, Rs,
                 inst->toString().c_str());
             SAFE_ABORT();
@@ -1219,7 +1223,14 @@ InstructionTree::InstructionTree(const int32_t* pc): Instruction(pc) {
 
 std::ostream& operator<<(std::ostream& os, const AssemblyFunction& func) {
     os << std::showbase;
-    // TODO: print fields
+    os << "Function candidates: " << std::endl;
+    for (auto p : func.parseState.functionCandidates) {
+        os << p.first << " (offset " << asOffset((intptr_t)p.first) << "): depMap " << DepMapToString(p.second) << std::endl;
+    }
+    os << "Other jumps: " << std::endl;
+    for (auto p : func.parseState.otherJumps) {
+        os << p.first << " (offset " << asOffset((intptr_t)p.first) << "): depMap " << DepMapToString(p.second) << std::endl;
+    }
     return os << std::noshowbase;
 }
 
@@ -1241,13 +1252,4 @@ AssemblyFunction::AssemblyFunction(const int32_t* pc): parseState() {
         p.first->PopulateChildren(parseState);
     }
     usleep(10000L);  // 0.01s
-
-    Logger::get().info("Function candidates: ");
-    for (auto p : parseState.functionCandidates) {
-        Logger::get().info("%p (offset %lX): depMap %s", p.first, asOffset((intptr_t)p.first), DepMapToString(p.second).c_str());
-    }
-    Logger::get().info("Other jumps: ");
-    for (auto p : parseState.otherJumps) {
-        Logger::get().info("%p (offset %lX): depMap %s", p.first, asOffset((intptr_t)p.first), DepMapToString(p.second).c_str());
-    }
 }

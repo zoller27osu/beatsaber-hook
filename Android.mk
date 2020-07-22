@@ -44,6 +44,7 @@ LOCAL_LDLIBS     := -llog
 # MUST SPECIFY THE libil2cpp FOLDER IN YOUR INCLUDE PATH!
 # Ensure you select the correct version of libil2cpp for your game
 LOCAL_CFLAGS     := -D'VERSION="0.1.0"' -I'c:/Program Files/Unity/Editor/Data/il2cpp/libil2cpp'
+LOCAL_CFLAGS     += -Wall -Wextra -Werror -Wno-unused-function
 # Suppress macro logs can be specified in order to create a build that has silenced logs.
 # TODO: This will eventually be a parameter specifyable.
 # LOCAL_CFLAGS	 += -D'SUPPRESS_MACRO_LOGS'
