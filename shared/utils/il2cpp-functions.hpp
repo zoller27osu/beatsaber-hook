@@ -7,7 +7,7 @@
 #include "typedefs.h"
 #include "logging.hpp"
 
-#if __has_include("il2cpp-runtime-stats.h")
+#if !defined(UNITY_2019) && __has_include("il2cpp-runtime-stats.h")
 #define UNITY_2019
 #endif
 

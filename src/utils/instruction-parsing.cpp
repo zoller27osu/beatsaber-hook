@@ -101,7 +101,7 @@ std::ostream& operator<<(std::ostream& os, const Register& regName) {
 }
 
 std::string Register::toString() const {
-    std::stringstream ss;
+    std::ostringstream ss;
     ss << *this;
     return ss.str();
 }
@@ -134,7 +134,7 @@ std::ostream& operator<<(std::ostream& os, const Instruction& inst) {
 }
 
 std::string Instruction::toString() const {
-    std::stringstream ss;
+    std::ostringstream ss;
     ss << *this;
     return ss.str();
 }
@@ -1150,7 +1150,7 @@ bool OnlySelfDeps(uint_fast8_t reg, decltype(ParseState::dependencyMap)& depMap)
 }
 
 std::string DepMapToString(decltype(ParseState::dependencyMap)& depMap) {
-    std::stringstream ss;
+    std::ostringstream ss;
     ss << "{self deps: [";
     for (uint_fast8_t i = 0; i < depMap.max_size(); i++) {
         if ((i != 0) && ((i % 8) == 0)) {
@@ -1180,7 +1180,7 @@ std::string DepMapToString(decltype(ParseState::dependencyMap)& depMap) {
             first = false;
         }
     }
-    ss << "}";
+    ss << "}" << std::flush;
     return ss.str();
 }
 
@@ -1222,20 +1222,22 @@ InstructionTree::InstructionTree(const int32_t* pc): Instruction(pc) {
 }
 
 std::ostream& operator<<(std::ostream& os, const AssemblyFunction& func) {
-    os << std::showbase;
+    os << std::hex << std::uppercase;
     os << "Function candidates: " << std::endl;
     for (auto p : func.parseState.functionCandidates) {
-        os << p.first << " (offset " << asOffset((intptr_t)p.first) << "): depMap " << DepMapToString(p.second) << std::endl;
+        os << "0x" << uintptr_t(p.first) << " (offset 0x" << asOffset((intptr_t)p.first) << "): depMap "
+            << DepMapToString(p.second) << std::endl;
     }
     os << "Other jumps: " << std::endl;
     for (auto p : func.parseState.otherJumps) {
-        os << p.first << " (offset " << asOffset((intptr_t)p.first) << "): depMap " << DepMapToString(p.second) << std::endl;
+        os << "0x" << uintptr_t(p.first) << " (offset 0x" << asOffset((intptr_t)p.first) << "): depMap "
+            << DepMapToString(p.second) << std::endl;
     }
-    return os << std::noshowbase;
+    return os << std::nouppercase << std::dec;
 }
 
 std::string AssemblyFunction::toString() const {
-    std::stringstream ss;
+    std::ostringstream ss;
     ss << *this;
     return ss.str();
 }
@@ -1251,5 +1253,4 @@ AssemblyFunction::AssemblyFunction(const int32_t* pc): parseState() {
         parseState.dependencyMap = std::move(p.second);
         p.first->PopulateChildren(parseState);
     }
-    usleep(10000L);  // 0.01s
 }
