@@ -170,7 +170,7 @@ public:
 
 private:
     const char* kind[3];  // strings describing the kind of instruction, from least to most specific
-    char parseLevel;  // The lowest level we were able to parse at, 1-3 (subtract 1 for index of most specific string in 'kind')
+    uint8_t parseLevel;  // The lowest level we were able to parse at, 1-3 (subtract 1 for index of most specific string in 'kind')
     bool RdCanBeSP = false;
     bool Rs0CanBeSP = false;
     // For LDR/STR:
@@ -226,7 +226,7 @@ struct ParseState {
 
     ParseState() {
         for (uint_fast8_t i = 0; i < dependencyMap.size(); i++) {
-            dependencyMap[i] = std::move(decltype(dependencyMap)::value_type(1 << i));
+            dependencyMap[i] = decltype(dependencyMap)::value_type(1 << i);
         }
     }
 };
@@ -248,13 +248,13 @@ private:
 template<class T>
 T trunc(T bits, int N) {
     if (N == sizeof(T)*CHAR_BIT) return bits;
-    CRASH_UNLESS(N < sizeof(T)*CHAR_BIT);
+    CRASH_UNLESS(N < (long)sizeof(T)*CHAR_BIT);
     return bits & ONES(N);
 }
 
 // Transforms the given integer (with M denoting the true number of significant bits) into an unsigned number of type To.
 template<class To, class From>
-To ZeroExtend(From bits, int M) {
+To ZeroExtend(From bits, [[maybe_unused]] int M) {
     static_assert(std::is_unsigned_v<From>);
     return static_cast<To>(bits);
 }

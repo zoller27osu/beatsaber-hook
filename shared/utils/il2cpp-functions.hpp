@@ -7,7 +7,7 @@
 #include "typedefs.h"
 #include "logging.hpp"
 
-#if __has_include("il2cpp-runtime-stats.h")
+#if !defined(UNITY_2019) && __has_include("il2cpp-runtime-stats.h")
 #define UNITY_2019
 #endif
 
@@ -368,7 +368,7 @@ class il2cpp_functions {
     static const Il2CppGenericContainer* MetadataCache_GetGenericContainerFromIndex(GenericContainerIndex index);
     static const Il2CppGenericParameter* MetadataCache_GetGenericParameterFromIndex(GenericParameterIndex index);
     static Il2CppClass* MetadataCache_GetNestedTypeFromIndex(NestedTypeIndex index);
-    static const TypeDefinitionIndex MetadataCache_GetIndexForTypeDefinition(const Il2CppClass* typeDefinition);
+    static TypeDefinitionIndex MetadataCache_GetIndexForTypeDefinition(const Il2CppClass* typeDefinition);
 
     // Whether all of the il2cpp functions have been initialized or not
     static bool initialized;

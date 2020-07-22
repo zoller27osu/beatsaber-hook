@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-class Il2CppString;
+struct Il2CppString;
 #ifndef __cplusplus
 bool = uchar8_t;
 #endif /* __cplusplus */
