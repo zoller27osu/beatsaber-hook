@@ -1,4 +1,3 @@
-#pragma once
 #ifndef MODLOADER_DEF
 #define MODLOADER_DEF
 
