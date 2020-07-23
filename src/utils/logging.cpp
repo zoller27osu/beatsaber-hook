@@ -5,7 +5,9 @@
 #include "../../shared/utils/logging.hpp"
 #include "../../include/modloader.hpp"
 #include <string_view>
+#include <string>
 #include <memory>
+#include "../../shared/utils/utils.h"
 
 #ifndef VERSION
 #define VERSION "0.0.0"
@@ -24,46 +26,72 @@ Logger::Logger(ModInfo info) {
     tag = "QuestHook[" + info.id + "|v" + info.version + "]";
 }
 
+#define LOG_MAX_CHARS 1000
+void Logger::log(Logging::Level lvl, std::string str) const {
+    if (str.length() > LOG_MAX_CHARS) {
+        std::size_t i = 0;
+        while (i < str.length()) {
+            auto sub = str.substr(i, LOG_MAX_CHARS);
+            auto newline = sub.find('\n');
+            if (newline != std::string::npos) {
+                sub = sub.substr(0, newline);
+                i += newline + 1; // Skip actual newline character
+            } else {
+                i += LOG_MAX_CHARS;
+            }
+            __android_log_write(lvl, tag.c_str(), sub.c_str());
+        }
+    } else {
+        __android_log_write(lvl, tag.c_str(), str.c_str());
+    }
+}
+
 void Logger::log(Logging::Level lvl, std::string_view fmt, ...) const {
     va_list args;
     va_start(args, fmt);
-    __android_log_vprint(lvl, tag.c_str(), fmt.data(), args);
+    auto s = string_vformat(fmt, args);
     va_end(args);
+    log(lvl, s);
 }
 
 void Logger::critical(std::string_view fmt, ...) const {
     va_list args;
     va_start(args, fmt);
-    __android_log_vprint(Logging::CRITICAL, tag.c_str(), fmt.data(), args);
+    auto s = string_vformat(fmt, args);
     va_end(args);
+    log(Logging::CRITICAL, s);
 }
 
 void Logger::error(std::string_view fmt, ...) const {
     va_list args;
     va_start(args, fmt);
-    __android_log_vprint(Logging::ERROR, tag.c_str(), fmt.data(), args);
+    auto s = string_vformat(fmt, args);
     va_end(args);
+    log(Logging::ERROR, s);
 }
 
 void Logger::warning(std::string_view fmt, ...) const {
     va_list args;
     va_start(args, fmt);
-    __android_log_vprint(Logging::WARNING, tag.c_str(), fmt.data(), args);
+    auto s = string_vformat(fmt, args);
     va_end(args);
+    log(Logging::WARNING, s);
 }
 
 void Logger::info(std::string_view fmt, ...) const {
     va_list args;
     va_start(args, fmt);
-    __android_log_vprint(Logging::INFO, tag.c_str(), fmt.data(), args);
+    auto s = string_vformat(fmt, args);
     va_end(args);
+    log(Logging::INFO, s);
 }
 
 void Logger::debug(std::string_view fmt, ...) const {
     va_list args;
     va_start(args, fmt);
-    __android_log_vprint(Logging::DEBUG, tag.c_str(), fmt.data(), args);
+    auto s = string_vformat(fmt, args);
     va_end(args);
+    log(Logging::DEBUG, s);
 }
 
 #ifdef FILE_LOG

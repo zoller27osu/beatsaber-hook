@@ -42,6 +42,15 @@ void print(std::stringstream& ss, Logging::Level lvl) {
     resetSS(ss);
 }
 
+std::string string_vformat(const std::string_view format, va_list args) {
+    size_t size = vsnprintf(nullptr, 0, format.data(), args) + 1; // Extra space for '\0'
+    if (size <= 0)
+        return "";
+    std::unique_ptr<char[]> buf(new char[size]); 
+    vsnprintf(buf.get(), size, format.data(), args);
+    return std::string(buf.get(), buf.get() + size - 1);
+}
+
 static std::unordered_set<const void*> analyzed;
 void analyzeBytes(std::stringstream& ss, const void* ptr, int indent) {
     if (!ptr || ((const uintptr_t)ptr) > 0x7fffffffffll) return;

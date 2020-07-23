@@ -102,6 +102,7 @@ class Logger {
     public:
         Logger(const ModInfo info);
         Logger(std::string_view tag_);
+        void log(Logging::Level lvl, std::string str) const;
         void log(Logging::Level lvl, std::string_view fmt, ...) const;
         void critical(std::string_view fmt, ...) const;
         void error(std::string_view fmt, ...) const;

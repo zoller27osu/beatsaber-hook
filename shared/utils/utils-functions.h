@@ -11,6 +11,8 @@ struct Il2CppString;
 bool = uchar8_t;
 #endif /* __cplusplus */
 
+// va_list wrapper for string_format
+std::string string_vformat(const std::string_view format, va_list args);
 // Returns a string_view of the given Il2CppString*
 std::u16string_view csstrtostr(Il2CppString* in);
 // Sets the given cs_string using the given string/char16 array
