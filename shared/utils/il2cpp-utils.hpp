@@ -519,7 +519,7 @@ namespace il2cpp_utils {
             auto* outType = ExtractIndependentType<TOut>();
             if (outType) {
                 auto* retType = ExtractType(ret);
-                if (!IsConvertible(retType, outType, false)) {
+                if (!IsConvertible(outType, retType, false)) {
                     Logger::get().warning("User requested TOut %s does not match the method's return object of type %s!",
                         TypeGetSimpleName(outType), TypeGetSimpleName(retType));
                 }
@@ -659,7 +659,7 @@ namespace il2cpp_utils {
 
         // Check that the TOut requested by the user matches the field.
         auto* outType = ExtractIndependentType<TOut>();
-        if (outType && !IsConvertible(field->type, outType, false)) {
+        if (outType && !IsConvertible(outType, field->type, false)) {
             Logger::get().warning("User requested TOut %s does not match the field's type, %s!",
                 TypeGetSimpleName(outType), TypeGetSimpleName(field->type));
         }
