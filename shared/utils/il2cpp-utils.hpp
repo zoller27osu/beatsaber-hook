@@ -78,21 +78,6 @@ namespace il2cpp_utils {
     /// @return MethodInfo* for RunMethod calls, will be nullptr on failure
     const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::initializer_list<Il2CppClass*> types) noexcept;
 
-    /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses and invokes it.
-    /// @n This method will not crash.
-    /// @tparam TOut The return type of the method to invoke
-    /// @tparam T Instance type
-    /// @tparam TArgs Parameters to RunMethod
-    /// @param info Generic MethodInfo* to invoke
-    /// @param types Types to instantiate the generic MethodInfo* with
-    /// @param instance Instance to RunMethod
-    /// @param args Parameters to RunMethod
-    template<class TOut = Il2CppObject*, class T, class... TArgs>
-    std::optional<TOut> RunGenericMethod(const MethodInfo* info, std::initializer_list<Il2CppClass*> types, T&& instance, TArgs ...args) noexcept {
-        auto* createdMethod = RET_0_UNLESS(MakeGenericMethod(info, types));
-        return RunMethod(instance, createdMethod, args...);
-    }
-
     // Seriously, don't un-const the returned Type
     const Il2CppType* MakeRef(const Il2CppType* type);
 
@@ -587,6 +572,41 @@ namespace il2cpp_utils {
     std::optional<TOut> RunMethodUnsafe(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, TArgs&& ...params) {
         auto* klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, klassName));
         return RunMethodUnsafe<TOut>(klass, methodName, params...);
+    }
+
+    /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses and invokes it.
+    /// @n This method will not crash.
+    /// @tparam TOut The return type of the method to invoke
+    /// @tparam T Instance type
+    /// @tparam TArgs Parameters to RunMethod
+    /// @param instance Instance to RunMethod, or null/class
+    /// @param info Generic MethodInfo* to invoke
+    /// @param genTypes Types to instantiate the generic MethodInfo* with
+    /// @param params Parameters to RunMethod
+    template<class TOut = Il2CppObject*, class T, class... TArgs>
+    std::optional<TOut> RunGenericMethod(T&& instance, const MethodInfo* info, std::initializer_list<Il2CppClass*> genTypes, TArgs ...params) noexcept {
+        auto* createdMethod = RET_NULLOPT_UNLESS(MakeGenericMethod(info, genTypes));
+        return RunMethod<TOut, false>(instance, createdMethod, params...);
+    }
+
+    template<class TOut = Il2CppObject*, class T, class... TArgs>
+    std::optional<TOut> RunGenericMethod(T&& classOrInstance, std::string_view methodName, std::initializer_list<Il2CppClass*> genTypes, TArgs ...params) noexcept {
+        auto types = ExtractTypes(params...);
+        if (types.size() != sizeof...(TArgs)) {
+            Logger::get().warning("RunGenericMethod: ExtractTypes for method %s failed!", methodName.data());
+            return std::nullopt;
+        }
+
+        auto* info = RET_NULLOPT_UNLESS(FindMethod(classOrInstance, methodName, types));
+        return RunGenericMethod<TOut>(classOrInstance, info, genTypes, params...);
+    }
+
+    template<class TOut = Il2CppObject*, class... TArgs>
+    // Runs a static generic method with the specified method name and arguments, on the class with the specified namespace and class name.
+    // The method also has return type TOut.
+    std::optional<TOut> RunGenericMethod(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, std::initializer_list<Il2CppClass*> genTypes, TArgs ...params) noexcept {
+        auto* klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, klassName));
+        return RunGenericMethod<TOut>(klass, methodName, genTypes, params...);
     }
 
     template<typename TObj = Il2CppObject, typename... TArgs>
