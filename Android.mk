@@ -43,7 +43,7 @@ LOCAL_SHARED_LIBRARIES := modloader
 LOCAL_LDLIBS     := -llog
 # MUST SPECIFY THE libil2cpp FOLDER IN YOUR INCLUDE PATH!
 # Ensure you select the correct version of libil2cpp for your game
-# Use -isystem instead of -I for libil2cpp since 
+# Use -isystem instead of -I for libil2cpp since we aren't responsible for its code or the warnings it produces
 LOCAL_CFLAGS     := -D'VERSION="0.1.0"' -isystem 'c:/Program Files/Unity/Editor/Data/il2cpp/libil2cpp'
 LOCAL_CFLAGS     += -D'UNITY_2019' -Wall -Wextra -Werror -Wno-unused-function
 # Suppress macro logs can be specified in order to create a build that has silenced logs.
