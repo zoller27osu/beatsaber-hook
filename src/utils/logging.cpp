@@ -7,7 +7,7 @@
 #include <string_view>
 #include <string>
 #include <memory>
-#include "../../shared/utils/utils.h"
+#include "../../shared/utils/utils-functions.h"
 
 #ifndef VERSION
 #define VERSION "0.0.0"
