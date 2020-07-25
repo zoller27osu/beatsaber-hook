@@ -26,35 +26,17 @@ TARGET_ARCH_ABI := $(APP_ABI)
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
 include $(CLEAR_VARS)
-# Build the modloader .so object first, ensure we have it and can link with it.
-# Keep in mind that this modloader.so should EXACTLY MATCH the header file exported from the modloader
-# running in the game you are making a mod for. If it doesn't, symbols will be undefined, and your mod probably won't load.
-# When developing this yourself, ensure that the libmodloader.so is specified correctly as below and that your includes
-# specify it correctly.
-LOCAL_MODULE	        := modloader
-LOCAL_SRC_FILES         := ./include/libs/libmodloader.so
-LOCAL_EXPORT_C_INCLUDES := ./include/
+LOCAL_MODULE := modloader_a
+LOCAL_SRC_FILES += C:\Users\Sc2ad\Desktop\Code\BeatSaberMods\QuestBS-Utils\extern\beatsaber-hook\extern/modloader_0_1_0.so
+LOCAL_EXPORT_C_INCLUDES := C:\Users\Sc2ad\Desktop\Code\BeatSaberMods\QuestBS-Utils\extern\beatsaber-hook\extern/modloader
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-# Create the actual shared object. We want to ensure we load all libraries we wish to use:
-LOCAL_SHARED_LIBRARIES := modloader
-# Ensure we include the log library so we can log to the android log
-LOCAL_LDLIBS     := -llog
-# MUST SPECIFY THE libil2cpp FOLDER IN YOUR INCLUDE PATH!
-# Ensure you select the correct version of libil2cpp for your game
-# Use -isystem instead of -I for libil2cpp since 
-LOCAL_CFLAGS     := -D'VERSION="0.1.0"' -isystem 'c:/Program Files/Unity/Editor/Data/il2cpp/libil2cpp'
-LOCAL_CFLAGS     += -D'UNITY_2019' -Wall -Wextra -Werror -Wno-unused-function
-# Suppress macro logs can be specified in order to create a build that has silenced logs.
-# TODO: This will eventually be a parameter specifyable.
-# LOCAL_CFLAGS	 += -D'SUPPRESS_MACRO_LOGS'
-LOCAL_MODULE     := beatsaber-hook
-LOCAL_C_INCLUDES := ./include
-# Add inline-hook
-# LOCAL_SRC_FILES  := $(call rwildcard,src/inline-hook,*.c) $(call rwildcard,src/inline-hook,*.cpp)
-# Add utils
-LOCAL_SRC_FILES  := $(call rwildcard,src/utils,*.cpp)
-# Add config
-LOCAL_SRC_FILES  += $(call rwildcard,src/config,*.cpp)
+LOCAL_SHARED_LIBRARIES := modloader_a
+LOCAL_MODULE := beatsaber-hook
+LOCAL_SRC_FILES += $(call rwildcard,src/utils,*.cpp)
+LOCAL_SRC_FILES += $(call rwildcard,src/config,*.cpp)
+LOCAL_LDLIBS += -llog
+LOCAL_CFLAGS += -DVERSION='"0.2.3"' -isystem 'c:/Program Files/Unity/Editor/Data/il2cpp/libil2cpp' -D'UNITY_2019' -Wall -Wextra -Werror -Wno-unused-function -DID='"beatsaber-hook"' -I'./shared' -I'./extern'
+LOCAL_C_INCLUDES += ./shared
 include $(BUILD_SHARED_LIBRARY)

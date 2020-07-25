@@ -1,0 +1,22 @@
+{
+  "sharedDir": "shared",
+  "dependenciesDir": "extern",
+  "info": {
+    "name": "beatsaber-hook",
+    "id": "beatsaber-hook",
+    "version": "0.2.3",
+    "url": "https://github.com/sc2ad/beatsaber-hook",
+    "additionalData": {}
+  },
+  "dependencies": [
+    {
+      "id": "modloader",
+      "versionRange": "0.1.0",
+      "additionalData": {}
+    }
+  ],
+  "additionalData": {
+    "branchName": "so-update",
+    "soLink": ""
+  }
+}

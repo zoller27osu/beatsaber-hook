@@ -4,7 +4,7 @@
 #include "../../shared/utils/il2cpp-functions.hpp"
 #include "../../shared/utils/instruction-parsing.hpp"
 #include "../../shared/utils/logging.hpp"
-#include "../../include/modloader.hpp"
+#include "modloader/modloader.hpp"
 
 // All the fields...
 #ifdef UNITY_2019

@@ -3,7 +3,7 @@
 // This would either return or initialize a logger instance for us to use with future calls to "log"
 
 #include "../../shared/utils/logging.hpp"
-#include "../../include/modloader.hpp"
+#include "modloader/modloader.hpp"
 #include <string_view>
 #include <string>
 #include <memory>

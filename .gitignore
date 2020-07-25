@@ -20,3 +20,7 @@ ndkpath.txt
 
 libs/
 obj/
+
+extern/
+qpm.lock.json
+*.backup
