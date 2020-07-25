@@ -17,6 +17,6 @@
   ],
   "additionalData": {
     "branchName": "so-update",
-    "soLink": ""
+    "soLink": "https://github.com/sc2ad/beatsaber-hook/releases/download/v0.3.0/libbeatsaber-hook.so"
   }
 }
