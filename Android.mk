@@ -28,7 +28,7 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 include $(CLEAR_VARS)
 LOCAL_MODULE := modloader
 LOCAL_EXPORT_C_INCLUDES := extern/modloader
-LOCAL_SRC_FILES += extern/modloader_0_1_0.so
+LOCAL_SRC_FILES := extern/modloader_0_1_0.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
