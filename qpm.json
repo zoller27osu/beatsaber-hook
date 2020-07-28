@@ -4,17 +4,17 @@
   "info": {
     "name": "beatsaber-hook",
     "id": "beatsaber-hook",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "url": "https://github.com/sc2ad/beatsaber-hook",
     "additionalData": {
       "branchName": "so-update",
-      "soLink": "https://github.com/sc2ad/beatsaber-hook/releases/download/v0.3.0/libbeatsaber-hook.so"
+      "soLink": "https://github.com/sc2ad/beatsaber-hook/releases/download/v0.3.2/libbeatsaber-hook.so"
     }
   },
   "dependencies": [
     {
       "id": "modloader",
-      "versionRange": "0.1.0",
+      "versionRange": "0.1.1",
       "additionalData": {}
     }
   ],

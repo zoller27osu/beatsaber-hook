@@ -28,7 +28,7 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 include $(CLEAR_VARS)
 LOCAL_MODULE := modloader
 LOCAL_EXPORT_C_INCLUDES := extern/modloader
-LOCAL_SRC_FILES := extern/modloader_0_1_0.so
+LOCAL_SRC_FILES := extern/libmodloader.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -37,6 +37,6 @@ LOCAL_SRC_FILES += $(call rwildcard,src/utils,*.cpp)
 LOCAL_SRC_FILES += $(call rwildcard,src/config,*.cpp)
 LOCAL_SHARED_LIBRARIES += modloader
 LOCAL_LDLIBS += -llog
-LOCAL_CFLAGS += -DVERSION='"0.3.1"' -isystem 'c:/Program Files/Unity/Editor/Data/il2cpp/libil2cpp' -D'UNITY_2019' -Wall -Wextra -Werror -Wno-unused-function -DID='"beatsaber-hook"' -I'./shared' -I'./extern'
+LOCAL_CFLAGS += -DVERSION='"0.3.2"' -isystem 'c:/Program Files/Unity/Editor/Data/il2cpp/libil2cpp' -D'UNITY_2019' -Wall -Wextra -Werror -Wno-unused-function -DID='"beatsaber-hook"' -I'./shared' -isystem'./extern'
 LOCAL_C_INCLUDES += ./shared
 include $(BUILD_SHARED_LIBRARY)
