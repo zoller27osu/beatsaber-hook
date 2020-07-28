@@ -174,6 +174,8 @@ namespace il2cpp_utils {
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppObject*, object);
         #endif
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppString*, string);
+        DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionType*, systemtype);
+        DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionRuntimeType*, runtimetype);
 
         DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
         DEFINE_IL2CPP_ARG_TYPE(Color, "UnityEngine", "Color");
@@ -228,14 +230,15 @@ namespace il2cpp_utils {
             static inline Il2CppClass* get(T* arg) {
                 using ptr_arg_class = il2cpp_no_arg_class<T*>;
                 using element_arg_class = il2cpp_no_arg_class<T>;
-                if constexpr (has_no_arg_get<ptr_arg_class> && !arg)
-                    return ptr_arg_class::get();
-                if constexpr (has_no_arg_get<element_arg_class> && !has_no_arg_get<ptr_arg_class>) {
+                if constexpr (has_no_arg_get<ptr_arg_class>) {
+                    if (!arg)
+                        return ptr_arg_class::get();
+                    // otherwise, falls through to Il2CppObject* handler
+                } else if constexpr (has_no_arg_get<element_arg_class>) {
                     Il2CppClass* elementClass = element_arg_class::get();
                     return il2cpp_functions::Class_GetPtrClass(elementClass);
-                } else {
-                    return il2cpp_arg_class<Il2CppObject*>::get(reinterpret_cast<Il2CppObject*>(arg));
                 }
+                return il2cpp_arg_class<Il2CppObject*>::get(reinterpret_cast<Il2CppObject*>(arg));
             }
         };
 
