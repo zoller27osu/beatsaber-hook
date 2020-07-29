@@ -4,6 +4,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <type_traits>
+// from https://gcc.gnu.org/bugzilla//show_bug.cgi?id=71579#c4, leading underscores removed
+namespace std {
+    template <class _Tp>
+    struct is_complete_impl
+    {
+        template <class _Up, size_t = sizeof(_Up)>
+        static true_type _S_test(int);
+
+        template <class _Up>
+        static false_type _S_test(...);
+
+        using type = decltype(_S_test<_Tp>(0));
+    };
+
+    template<typename _Tp>
+    using is_complete = typename is_complete_impl<_Tp>::type;
+
+    // my own (trivial) addition
+    template<typename _Tp>
+    using is_complete_v = typename is_complete<_Tp>::value;
+}
+
 #include <cassert>
 // For including il2cpp properly
 #ifdef _MSC_VER
