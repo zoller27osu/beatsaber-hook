@@ -216,15 +216,6 @@ namespace il2cpp_utils {
             }
         };
 
-        template<>
-        struct il2cpp_arg_class<Il2CppObject*> {
-            static inline Il2CppClass* get(Il2CppObject* arg) {
-                RET_0_UNLESS(arg);
-                il2cpp_functions::Init();
-                return RET_0_UNLESS(il2cpp_functions::object_get_class(arg));
-            }
-        };
-
         template<typename T>
         struct il2cpp_arg_class<T*> {
             static inline Il2CppClass* get(T* arg) {
@@ -238,7 +229,8 @@ namespace il2cpp_utils {
                     Il2CppClass* elementClass = element_arg_class::get();
                     return il2cpp_functions::Class_GetPtrClass(elementClass);
                 }
-                return il2cpp_arg_class<Il2CppObject*>::get(reinterpret_cast<Il2CppObject*>(arg));
+                il2cpp_functions::Init();
+                return RET_0_UNLESS(il2cpp_functions::object_get_class(reinterpret_cast<Il2CppObject*>(arg)));
             }
         };
 
