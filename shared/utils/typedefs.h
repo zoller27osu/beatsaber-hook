@@ -23,7 +23,7 @@ namespace std {
 
     // my own (trivial) addition
     template<typename _Tp>
-    using is_complete_v = typename is_complete<_Tp>::value;
+    constexpr bool is_complete_v = is_complete<_Tp>::value;
 }
 
 #include <cassert>
