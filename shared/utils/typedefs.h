@@ -51,7 +51,7 @@ struct is_value_type : std::integral_constant<
     bool,
     (std::is_arithmetic_v<T> || std::is_enum_v<T> || std::is_pointer_v<T> || std::is_pod_v<T>) && !std::is_base_of_v<Il2CppObject, T>
 > {};
-template<class _T> using is_value_type_v = typename is_value_type<_T>::value;
+template<class _T> constexpr bool is_value_type_v = is_value_type<_T>::value;
 
 struct NamespaceAndNamePairHash
 {
@@ -81,7 +81,7 @@ struct Il2CppNameToTypeDefinitionIndexHashTable : public Il2CppHashMap<std::pair
 template<class T>
 struct Array : public Il2CppArray
 {
-    static_assert(is_value_type<T>::value, "T must be a C# value type! (primitive, pointer or Struct)");
+    static_assert(is_value_type_v<T>, "T must be a C# value type! (primitive, pointer or Struct)");
     ALIGN_TYPE(8) T values[IL2CPP_ZERO_LEN_ARRAY];
 
     il2cpp_array_size_t Length() {
