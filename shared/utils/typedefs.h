@@ -27,23 +27,7 @@ namespace std {
 }
 
 #include <cassert>
-// For including il2cpp properly
-#ifdef _MSC_VER
-#undef _MSC_VER
-#endif
-#ifndef __GNUC__
-#define __GNUC__
-#endif
-
-#define NET_4_0 true
-#include "il2cpp-config.h"
-#include "il2cpp-api-types.h"
-#include "il2cpp-class-internals.h"
-#include "il2cpp-object-internals.h"
-#include "il2cpp-tabledefs.h"
-#include "utils/Il2CppHashMap.h"
-#include "utils/HashUtils.h"
-#include "utils/StringUtils.h"
+#include "il2cpp-includes.h"
 
 #ifdef __cplusplus
 template<class T, class Enable = void>
@@ -77,34 +61,11 @@ struct Il2CppNameToTypeDefinitionIndexHashTable : public Il2CppHashMap<std::pair
     }
 };
 
-// TODO: Move these to extern "C" region
 template<class T>
-struct Array : public Il2CppArray
-{
-    static_assert(is_value_type_v<T>, "T must be a C# value type! (primitive, pointer or Struct)");
-    ALIGN_TYPE(8) T values[IL2CPP_ZERO_LEN_ARRAY];
-
-    il2cpp_array_size_t Length() {
-        if (bounds) {
-            return bounds->length;
-        }
-        return max_length;
-    }
-};
-
-// System.Collections.Generic.List
-template<class T>
-struct List : Il2CppObject
-{
-    Array<T>* items;
-    int size;
-    int version;
-    Il2CppObject* syncRoot;
-};
+struct Array;
 
 extern "C" {
-#endif /* __cplusplus */
-#ifndef __cplusplus
+#else
 typedef struct Il2CppObject {
     void* vtable;
     void* monitor;
@@ -150,7 +111,7 @@ typedef struct Delegate : Il2CppObject
 // System.MulticastDelegate
 typedef struct MulticastDelegate : Delegate
 {
-    Array<Delegate*>* delegates;
+    ::Array<Delegate*>* delegates;
 } MulticastDelegate;
 
 // UNITY SPECIFIC
@@ -208,4 +169,68 @@ typedef struct Scene {
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif /* __cplusplus */
+
+#if __has_include("System/Array.hpp")
+#define HAS_CODEGEN 1
+#include "System/Array.hpp"
+#include "System/Collections/Generic/IEnumerable_1.hpp"
+#endif
+
+// TODO: Move these to extern "C" region
+template<class T>
+#ifdef HAS_CODEGEN
+struct Array : public Il2CppArray, public System::Collections::Generic::IEnumerable_1<T>
+#else
+struct Array : public Il2CppArray
+#endif
+{
+    static_assert(is_value_type_v<T>, "T must be a C# value type! (primitive, pointer or Struct)");
+    ALIGN_TYPE(8) T values[IL2CPP_ZERO_LEN_ARRAY];
+
+    il2cpp_array_size_t Length() {
+        if (bounds) {
+            return bounds->length;
+        }
+        return max_length;
+    }
+};
+
+// System.Collections.Generic.List
+template<class T>
+struct List : Il2CppObject
+{
+    Array<T>* items;
+    int size;
+    int version;
+    Il2CppObject* syncRoot;
+};
 #endif /* TYPEDEFS_H */
+
+#ifdef DEFINE_IL2CPP_ARG_TYPE
+#ifndef IL2CPP_TYPEDEFS_DEFINES
+#define IL2CPP_TYPEDEFS_DEFINES
+namespace il2cpp_utils::il2cpp_type_check {
+    DEFINE_IL2CPP_ARG_TYPE(Color, "UnityEngine", "Color");
+    DEFINE_IL2CPP_ARG_TYPE(Vector2, "UnityEngine", "Vector2");
+    DEFINE_IL2CPP_ARG_TYPE(Vector3, "UnityEngine", "Vector3");
+    DEFINE_IL2CPP_ARG_TYPE(Vector4, "UnityEngine", "Vector4");
+    DEFINE_IL2CPP_ARG_TYPE(Quaternion, "UnityEngine", "Quaternion");
+    DEFINE_IL2CPP_ARG_TYPE(Rect, "UnityEngine", "Rect");
+    DEFINE_IL2CPP_ARG_TYPE(Scene, "UnityEngine.SceneManagement", "Scene");
+
+    template<typename TArg>
+    struct il2cpp_no_arg_class<Array<TArg>*> {
+        static inline Il2CppClass* get() {
+            il2cpp_functions::Init();
+            if constexpr (std::is_same_v<std::decay_t<TArg>, Il2CppObject*>) {
+                il2cpp_functions::CheckS_GlobalMetadata();
+                return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);
+            } else {
+                Il2CppClass* eClass = RET_0_UNLESS(il2cpp_no_arg_class<TArg>::get());
+                return il2cpp_functions::array_class_get(eClass, 1);
+            }
+        }
+    };
+}
+#endif /* IL2CPP_TYPEDEFS_DEFINES */
+#endif /* DEFINE_IL2CPP_ARG_TYPE */
