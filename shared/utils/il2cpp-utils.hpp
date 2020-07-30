@@ -179,6 +179,27 @@ namespace il2cpp_utils {
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionRuntimeType*, runtimetype);
 
         DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
+        DEFINE_IL2CPP_ARG_TYPE(Color, "UnityEngine", "Color");	
+        DEFINE_IL2CPP_ARG_TYPE(Vector2, "UnityEngine", "Vector2");	
+        DEFINE_IL2CPP_ARG_TYPE(Vector3, "UnityEngine", "Vector3");	
+        DEFINE_IL2CPP_ARG_TYPE(Vector4, "UnityEngine", "Vector4");	
+        DEFINE_IL2CPP_ARG_TYPE(Quaternion, "UnityEngine", "Quaternion");	
+        DEFINE_IL2CPP_ARG_TYPE(Rect, "UnityEngine", "Rect");	
+        DEFINE_IL2CPP_ARG_TYPE(Scene, "UnityEngine.SceneManagement", "Scene");	
+
+        template<typename TArg>	
+        struct il2cpp_no_arg_class<Array<TArg>*> {	
+            static inline Il2CppClass* get() {	
+                il2cpp_functions::Init();	
+                if constexpr (std::is_same_v<std::decay_t<TArg>, Il2CppObject*>) {	
+                    il2cpp_functions::CheckS_GlobalMetadata();	
+                    return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);	
+                } else {	
+                    Il2CppClass* eClass = RET_0_UNLESS(il2cpp_no_arg_class<TArg>::get());	
+                    return il2cpp_functions::array_class_get(eClass, 1);	
+                }	
+            }	
+        };
 
         template<>
         struct il2cpp_arg_class<Il2CppClass*> {
@@ -988,5 +1009,4 @@ namespace il2cpp_utils {
         return il2cpp_functions::runtime_invoke(method, reference, invokeParams, exc);
     }
 }
-#include "typedefs.h"
 #endif /* IL2CPP_UTILS_H */

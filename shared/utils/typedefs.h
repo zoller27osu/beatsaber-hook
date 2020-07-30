@@ -205,32 +205,3 @@ struct List : Il2CppObject
     Il2CppObject* syncRoot;
 };
 #endif /* TYPEDEFS_H */
-
-#ifdef DEFINE_IL2CPP_ARG_TYPE
-#ifndef IL2CPP_TYPEDEFS_DEFINES
-#define IL2CPP_TYPEDEFS_DEFINES
-namespace il2cpp_utils::il2cpp_type_check {
-    DEFINE_IL2CPP_ARG_TYPE(Color, "UnityEngine", "Color");
-    DEFINE_IL2CPP_ARG_TYPE(Vector2, "UnityEngine", "Vector2");
-    DEFINE_IL2CPP_ARG_TYPE(Vector3, "UnityEngine", "Vector3");
-    DEFINE_IL2CPP_ARG_TYPE(Vector4, "UnityEngine", "Vector4");
-    DEFINE_IL2CPP_ARG_TYPE(Quaternion, "UnityEngine", "Quaternion");
-    DEFINE_IL2CPP_ARG_TYPE(Rect, "UnityEngine", "Rect");
-    DEFINE_IL2CPP_ARG_TYPE(Scene, "UnityEngine.SceneManagement", "Scene");
-
-    template<typename TArg>
-    struct il2cpp_no_arg_class<Array<TArg>*> {
-        static inline Il2CppClass* get() {
-            il2cpp_functions::Init();
-            if constexpr (std::is_same_v<std::decay_t<TArg>, Il2CppObject*>) {
-                il2cpp_functions::CheckS_GlobalMetadata();
-                return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);
-            } else {
-                Il2CppClass* eClass = RET_0_UNLESS(il2cpp_no_arg_class<TArg>::get());
-                return il2cpp_functions::array_class_get(eClass, 1);
-            }
-        }
-    };
-}
-#endif /* IL2CPP_TYPEDEFS_DEFINES */
-#endif /* DEFINE_IL2CPP_ARG_TYPE */
