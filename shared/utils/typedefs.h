@@ -27,23 +27,7 @@ namespace std {
 }
 
 #include <cassert>
-// For including il2cpp properly
-#ifdef _MSC_VER
-#undef _MSC_VER
-#endif
-#ifndef __GNUC__
-#define __GNUC__
-#endif
-
-#define NET_4_0 true
-#include "il2cpp-config.h"
-#include "il2cpp-api-types.h"
-#include "il2cpp-class-internals.h"
-#include "il2cpp-object-internals.h"
-#include "il2cpp-tabledefs.h"
-#include "utils/Il2CppHashMap.h"
-#include "utils/HashUtils.h"
-#include "utils/StringUtils.h"
+#include "il2cpp-includes.h"
 
 #ifdef __cplusplus
 template<class T, class Enable = void>
@@ -77,34 +61,11 @@ struct Il2CppNameToTypeDefinitionIndexHashTable : public Il2CppHashMap<std::pair
     }
 };
 
-// TODO: Move these to extern "C" region
 template<class T>
-struct Array : public Il2CppArray
-{
-    static_assert(is_value_type_v<T>, "T must be a C# value type! (primitive, pointer or Struct)");
-    ALIGN_TYPE(8) T values[IL2CPP_ZERO_LEN_ARRAY];
-
-    il2cpp_array_size_t Length() {
-        if (bounds) {
-            return bounds->length;
-        }
-        return max_length;
-    }
-};
-
-// System.Collections.Generic.List
-template<class T>
-struct List : Il2CppObject
-{
-    Array<T>* items;
-    int size;
-    int version;
-    Il2CppObject* syncRoot;
-};
+struct Array;
 
 extern "C" {
-#endif /* __cplusplus */
-#ifndef __cplusplus
+#else
 typedef struct Il2CppObject {
     void* vtable;
     void* monitor;
@@ -150,7 +111,7 @@ typedef struct Delegate : Il2CppObject
 // System.MulticastDelegate
 typedef struct MulticastDelegate : Delegate
 {
-    Array<Delegate*>* delegates;
+    ::Array<Delegate*>* delegates;
 } MulticastDelegate;
 
 // UNITY SPECIFIC
@@ -208,4 +169,39 @@ typedef struct Scene {
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif /* __cplusplus */
+
+#if __has_include("System/Array.hpp")
+#define HAS_CODEGEN 1
+#include "System/Array.hpp"
+#include "System/Collections/Generic/IEnumerable_1.hpp"
+#endif
+
+// TODO: Move these to extern "C" region
+template<class T>
+#ifdef HAS_CODEGEN
+struct Array : public Il2CppArray, public System::Collections::Generic::IEnumerable_1<T>
+#else
+struct Array : public Il2CppArray
+#endif
+{
+    static_assert(is_value_type_v<T>, "T must be a C# value type! (primitive, pointer or Struct)");
+    ALIGN_TYPE(8) T values[IL2CPP_ZERO_LEN_ARRAY];
+
+    il2cpp_array_size_t Length() {
+        if (bounds) {
+            return bounds->length;
+        }
+        return max_length;
+    }
+};
+
+// System.Collections.Generic.List
+template<class T>
+struct List : Il2CppObject
+{
+    Array<T>* items;
+    int size;
+    int version;
+    Il2CppObject* syncRoot;
+};
 #endif /* TYPEDEFS_H */

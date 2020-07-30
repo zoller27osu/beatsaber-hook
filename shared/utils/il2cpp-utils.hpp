@@ -24,6 +24,7 @@ constexpr bool has_no_arg_get = std::experimental::is_detected_v<no_arg_get_t, T
 #endif
 
 #include "il2cpp-functions.hpp"
+#include "typedefs.h"
 #include "logging.hpp"
 #include "utils.h"
 
@@ -609,7 +610,7 @@ namespace il2cpp_utils {
     template<typename TObj = Il2CppObject, typename... TArgs>
     // Creates a new object of the given class using the given constructor parameters and casts it to TObj*
     // Will only run a .ctor whose parameter types match the given arguments.
-    TObj* New(Il2CppClass* klass, TArgs const& ...args) {
+    TObj* New(Il2CppClass* klass, TArgs&& ...args) {
         il2cpp_functions::Init();
 
         // object_new call
@@ -635,7 +636,7 @@ namespace il2cpp_utils {
     template<typename TObj = Il2CppObject, typename... TArgs>
     // Creates a new object of the class with the given nameSpace and className using the given constructor parameters and casts
     // it to TObj*. Will only run a .ctor whose parameter types match the given arguments.
-    TObj* New(std::string_view nameSpace, std::string_view className, TArgs const& ...args) {
+    TObj* New(std::string_view nameSpace, std::string_view className, TArgs&& ...args) {
         auto* klass = RET_0_UNLESS(GetClassFromName(nameSpace, className));
         return New(klass, args...);
     }
