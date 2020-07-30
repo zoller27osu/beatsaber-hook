@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <stdio.h>
 #include <stdlib.h>
-#include "typedefs.h"
+#include "il2cpp-includes.h"
 #include "logging.hpp"
 
 #if !defined(UNITY_2019) && __has_include("il2cpp-runtime-stats.h")

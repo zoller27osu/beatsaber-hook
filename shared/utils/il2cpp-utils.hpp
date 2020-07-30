@@ -24,6 +24,7 @@ constexpr bool has_no_arg_get = std::experimental::is_detected_v<no_arg_get_t, T
 #endif
 
 #include "il2cpp-functions.hpp"
+#include "typedefs.h"
 #include "logging.hpp"
 #include "utils.h"
 
@@ -178,27 +179,6 @@ namespace il2cpp_utils {
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionRuntimeType*, runtimetype);
 
         DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
-        DEFINE_IL2CPP_ARG_TYPE(Color, "UnityEngine", "Color");
-        DEFINE_IL2CPP_ARG_TYPE(Vector2, "UnityEngine", "Vector2");
-        DEFINE_IL2CPP_ARG_TYPE(Vector3, "UnityEngine", "Vector3");
-        DEFINE_IL2CPP_ARG_TYPE(Vector4, "UnityEngine", "Vector4");
-        DEFINE_IL2CPP_ARG_TYPE(Quaternion, "UnityEngine", "Quaternion");
-        DEFINE_IL2CPP_ARG_TYPE(Rect, "UnityEngine", "Rect");
-        DEFINE_IL2CPP_ARG_TYPE(Scene, "UnityEngine.SceneManagement", "Scene");
-
-        template<typename TArg>
-        struct il2cpp_no_arg_class<Array<TArg>*> {
-            static inline Il2CppClass* get() {
-                il2cpp_functions::Init();
-                if constexpr (std::is_same_v<std::decay_t<TArg>, Il2CppObject*>) {
-                    il2cpp_functions::CheckS_GlobalMetadata();
-                    return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);
-                } else {
-                    Il2CppClass* eClass = RET_0_UNLESS(il2cpp_no_arg_class<TArg>::get());
-                    return il2cpp_functions::array_class_get(eClass, 1);
-                }
-            }
-        };
 
         template<>
         struct il2cpp_arg_class<Il2CppClass*> {
@@ -609,7 +589,7 @@ namespace il2cpp_utils {
     template<typename TObj = Il2CppObject, typename... TArgs>
     // Creates a new object of the given class using the given constructor parameters and casts it to TObj*
     // Will only run a .ctor whose parameter types match the given arguments.
-    TObj* New(Il2CppClass* klass, TArgs const& ...args) {
+    TObj* New(Il2CppClass* klass, TArgs&& ...args) {
         il2cpp_functions::Init();
 
         // object_new call
@@ -635,7 +615,7 @@ namespace il2cpp_utils {
     template<typename TObj = Il2CppObject, typename... TArgs>
     // Creates a new object of the class with the given nameSpace and className using the given constructor parameters and casts
     // it to TObj*. Will only run a .ctor whose parameter types match the given arguments.
-    TObj* New(std::string_view nameSpace, std::string_view className, TArgs const& ...args) {
+    TObj* New(std::string_view nameSpace, std::string_view className, TArgs&& ...args) {
         auto* klass = RET_0_UNLESS(GetClassFromName(nameSpace, className));
         return New(klass, args...);
     }
@@ -1008,4 +988,5 @@ namespace il2cpp_utils {
         return il2cpp_functions::runtime_invoke(method, reference, invokeParams, exc);
     }
 }
+#include "typedefs.h"
 #endif /* IL2CPP_UTILS_H */
