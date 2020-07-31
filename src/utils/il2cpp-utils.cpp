@@ -238,7 +238,8 @@ namespace il2cpp_utils {
         return FindMethodUnsafe(klass, methodName, argsCount);
     }
 
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes) {
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes,
+            int generics) {
         il2cpp_functions::Init();
         RET_0_UNLESS(klass);
 
@@ -255,7 +256,8 @@ namespace il2cpp_utils {
         bool multipleMatches = false;
         // Does NOT automatically recurse through klass's parents
         while (const MethodInfo* current = il2cpp_functions::class_get_methods(klass, &myIter)) {
-            if ((methodName == current->name) && ParameterMatch(current, argTypes)) {
+            if ((methodName == current->name) && ParameterMatch(current, argTypes) && (generics < 0 ||
+                    (current->is_generic && current->is_inflated && current->genericContainer->type_argc == generics))) {
                 if (methodInfo) {
                     multipleMatches = true;
                     break;
@@ -286,18 +288,20 @@ namespace il2cpp_utils {
         return methodInfo;
     }
 
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> classFromes) {
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> classFromes,
+            int generics) {
         std::vector<const Il2CppType*> argTypes = ClassVecToTypes(classFromes);
-        return FindMethod(klass, methodName, argTypes);
+        return FindMethod(klass, methodName, argTypes, generics);
     }
 
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass) {
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass,
+            int generics) {
         std::vector<const Il2CppType*> argTypes;
         for (size_t i = 0; i < argSpaceClass.size() - 1; i += 2) {
             auto clazz = GetClassFromName(argSpaceClass[i].data(), argSpaceClass[i+1].data());
             argTypes.push_back(il2cpp_functions::class_get_type(clazz));
         }
-        return FindMethod(klass, methodName, argTypes);
+        return FindMethod(klass, methodName, argTypes, generics);
     }
 
     FieldInfo* FindField(Il2CppClass* klass, std::string_view fieldName) {
@@ -516,6 +520,7 @@ namespace il2cpp_utils {
         }
         const auto& paramStrRef = paramStream.str();
         const char* paramStr = paramStrRef.c_str();
+        // TODO: add <T> after methodName
         Logger::get().debug("%s%s %s(%s);", flagStr, retTypeStr, methodName, paramStr);
     }
 
