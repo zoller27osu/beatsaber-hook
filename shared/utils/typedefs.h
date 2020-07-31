@@ -174,6 +174,7 @@ typedef struct Scene {
 #define HAS_CODEGEN
 #include "System/Array.hpp"
 #include "System/Collections/Generic/IEnumerable_1.hpp"
+#include "System/Collections/Generic/List_1.hpp"
 #endif
 
 // TODO: Move these to extern "C" region
@@ -191,6 +192,9 @@ struct List : Il2CppObject
 template<class T>
 struct Array : public Il2CppArray
 #else
+template<class T>
+using List = System::Collections::Generic::List_1<T>;
+
 template<class T>
 struct Array : public Il2CppArray, public System::Collections::Generic::IEnumerable_1<T>
 #endif
