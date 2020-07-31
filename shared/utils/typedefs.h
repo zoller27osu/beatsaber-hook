@@ -170,7 +170,7 @@ typedef struct Scene {
 }  /* extern "C" */
 #endif /* __cplusplus */
 
-#if __has_include("System/Array.hpp")
+#if __has_include("System/Array.hpp") && !defined(NO_CODEGEN_USE)
 #define HAS_CODEGEN
 #include "System/Array.hpp"
 #include "System/Collections/Generic/IEnumerable_1.hpp"

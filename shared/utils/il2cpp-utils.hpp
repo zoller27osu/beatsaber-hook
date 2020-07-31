@@ -96,6 +96,7 @@ namespace il2cpp_utils {
         template<typename T, class Enable = void>
         struct il2cpp_no_arg_class { };
 
+        #if __has_feature(cxx_rtti)
         template<typename T>
         struct il2cpp_no_arg_class<T, typename std::enable_if_t<std::is_base_of_v<NestedType, T>>> {
             // TODO: make this work on any class with a `using declaring_type`, then remove NestedType
@@ -129,6 +130,7 @@ namespace il2cpp_utils {
                 return found;
             }
         };
+        #endif
 
         template<typename T>
         struct il2cpp_arg_class {

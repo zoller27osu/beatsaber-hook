@@ -77,8 +77,9 @@ auto&& unwrap_optionals(T&& arg) {
 #endif
 
 #define RET_V_UNLESS(expr) RET_UNLESS(, expr)
-#define RET_0_UNLESS(expr) RET_UNLESS(0, expr)
-#define RET_NULLOPT_UNLESS(expr) RET_UNLESS(std::nullopt, expr)
+#define RET_DEFAULT_UNLESS(expr) RET_UNLESS({}, expr)
+#define RET_0_UNLESS(expr) RET_DEFAULT_UNLESS(expr)
+#define RET_NULLOPT_UNLESS(expr) RET_DEFAULT_UNLESS(expr)
 
 // Produces a has_[member]<T, U> type trait whose ::value tells you whether T has a member named [member] with type U.
 #define DEFINE_MEMBER_CHECKER(member) \
@@ -90,6 +91,7 @@ auto&& unwrap_optionals(T&& arg) {
             std::is_same_v<decltype(T::member), U>> \
         > : std::true_type { };
 
+#if __has_feature(cxx_rtti)
 // from https://stackoverflow.com/questions/1055452/c-get-name-of-type-in-template#comment77016419_19123821 (https://ideone.com/sqFWir)
 template<typename T>
 std::string type_name() {
@@ -104,6 +106,7 @@ std::string type_name() {
 	#endif
 	return tname;
 }
+#endif
 
 // For use in fire-if-compiled asserts e.g. static_assert(false_t<T>, "message")
 template <class...> constexpr std::false_type false_t{};
@@ -171,6 +174,19 @@ std::string string_format(const std::string_view format, TArgs ... args)
     snprintf(buf.get(), size, format.data(), args...);
     return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
+
+#if __has_feature(cxx_exceptions)
+template<class T>
+auto throwUnless(T&& arg, const char* func, const char* file, int line) {
+    if (!arg) throw std::runtime_error(string_format("Throwing in %s at %s:%i", func, file, line));
+    return unwrap_optionals(arg);
+}
+#ifndef SUPPRESS_MACRO_LOGS
+#define THROW_UNLESS(expr) throwUnless(expr, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#else
+#define THROW_UNLESS(expr) throwUnless(expr, "undefined_function", "undefined_file", -1)
+#endif /* SUPPRESS_MACRO_LOGS */
+#endif /* __has_feature(cxx_exceptions) */
 
 extern "C" {
 #endif /* __cplusplus */
