@@ -239,7 +239,7 @@ namespace il2cpp_utils {
     }
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes,
-            int generics) {
+            size_t generics) {
         il2cpp_functions::Init();
         RET_0_UNLESS(klass);
 
@@ -257,7 +257,7 @@ namespace il2cpp_utils {
         // Does NOT automatically recurse through klass's parents
         while (const MethodInfo* current = il2cpp_functions::class_get_methods(klass, &myIter)) {
             if ((methodName == current->name) && ParameterMatch(current, argTypes) && (generics < 0 ||
-                    (current->is_generic && current->is_inflated && current->genericContainer->type_argc == generics))) {
+                    (current->is_generic && current->is_inflated && (size_t)current->genericContainer->type_argc == generics))) {
                 if (methodInfo) {
                     multipleMatches = true;
                     break;
@@ -289,13 +289,13 @@ namespace il2cpp_utils {
     }
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> classFromes,
-            int generics) {
+            size_t generics) {
         std::vector<const Il2CppType*> argTypes = ClassVecToTypes(classFromes);
         return FindMethod(klass, methodName, argTypes, generics);
     }
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass,
-            int generics) {
+            size_t generics) {
         std::vector<const Il2CppType*> argTypes;
         for (size_t i = 0; i < argSpaceClass.size() - 1; i += 2) {
             auto clazz = GetClassFromName(argSpaceClass[i].data(), argSpaceClass[i+1].data());
@@ -433,7 +433,7 @@ namespace il2cpp_utils {
         return ret;
     }
 
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::initializer_list<Il2CppClass*> types) noexcept {
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*> types) noexcept {
         il2cpp_functions::Init();
         // Ensure it exists and is generic
         RET_0_UNLESS(info);
