@@ -171,17 +171,28 @@ typedef struct Scene {
 #endif /* __cplusplus */
 
 #if __has_include("System/Array.hpp")
-#define HAS_CODEGEN 1
+#define HAS_CODEGEN
 #include "System/Array.hpp"
 #include "System/Collections/Generic/IEnumerable_1.hpp"
 #endif
 
 // TODO: Move these to extern "C" region
+#ifndef HAS_CODEGEN
+// System.Collections.Generic.List
 template<class T>
-#ifdef HAS_CODEGEN
-struct Array : public Il2CppArray, public System::Collections::Generic::IEnumerable_1<T>
-#else
+struct List : Il2CppObject
+{
+    Array<T>* items;
+    int size;
+    int version;
+    Il2CppObject* syncRoot;
+};
+
+template<class T>
 struct Array : public Il2CppArray
+#else
+template<class T>
+struct Array : public Il2CppArray, public System::Collections::Generic::IEnumerable_1<T>
 #endif
 {
     static_assert(is_value_type_v<T>, "T must be a C# value type! (primitive, pointer or Struct)");
@@ -193,15 +204,5 @@ struct Array : public Il2CppArray
         }
         return max_length;
     }
-};
-
-// System.Collections.Generic.List
-template<class T>
-struct List : Il2CppObject
-{
-    Array<T>* items;
-    int size;
-    int version;
-    Il2CppObject* syncRoot;
 };
 #endif /* TYPEDEFS_H */
