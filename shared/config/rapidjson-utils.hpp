@@ -3,14 +3,14 @@
 #define UTIL_JSON_H
 
 #include <type_traits>
-#include "../../rapidjson/include/rapidjson/document.h"
-#include "../../rapidjson/include/rapidjson/allocators.h"
-#include "../../rapidjson/include/rapidjson/prettywriter.h"
-#include "../../rapidjson/include/rapidjson/encodings.h"
-#include "../../rapidjson/include/rapidjson/reader.h"
-#include "../../rapidjson/include/rapidjson/writer.h"
-#include "../../rapidjson/include/rapidjson/istreamwrapper.h"
-#include "../../rapidjson/include/rapidjson/ostreamwrapper.h"
+#include "../rapidjson/include/rapidjson/document.h"
+#include "../rapidjson/include/rapidjson/allocators.h"
+#include "../rapidjson/include/rapidjson/prettywriter.h"
+#include "../rapidjson/include/rapidjson/encodings.h"
+#include "../rapidjson/include/rapidjson/reader.h"
+#include "../rapidjson/include/rapidjson/writer.h"
+#include "../rapidjson/include/rapidjson/istreamwrapper.h"
+#include "../rapidjson/include/rapidjson/ostreamwrapper.h"
 #include <string>
 #include "../utils/utils.h"
 #include <cassert>
