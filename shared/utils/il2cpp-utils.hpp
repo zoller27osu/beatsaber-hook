@@ -77,7 +77,7 @@ namespace il2cpp_utils {
     /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses.
     /// @details This method will not crash.
     /// @return MethodInfo* for RunMethod calls, will be nullptr on failure
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::initializer_list<Il2CppClass*> types) noexcept;
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*> types) noexcept;
 
     // Seriously, don't un-const the returned Type
     const Il2CppType* MakeRef(const Il2CppType* type);
@@ -96,6 +96,7 @@ namespace il2cpp_utils {
         template<typename T, class Enable = void>
         struct il2cpp_no_arg_class { };
 
+        #if __has_feature(cxx_rtti)
         template<typename T>
         struct il2cpp_no_arg_class<T, typename std::enable_if_t<std::is_base_of_v<NestedType, T>>> {
             // TODO: make this work on any class with a `using declaring_type`, then remove NestedType
@@ -129,6 +130,7 @@ namespace il2cpp_utils {
                 return found;
             }
         };
+        #endif
 
         template<typename T>
         struct il2cpp_arg_class {
@@ -400,11 +402,11 @@ namespace il2cpp_utils {
 
     // Returns the MethodInfo for the method on the given class with the given name and types of arguments
     // Created by zoller27osu
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes);
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses);
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes, size_t generics = 0);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses, size_t generics = 0);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass, size_t generics = 0);
     // Returns the MethodInfo for the method on the given class or instance. Also the only non-vector arg types version.
-    template <typename T, typename... TArgs>
+    template <size_t generics = 0, typename T, typename... TArgs>
     // prevents template recursion and ambiguity with the double string version:
     std::enable_if_t<(... && !is_vector<TArgs>::value) && !std::is_convertible_v<T, std::string_view>, const MethodInfo*>
     FindMethod(T&& classOrInstance, std::string_view methodName, TArgs&&... args) {
@@ -416,7 +418,7 @@ namespace il2cpp_utils {
             if constexpr (sizeof...(TArgs) == 0) {
                 return FindMethodUnsafe(klass, methodName, 0);
             } else {
-                return FindMethod(klass, methodName, {args...});
+                return FindMethod(klass, methodName, {args...}, generics);
             }
         }
     }
@@ -581,28 +583,28 @@ namespace il2cpp_utils {
     /// @param info Generic MethodInfo* to invoke
     /// @param genTypes Types to instantiate the generic MethodInfo* with
     /// @param params Parameters to RunMethod
-    template<class TOut = Il2CppObject*, class T, class... TArgs>
-    std::optional<TOut> RunGenericMethod(T&& instance, const MethodInfo* info, std::initializer_list<Il2CppClass*> genTypes, TArgs ...params) noexcept {
-        auto* createdMethod = RET_NULLOPT_UNLESS(MakeGenericMethod(info, genTypes));
+    template<class TOut = Il2CppObject*, class T, size_t N, class... TArgs>
+    std::optional<TOut> RunGenericMethod(T&& instance, const MethodInfo* info, Il2CppClass* const (&genTypes)[N], TArgs ...params) noexcept {
+        auto* createdMethod = RET_NULLOPT_UNLESS(MakeGenericMethod(info, std::vector<Il2CppClass*>(genTypes, genTypes + N)));
         return RunMethod<TOut, false>(instance, createdMethod, params...);
     }
 
-    template<class TOut = Il2CppObject*, class T, class... TArgs>
-    std::optional<TOut> RunGenericMethod(T&& classOrInstance, std::string_view methodName, std::initializer_list<Il2CppClass*> genTypes, TArgs ...params) noexcept {
+    template<class TOut = Il2CppObject*, class T, size_t N, class... TArgs>
+    std::optional<TOut> RunGenericMethod(T&& classOrInstance, std::string_view methodName, Il2CppClass* const (&genTypes)[N], TArgs ...params) noexcept {
         auto types = ExtractTypes(params...);
         if (types.size() != sizeof...(TArgs)) {
             Logger::get().warning("RunGenericMethod: ExtractTypes for method %s failed!", methodName.data());
             return std::nullopt;
         }
 
-        auto* info = RET_NULLOPT_UNLESS(FindMethod(classOrInstance, methodName, types));
+        auto* info = RET_NULLOPT_UNLESS(FindMethod<N>(classOrInstance, methodName, types));
         return RunGenericMethod<TOut>(classOrInstance, info, genTypes, params...);
     }
 
-    template<class TOut = Il2CppObject*, class... TArgs>
+    template<class TOut = Il2CppObject*, size_t N, class... TArgs>
     // Runs a static generic method with the specified method name and arguments, on the class with the specified namespace and class name.
     // The method also has return type TOut.
-    std::optional<TOut> RunGenericMethod(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, std::initializer_list<Il2CppClass*> genTypes, TArgs ...params) noexcept {
+    std::optional<TOut> RunGenericMethod(std::string_view nameSpace, std::string_view klassName, std::string_view methodName, Il2CppClass* const (&genTypes)[N], TArgs ...params) noexcept {
         auto* klass = RET_NULLOPT_UNLESS(GetClassFromName(nameSpace, klassName));
         return RunGenericMethod<TOut>(klass, methodName, genTypes, params...);
     }
