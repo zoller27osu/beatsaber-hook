@@ -1,3 +1,4 @@
+#include "typedefs.h"  // needed for some il2cpp_type_check things and MulticastDelegate for MakeAction
 #ifndef IL2CPP_UTILS_H
 #define IL2CPP_UTILS_H
 
@@ -24,7 +25,6 @@ constexpr bool has_no_arg_get = std::experimental::is_detected_v<no_arg_get_t, T
 #endif
 
 #include "il2cpp-functions.hpp"
-#include "typedefs.h"
 #include "logging.hpp"
 #include "utils.h"
 
