@@ -10,7 +10,7 @@
 #include <sstream>
 #include <unordered_set>
 #include "il2cpp-object-internals.h"
-#include "modloader/modloader.hpp"
+#include "modloader/shared/modloader.hpp"
 
 void safeAbort(const char* func, const char* file, int line) {
     #ifdef FILE_LOG

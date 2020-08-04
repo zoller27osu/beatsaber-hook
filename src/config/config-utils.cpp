@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
-#include "modloader/modloader.hpp"
+#include "modloader/shared/modloader.hpp"
 
 // CONFIG
 
