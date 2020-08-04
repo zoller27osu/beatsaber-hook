@@ -239,7 +239,7 @@ namespace il2cpp_utils {
     }
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes,
-            size_t generics) {
+            int generics) {
         il2cpp_functions::Init();
         RET_0_UNLESS(klass);
 
@@ -256,8 +256,15 @@ namespace il2cpp_utils {
         bool multipleMatches = false;
         // Does NOT automatically recurse through klass's parents
         while (const MethodInfo* current = il2cpp_functions::class_get_methods(klass, &myIter)) {
-            if ((methodName == current->name) && ParameterMatch(current, argTypes) && (generics < 0 ||
-                    (current->is_generic && current->is_inflated && (size_t)current->genericContainer->type_argc == generics))) {
+            if ((methodName == current->name) && ParameterMatch(current, argTypes)) {
+                if (generics > 0) {
+                    if (!current->is_generic || current->is_inflated) continue;
+                    if (current->genericContainer->type_argc != generics) {
+                        Logger::get().warning("Potential method match had wrong number of generics %i (expected %i)",
+                            current->genericContainer->type_argc, generics);
+                        continue;
+                    }
+                }
                 if (methodInfo) {
                     multipleMatches = true;
                     break;
@@ -289,13 +296,13 @@ namespace il2cpp_utils {
     }
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> classFromes,
-            size_t generics) {
+            int generics) {
         std::vector<const Il2CppType*> argTypes = ClassVecToTypes(classFromes);
         return FindMethod(klass, methodName, argTypes, generics);
     }
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass,
-            size_t generics) {
+            int generics) {
         std::vector<const Il2CppType*> argTypes;
         for (size_t i = 0; i < argSpaceClass.size() - 1; i += 2) {
             auto clazz = GetClassFromName(argSpaceClass[i].data(), argSpaceClass[i+1].data());
