@@ -257,11 +257,11 @@ namespace il2cpp_utils {
         // Does NOT automatically recurse through klass's parents
         while (const MethodInfo* current = il2cpp_functions::class_get_methods(klass, &myIter)) {
             if ((methodName == current->name) && ParameterMatch(current, argTypes)) {
-                if (generics > 0) {
-                    if (!current->is_generic || current->is_inflated) continue;
-                    if (current->genericContainer->type_argc != generics) {
+                if (generics >= 0) {
+                    auto currCount = (current->is_generic && !current->is_inflated) ? current->genericContainer->type_argc : 0;
+                    if (currCount != generics) {
                         Logger::get().warning("Potential method match had wrong number of generics %i (expected %i)",
-                            current->genericContainer->type_argc, generics);
+                            currCount, generics);
                         continue;
                     }
                 }
