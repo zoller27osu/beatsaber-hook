@@ -402,11 +402,11 @@ namespace il2cpp_utils {
 
     // Returns the MethodInfo for the method on the given class with the given name and types of arguments
     // Created by zoller27osu
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes, size_t generics = 0);
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses, size_t generics = 0);
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass, size_t generics = 0);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes, int generics = 0);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> argClasses, int generics = 0);
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass, int generics = 0);
     // Returns the MethodInfo for the method on the given class or instance. Also the only non-vector arg types version.
-    template <size_t generics = 0, typename T, typename... TArgs>
+    template <int generics = 0, typename T, typename... TArgs>
     // prevents template recursion and ambiguity with the double string version:
     std::enable_if_t<(... && !is_vector<TArgs>::value) && !std::is_convertible_v<T, std::string_view>, const MethodInfo*>
     FindMethod(T&& classOrInstance, std::string_view methodName, TArgs&&... args) {
