@@ -4,7 +4,7 @@
   "info": {
     "name": "beatsaber-hook",
     "id": "beatsaber-hook",
-    "version": "0.3.5",
+    "version": "0.3.6",
     "url": "https://github.com/sc2ad/beatsaber-hook",
     "additionalData": {
       "branchName": "so-update",
@@ -16,6 +16,11 @@
     {
       "id": "modloader",
       "versionRange": "0.1.1",
+      "additionalData": {}
+    },
+    {
+      "id": "libil2cpp",
+      "versionRange": "0.1.2",
       "additionalData": {}
     }
   ],
