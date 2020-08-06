@@ -984,8 +984,8 @@ namespace il2cpp_utils {
     void AddNestedTypesToNametoClassHashTable(const Il2CppImage* img, const Il2CppTypeDefinition* typeDefinition);
 
     // Creates a cs string (allocates it) with the given string_view and returns it
-    // If pinned is false, will create a gchandle for the created string
-    Il2CppString* createcsstr(std::string_view inp, bool pinned = false);
+    // If pinned is true, will create a gchandle for the created string (currently unused)
+    Il2CppString* createcsstr(std::string_view inp, [[maybe_unused]] bool pinned = false);
 
     // Returns if a given source object is an object of the given class
     // Created by zoller27osu

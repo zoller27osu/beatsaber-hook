@@ -926,14 +926,17 @@ namespace il2cpp_utils {
             AddNestedTypesToNametoClassHashTable(hashTable, namespaze, name, nestedClass);
     }
 
-    Il2CppString* createcsstr(std::string_view inp, bool pinned) {
-        il2cpp_functions::Init();
-        auto* obj = il2cpp_functions::string_new_len(inp.data(), (uint32_t)inp.length());
-        if (!pinned) {
-            auto gchandle = il2cpp_functions::gchandle_new(&obj->object, pinned);
-            Logger::get().debug("gchandle created for string! handle ID: %u", gchandle);
-            // gchandle (probably) does not need to be returned here.
-        }
+    Il2CppString* createcsstr(std::string_view inp, [[maybe_unused]] bool pinned = false) {
+        // Get ASCII Encoding
+        auto enc = RET_0_UNLESS(GetPropertyValue("System.Text", "Encoding", "ASCII"));
+        // Create new string, created from the literal char*, not to be confused with a copy of this data
+        auto* obj = RET_0_UNLESS(New<Il2CppString>("System", "String", inp.data(), 0, inp.length(), enc));
+        // auto* obj = il2cpp_functions::string_new_len(inp.data(), (uint32_t)inp.length());
+        // if (!pinned) {
+        //     auto gchandle = il2cpp_functions::gchandle_new(&obj->object, pinned);
+        //     Logger::get().debug("gchandle created for string! handle ID: %u", gchandle);
+        //     // gchandle (probably) does not need to be returned here.
+        // }
         return obj;
     }
 
