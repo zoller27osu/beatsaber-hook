@@ -127,7 +127,7 @@ jobs:
       uses: octokit/request-action@v2.x
       id: get_release
       with:
-          route: GET /repos/:repository/releases/${{ steps.get_tag_version.outputs.TAG }}
+          route: GET /repos/:repository/releases/tags/${{ steps.get_tag_version.outputs.TAG }}
           repository: ${{ github.repository }}
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
