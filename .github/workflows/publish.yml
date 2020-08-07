@@ -64,26 +64,34 @@ jobs:
         path: QPM
         repo: sc2ad/QuestPackageManager
         
-    - name: QPM Dependencies Cache
-      id: cache-qpm-deps
-      uses: actions/cache@v2
-      env:
-        cache-name: cache-qpm-deps
-      with:
-        path: ~/.config/QPM
-        key: ${{ runner.os }}-${{ env.cache-name }}
-        restore-keys: |
-          ${{ runner.os }}-${{ env.cache-name }}
+#     - name: QPM Dependencies Cache
+#       id: cache-qpm-deps
+#       uses: actions/cache@v2
+#       env:
+#         cache-name: cache-qpm-deps
+#       with:
+#         path: ~/.config/QPM
+#         key: ${{ runner.os }}-${{ env.cache-name }}
+#         restore-keys: |
+#           ${{ runner.os }}-${{ env.cache-name }}
       
     - name: QPM Restore
-      if: steps.cache-qpm-deps.outputs.cache-hit != 'true'
+#       if: steps.cache-qpm-deps.outputs.cache-hit != 'true'
       run: |
         chmod +x ./QPM/QPM
         ./QPM/QPM restore
         
+    - name: Build
+      run: |
+        cd ${GITHUB_WORKSPACE}
+        pwsh -Command ./build.ps1
+        
     - name: Get Tag Version
       id: get_tag_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}  
+      run: |
+        echo ${GITHUB_REF#refs/tags/}
+        echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
+        echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/v}
       
     - name: QPM Edit Version
       run: |
@@ -96,33 +104,47 @@ jobs:
         git config user.email "<>"
     - name: Commit Edit Version
       run: |
-        git add .
+        ls -1 | grep -v ^QPM/$ | grep -v ^ndk/$ | xargs -i git add {}
         git commit -m "Update Version"
     # Then, we want to use the commit we have just made, and force push our tag to that commit
     - name: Get Commit ID
       id: get_commit_id
-      run: echo ::set-output name=ID::`git rev-parse HEAD`
+      run: |
+        echo `git rev-parse HEAD`
+        echo ::set-output name=ID::`git rev-parse HEAD`
     - name: Force create tag
       run: |
-        git tag --force ${GITHUB_REF} ${{ steps.get_commid_id.outputs.ID }}
-    # Then, push and create our release, upload our artifacts, modify the config file to have soLink and debugSoLink
+        git tag --force ${{ steps.get_tag_version.outputs.TAG }} ${{ steps.get_commid_id.outputs.ID }}
+    # Then, push, upload our artifacts, modify the config file to have soLink and debugSoLink
+    - name: Create and push version specific branch
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git branch version-${{ steps.get_tag_version.outputs.TAG }}
+        git push -u origin version-${{ steps.get_tag_version.outputs.TAG }}
+    # Create our release
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          Github Actions auto-release
+        draft: false
+        prerelease: false
+    # Upload our release assets
+    - name: Upload Release Assets
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./libs/arm64-v8a/libil2cpp_codegen.so
+        asset_name: libbeatsaber-hook.zip
+        asset_content_type: application/octet-stream
     # Perform qpm publish, followed by a commit if all goes well. If it does, then we can safely push everything
     # Otherwise, we don't push one or more things
     # Ideally, branchName will also be set to exactly our tag, so we support older versions properly via QPM
-    
-    - name: Build
-      run: |
-        cd ${GITHUB_WORKSPACE}
-        pwsh -Command ./build.ps1
-    - name: Upload non-debug artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: libil2cpp_codegen.so
-        path: ./libs/arm64-v8a/libil2cpp_codegen.so
-        if-no-files-found: error
-    - name: Upload debug artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: libil2cpp_codegen_debug.so
-        path: ./obj/local/arm64-v8a/libil2cpp_codegen.so
-        if-no-files-found: error
