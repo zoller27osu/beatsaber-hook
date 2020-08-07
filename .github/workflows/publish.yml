@@ -124,17 +124,18 @@ jobs:
         git push -u -f origin version-${{ steps.get_tag_version.outputs.TAG }}
     # Get release that was created for this tag
     - name: Get Release
-      uses: octokit/request-action@v2
+      uses: octokit/request-action@v2.x
       id: get_release
       with:
           route: GET /repos/:repository/releases/${{ steps.get_tag_version.outputs.TAG }}
           repository: ${{ github.repository }}
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: get upload url
+    - name: Get Release Upload URL
       id: get_upload_url
       run: |
         url=$(echo "$response" | jq -r '.upload_url')
+        echo $url
         echo "::set-output name=upload_rl::$url"
       env: 
           response:  ${{ steps.get_release.outputs.data }}
