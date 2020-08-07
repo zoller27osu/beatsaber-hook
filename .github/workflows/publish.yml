@@ -120,8 +120,8 @@ jobs:
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        git branch version-${{ steps.get_tag_version.outputs.TAG }} -f
-        git push -u origin version-${{ steps.get_tag_version.outputs.TAG }}
+        git branch version-${{ steps.get_tag_version.outputs.TAG }}
+        git push -u -f origin version-${{ steps.get_tag_version.outputs.TAG }}
     # Create our release
 #     - name: Create Release
 #       uses: actions/create-release@v1
