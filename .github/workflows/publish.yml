@@ -159,17 +159,27 @@ jobs:
         asset_name: libbeatsaber-hook_debug.so
         asset_content_type: application/octet-stream
         
-#     - name: Change QPM package info
-#       run: |
-#         ./QPM/QPM package edit-extra "branchName" "version-${{ steps.get_tag_version.outputs.TAG }}"
-#         ./QPM/QPM package edit-extra "soLink" "${{ steps.upload-release-asset.outputs.browser_download_url }}"
-#     - name: Commit Changed package info
-#       run: |
-#         git add qpm.json
-#         git commit -m "Updated qpm.json"
+    - name: Change QPM package info
+      run: |
+        ./QPM/QPM package edit-extra "branchName" "version-${{ steps.get_tag_version.outputs.TAG }}"
+        ./QPM/QPM package edit-extra "soLink" "${{ steps.upload-release-asset.outputs.browser_download_url }}"
+    - name: Commit Changed package info
+      run: |
+        git add qpm.json
+        git commit -m "Updated qpm.json"
       
-#     - name: Push New Commit
-#       run: git push
+    # Then, we want to use the commit we have just made, and force push our tag to that commit
+    - name: Get Commit ID
+      id: get_created_commit_id
+      run: |
+        echo `git rev-parse HEAD`
+        echo ::set-output name=ID::`git rev-parse HEAD`
+    - name: Force create tag
+      run: |
+        git tag --force ${{ steps.get_tag_version.outputs.TAG }} ${{ steps.get_created_commit_id.outputs.ID }}
+      
+    - name: Push New Commit
+      run: git push --tags
         
-#     - name: QPM Publish
-#       run: ./QPM/QPM publish
+    - name: QPM Publish
+      run: ./QPM/QPM publish
