@@ -140,15 +140,23 @@ jobs:
       env: 
           response:  ${{ steps.get_release.outputs.data }}
     # Upload our release assets
-    - name: Upload Release Assets
-      id: upload-release-asset 
+    - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
-        asset_path: ./libs/arm64-v8a/libil2cpp_codegen.so
+        asset_path: ./libs/arm64-v8a/libbeatsaber-hook.so
         asset_name: libbeatsaber-hook.so
+        asset_content_type: application/octet-stream
+    - name: Upload Debug Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
+        asset_path: ./obj/local/arm64-v8a/libbeatsaber-hook.so
+        asset_name: libbeatsaber-hook_debug.so
         asset_content_type: application/octet-stream
         
 #     - name: Change QPM package info
