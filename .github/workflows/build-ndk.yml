@@ -66,16 +66,16 @@ jobs:
         repo: sc2ad/QuestPackageManager
         
         # TODO Add this:
-#     - name: QPM Dependencies Cache
-#       id: cache-qpm-deps
-#       uses: actions/cache@v2
-#       env:
-#         cache-name: cache-qpm-deps
-#       with:
-#         path: ${GITHUB_WORKSPACE}/extern
-#         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('${GITHUB_WORKSPACE}/extern/*') }}
-#         restore-keys: |
-#           ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('${GITHUB_WORKSPACE}/extern/*') }}
+    - name: QPM Dependencies Cache
+      id: cache-qpm-deps
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-qpm-deps
+      with:
+        path: ~/.config/QPM
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('~/.config/QPM/*') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('~/.config/QPM/*') }}
       
     - name: QPM Restore
       if: steps.cache-qpm-deps.outputs.cache-hit != 'true'
@@ -90,10 +90,12 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: libbeatsaber-hook.so
-        path: ${GITHUB_WORKSPACE}/libs/arm64-v8a/libbeatsaber-hook.so
+        path: ${{ GITHUB_WORKSPACE }}/libs/arm64-v8a/libbeatsaber-hook.so
+        if-no-files-found: error
     - name: Upload debug artifact
       uses: actions/upload-artifact@v2
       with:
         name: libbeatsaber-hook_debug.so
-        path: ${GITHUB_WORKSPACE}/obj/local/arm64-v8a/libbeatsaber-hook.so
+        path: ${{ GITHUB_WORKSPACE }}/obj/local/arm64-v8a/libbeatsaber-hook.so
+        if-no-files-found: error
     # TODO: Add auto-populating releases, auto update versions, auto publish package on release
