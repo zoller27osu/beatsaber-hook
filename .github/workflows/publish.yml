@@ -177,12 +177,12 @@ jobs:
       run: |
         echo `git rev-parse HEAD`
         echo ::set-output name=ID::`git rev-parse HEAD`
-    - name: Force Push Tag Again
-      run: |
-        git tag --force ${{ steps.get_tag_version.outputs.TAG }} ${{ steps.get_created_commit_id.outputs.ID }}
       
     - name: Push New Commit and Tag
-      run: git push --tags --force
+      run: |
+        git push --force
+        git tag --force ${{ steps.get_tag_version.outputs.TAG }} ${{ steps.get_created_commit_id.outputs.ID }}
+        git push --tags --force
         
     - name: QPM Publish
       run: ./QPM/QPM publish
