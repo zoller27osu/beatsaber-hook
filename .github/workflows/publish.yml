@@ -120,20 +120,20 @@ jobs:
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        git branch version-${{ steps.get_tag_version.outputs.TAG }}
+        git branch version-${{ steps.get_tag_version.outputs.TAG }} -f
         git push -u origin version-${{ steps.get_tag_version.outputs.TAG }}
     # Create our release
-    - name: Create Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        body: |
-          Github Actions auto-release
-        draft: false
-        prerelease: false
+#     - name: Create Release
+#       uses: actions/create-release@v1
+#       env:
+#         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+#       with:
+#         tag_name: ${{ github.ref }}
+#         release_name: Release ${{ github.ref }}
+#         body: |
+#           Github Actions auto-release
+#         draft: false
+#         prerelease: false
     # Upload our release assets
     - name: Upload Release Assets
       id: upload-release-asset 
@@ -143,8 +143,20 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./libs/arm64-v8a/libil2cpp_codegen.so
-        asset_name: libbeatsaber-hook.zip
+        asset_name: libbeatsaber-hook.so
         asset_content_type: application/octet-stream
-    # Perform qpm publish, followed by a commit if all goes well. If it does, then we can safely push everything
-    # Otherwise, we don't push one or more things
-    # Ideally, branchName will also be set to exactly our tag, so we support older versions properly via QPM
+        
+#     - name: Change QPM package info
+#       run: |
+#         ./QPM/QPM package edit-extra "branchName" "version-${{ steps.get_tag_version.outputs.TAG }}"
+#         ./QPM/QPM package edit-extra "soLink" "${{ steps.upload-release-asset.outputs.browser_download_url }}"
+#     - name: Commit Changed package info
+#       run: |
+#         git add qpm.json
+#         git commit -m "Updated qpm.json"
+      
+#     - name: Push New Commit
+#       run: git push
+        
+#     - name: QPM Publish
+#       run: ./QPM/QPM publish
