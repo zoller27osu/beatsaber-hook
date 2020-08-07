@@ -136,7 +136,7 @@ jobs:
       run: |
         url=$(echo "$response" | jq -r '.upload_url')
         echo $url
-        echo "::set-output name=upload_rl::$url"
+        echo "::set-output name=upload_url::$url"
       env: 
           response:  ${{ steps.get_release.outputs.data }}
     # Upload our release assets
