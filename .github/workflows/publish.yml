@@ -1,0 +1,128 @@
+name: Publish QPM Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+      name: Checkout
+      with:
+        submodules: true
+        lfs: true
+    - name: Install Powershell
+      run: sudo apt-get install -y powershell
+    
+    - name: Cache Android NDK
+      id: cache-ndk
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-ndk
+      with:
+        path: ndk
+        key: ${{ runner.os }}-${{ env.cache-name }}
+        restore-keys: |
+          ${{ runner.os }}-${{ env.cache-name }}
+      
+    - name: Install Android NDK
+      if: steps.cache-ndk.outputs.cache-hit != 'true'
+      env:
+        ndkname: android-ndk-r20
+      run: |
+        wget -q -O ndk.zip https://dl.google.com/android/repository/${ndkname}-linux-x86_64.zip
+        unzip -q ndk.zip
+        mv ${ndkname} ndk
+      
+    - name: Create ndkpath.txt
+      run: |
+        cd ndk
+        pwd > ${GITHUB_WORKSPACE}/ndkpath.txt
+        
+    - name: Cache QPM
+      id: cache-qpm
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-qpm
+      with:
+        path: QPM
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('QPM/*') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('QPM/*') }}
+
+    - name: Get QPM
+      if: steps.cache-qpm.outputs.cache-hit != 'true'
+      uses: dawidd6/action-download-artifact@v2
+      with:
+        github_token: ${{secrets.GITHUB_TOKEN}}
+        workflow: main.yml
+        name: QPM-ubuntu-x64
+        path: QPM
+        repo: sc2ad/QuestPackageManager
+        
+    - name: QPM Dependencies Cache
+      id: cache-qpm-deps
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-qpm-deps
+      with:
+        path: ~/.config/QPM
+        key: ${{ runner.os }}-${{ env.cache-name }}
+        restore-keys: |
+          ${{ runner.os }}-${{ env.cache-name }}
+      
+    - name: QPM Restore
+      if: steps.cache-qpm-deps.outputs.cache-hit != 'true'
+      run: |
+        chmod +x ./QPM/QPM
+        ./QPM/QPM restore
+        
+    - name: Get Tag Version
+      id: get_tag_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}  
+      
+    - name: QPM Edit Version
+      run: |
+        ./QPM/QPM package edit version "${{ steps.get_tag_version.outputs.VERSION }}"
+        
+    # Commit the change to the package, .vscode/c_cpp_properties.json, and Android.mk
+    - name: Configure commit
+      run: |
+        git config user.name "Github Actions"
+        git config user.email "<>"
+    - name: Commit Edit Version
+      run: |
+        git add .
+        git commit -m "Update Version"
+    # Then, we want to use the commit we have just made, and force push our tag to that commit
+    - name: Get Commit ID
+      id: get_commit_id
+      run: echo ::set-output name=ID::`git rev-parse HEAD`
+    - name: Force create tag
+      run: |
+        git tag --force ${GITHUB_REF} ${{ steps.get_commid_id.outputs.ID }}
+    # Then, push and create our release, upload our artifacts, modify the config file to have soLink and debugSoLink
+    # Perform qpm publish, followed by a commit if all goes well. If it does, then we can safely push everything
+    # Otherwise, we don't push one or more things
+    # Ideally, branchName will also be set to exactly our tag, so we support older versions properly via QPM
+    
+    - name: Build
+      run: |
+        cd ${GITHUB_WORKSPACE}
+        pwsh -Command ./build.ps1
+    - name: Upload non-debug artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: libil2cpp_codegen.so
+        path: ./libs/arm64-v8a/libil2cpp_codegen.so
+        if-no-files-found: error
+    - name: Upload debug artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: libil2cpp_codegen_debug.so
+        path: ./obj/local/arm64-v8a/libil2cpp_codegen.so
+        if-no-files-found: error
