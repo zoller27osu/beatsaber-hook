@@ -159,7 +159,7 @@ typedef struct IntPtr {
 #include "System/Object.hpp"
 struct CsObject : public Il2CppObject, public System::Object {};
 #else
-typedef Il2CppObject CsObject;
+struct CsObject : public Il2CppObject {};
 #endif
 
 struct DelegateData;
@@ -195,7 +195,7 @@ typedef struct MulticastDelegate : Delegate
 #include "System/String.hpp"
 struct CsString : public System::String {};
 #else
-typedef Il2CppString CsString;
+struct CsString : public Il2CppString {};
 #endif
 
 // System.DelegateData
