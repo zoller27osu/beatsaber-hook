@@ -151,12 +151,12 @@ typedef struct IntPtr {
 }  /* extern "C" */
 #endif /* __cplusplus */
 
-#if __has_include("extern/codegen/include/System/Array.hpp") && !defined(NO_CODEGEN_USE)
+#if __has_include("System/Array.hpp") && !defined(NO_CODEGEN_USE)
 #define HAS_CODEGEN
 #endif
 
 #ifdef HAS_CODEGEN
-#include "extern/codegen/include/System/Object.hpp"
+#include "System/Object.hpp"
 struct CsObject : public Il2CppObject, public System::Object {};
 #else
 typedef Il2CppObject CsObject;
@@ -192,7 +192,7 @@ typedef struct MulticastDelegate : Delegate
 } MulticastDelegate;
 
 #ifdef HAS_CODEGEN
-#include "extern/codegen/include/System/String.hpp"
+#include "System/String.hpp"
 struct CsString : public System::String {};
 #else
 typedef Il2CppString CsString;
@@ -206,7 +206,7 @@ typedef struct DelegateData : CsObject {
 } DelegateData;
 
 #ifdef HAS_CODEGEN
-#include "extern/codegen/include/System/Collections/Generic/IEnumerable_1.hpp"
+#include "System/Collections/Generic/IEnumerable_1.hpp"
 template<class T>
 struct Array : public Il2CppArray, public System::Collections::Generic::IEnumerable_1<T>
 #else
@@ -226,7 +226,7 @@ struct Array : public Il2CppArray
 };
 
 #ifdef HAS_CODEGEN
-#include "extern/codegen/include/System/Collections/Generic/List_1.hpp"
+#include "System/Collections/Generic/List_1.hpp"
 template<class T>
 using List = System::Collections::Generic::List_1<T>;
 #else
