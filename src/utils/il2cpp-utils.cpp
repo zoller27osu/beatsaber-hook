@@ -1,4 +1,5 @@
 #include <utility>  // for std::pair
+#include "hashing.hpp"
 #include "../../shared/utils/il2cpp-utils.hpp"
 #include "../../shared/utils/utils.h"
 #include "../../shared/utils/il2cpp-functions.hpp"
@@ -6,8 +7,8 @@
 #include "../../shared/utils/typedefs.h"
 #include <algorithm>
 #include <map>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace std
 {
@@ -37,26 +38,6 @@ namespace std
 // Please see comments in il2cpp-utils.hpp
 // TODO: Make this into a static class
 namespace il2cpp_utils {
-    // A hash function used to hash a pair of any kind
-    struct hash_pair {
-        template<class T1, class T2>
-        size_t operator()(const std::pair<T1, T2>& p) const {
-            auto hash1 = std::hash<T1>{}(p.first);
-            auto hash2 = std::hash<T2>{}(p.second);
-            return hash1 ^ hash2;
-        }
-    };
-    // A hash function used to hash a pair of an object, pair
-    struct hash_pair_3 {
-        template<class T1, class T2, class T3>
-        size_t operator()(const std::pair<T1, std::pair<T2, T3>>& p) const {
-            auto hash1 = std::hash<T1>{}(p.first);
-            auto hash2 = hash_pair{}(p.second);
-            return hash1 ^ hash2;
-        }
-    };
-    // It doesn't matter what types these are, they just need to be used correctly within the methods
-    static std::unordered_map<std::pair<std::string, std::string>, Il2CppClass*, hash_pair> namesToClassesCache;
     // decltype is static so this should make the hashmap use as little memory as needed regardless of il2cpp changes
     static std::unordered_map<std::pair<Il2CppClass*, std::pair<std::string, decltype(MethodInfo::parameters_count)>>, const MethodInfo*, hash_pair_3> classesNamesToMethodsCache;
 
@@ -98,6 +79,9 @@ namespace il2cpp_utils {
     }
 
     bool IsConvertible(const Il2CppType* to, const Il2CppType* from, bool asArgs) {
+        RET_0_UNLESS(to);
+        RET_0_UNLESS(from);
+        Logger::get().debug("IsConvertible(%s, %s)", TypeGetSimpleName(to), TypeGetSimpleName(from));
         if (asArgs) {
             if (to->byref) {
                 if (!from->byref) {
@@ -112,7 +96,9 @@ namespace il2cpp_utils {
         }
         auto classTo = il2cpp_functions::class_from_il2cpp_type(to);
         auto classFrom = il2cpp_functions::class_from_il2cpp_type(from);
-        bool ret = il2cpp_functions::class_is_assignable_from(classTo, classFrom);
+        Logger::get().debug("IsConvertible: class_is_assignable_from(%s, %s)",
+                ClassStandardName(classTo).c_str(), ClassStandardName(classFrom).c_str());
+        bool ret = (to->type == IL2CPP_TYPE_MVAR) || il2cpp_functions::class_is_assignable_from(classTo, classFrom);
         if (!ret) {
             Logger::get().debug("IsConvertible: class_is_assignable_from(%s, %s) returned %s",
                 ClassStandardName(classTo).c_str(), ClassStandardName(classFrom).c_str(), ret ? "true" : "false");
@@ -124,19 +110,42 @@ namespace il2cpp_utils {
         return ret;
     }
 
-    bool ParameterMatch(const MethodInfo* method, const Il2CppType* const* type_arr, decltype(MethodInfo::parameters_count) count) {
+    bool ParameterMatch(const MethodInfo* method, std::vector<Il2CppClass*> genTypes, std::vector<const Il2CppType*> argTypes) {
         il2cpp_functions::Init();
-        if (method->parameters_count != count) {
+        if (method->parameters_count != argTypes.size()) {
+            return false;
+        }
+        auto genCount = (method->is_generic && !method->is_inflated) ? method->genericContainer->type_argc : 0;
+        if ((size_t)genCount != genTypes.size()) {
+            Logger::get().warning("Potential method match had wrong number of generics %i (expected %i)",
+                genCount, genTypes.size());
             return false;
         }
         // TODO: supply boolStrictMatch and use type_equals instead of IsConvertible if supplied?
         for (decltype(method->parameters_count) i = 0; i < method->parameters_count; i++) {
+            auto* paramType = method->parameters[i].parameter_type;
+            if (paramType->type == IL2CPP_TYPE_MVAR) {
+                auto genIdx = paramType->data.genericParameterIndex - method->genericContainer->genericParameterStart;
+                if (genIdx < 0) {
+                    Logger::get().warning("Extracted invalid genIdx %i from parameter %i", genIdx, i);
+                } else if (genIdx >= genCount) {
+                    Logger::get().warning("ParameterMatch was not supplied enough genTypes to determine type of parameter %i "
+                        "(had %i, needed %i)!", i, genCount, genIdx);
+                } else {
+                    auto* klass = genTypes.at(genIdx);
+                    paramType = (paramType->byref) ? &klass->this_arg : &klass->byval_arg;
+                }
+            }
             // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
-            if (!(IsConvertible(method->parameters[i].parameter_type, type_arr[i]))) {
+            if (!(IsConvertible(paramType, argTypes.at(i)))) {
                 return false;
             }
         }
         return true;
+    }
+
+    bool ParameterMatch(const MethodInfo* method, std::vector<const Il2CppType*> argTypes) {
+        return ParameterMatch(method, {}, argTypes);
     }
 
     static std::unordered_map<Il2CppClass*, const char*> typeMap;
@@ -176,38 +185,6 @@ namespace il2cpp_utils {
             (klass->byval_arg.type == IL2CPP_TYPE_MVAR);
     }
 
-    Il2CppClass* GetClassFromName(std::string_view name_space, std::string_view type_name) {
-        il2cpp_functions::Init();
-
-        // TODO: avoid creating std::string at any point except new pair insertion via P0919
-        // Check cache
-        auto key = std::pair<std::string, std::string>(name_space, type_name);
-        auto itr = namesToClassesCache.find(key);
-        if (itr != namesToClassesCache.end()) {
-            return itr->second;
-        }
-        auto dom = RET_0_UNLESS(il2cpp_functions::domain_get());
-        size_t assemb_count;
-        const Il2CppAssembly** allAssemb = il2cpp_functions::domain_get_assemblies(dom, &assemb_count);
-
-        for (size_t i = 0; i < assemb_count; i++) {
-            auto assemb = allAssemb[i];
-            auto img = il2cpp_functions::assembly_get_image(assemb);
-            if (!img) {
-                Logger::get().error("Assembly with name: %s has a null image!", assemb->aname.name);
-                continue;
-            }
-            auto klass = il2cpp_functions::class_from_name(img, name_space.data(), type_name.data());
-            if (klass) {
-                namesToClassesCache.emplace(key, klass);
-                return klass;
-            }
-        }
-        Logger::get().error("il2cpp_utils: GetClassFromName: could not find class with namepace: %s and name: %s",
-            name_space.data(), type_name.data());
-        return nullptr;
-    }
-
     const MethodInfo* FindMethodUnsafe(Il2CppClass* klass, std::string_view methodName, int argsCount) {
         il2cpp_functions::Init();
         RET_0_UNLESS(klass);
@@ -239,11 +216,12 @@ namespace il2cpp_utils {
         return FindMethodUnsafe(klass, methodName, argsCount);
     }
 
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppType*> argTypes,
-            int generics) {
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes,
+            std::vector<const Il2CppType*> argTypes) {
         il2cpp_functions::Init();
         RET_0_UNLESS(klass);
 
+        // TODO: fix for generics
         // Check Cache
         auto innerPair = classesNamesTypesInnerPairType(methodName, argTypes);
         auto key = std::pair<Il2CppClass*, classesNamesTypesInnerPairType>(klass, innerPair);
@@ -257,15 +235,7 @@ namespace il2cpp_utils {
         bool multipleMatches = false;
         // Does NOT automatically recurse through klass's parents
         while (const MethodInfo* current = il2cpp_functions::class_get_methods(klass, &myIter)) {
-            if ((methodName == current->name) && ParameterMatch(current, argTypes)) {
-                if (generics >= 0) {
-                    auto currCount = (current->is_generic && !current->is_inflated) ? current->genericContainer->type_argc : 0;
-                    if (currCount != generics) {
-                        Logger::get().warning("Potential method match had wrong number of generics %i (expected %i)",
-                            currCount, generics);
-                        continue;
-                    }
-                }
+            if ((methodName == current->name) && ParameterMatch(current, genTypes, argTypes)) {
                 if (methodInfo) {
                     multipleMatches = true;
                     break;
@@ -274,7 +244,7 @@ namespace il2cpp_utils {
             }
         }
         if (!methodInfo && klass->parent && klass->parent != klass) {
-            methodInfo = FindMethod(klass->parent, methodName, argTypes);
+            methodInfo = FindMethod(klass->parent, methodName, {}, argTypes);
         }
 
         if (!methodInfo || multipleMatches) {
@@ -296,20 +266,20 @@ namespace il2cpp_utils {
         return methodInfo;
     }
 
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<const Il2CppClass*> classFromes,
-            int generics) {
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes,
+            std::vector<const Il2CppClass*> classFromes) {
         std::vector<const Il2CppType*> argTypes = ClassVecToTypes(classFromes);
-        return FindMethod(klass, methodName, argTypes, generics);
+        return FindMethod(klass, methodName, genTypes, argTypes);
     }
 
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<std::string_view> argSpaceClass,
-            int generics) {
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes,
+            std::vector<std::string_view> argSpaceClass) {
         std::vector<const Il2CppType*> argTypes;
         for (size_t i = 0; i < argSpaceClass.size() - 1; i += 2) {
             auto clazz = GetClassFromName(argSpaceClass[i].data(), argSpaceClass[i+1].data());
             argTypes.push_back(il2cpp_functions::class_get_type(clazz));
         }
-        return FindMethod(klass, methodName, argTypes, generics);
+        return FindMethod(klass, methodName, genTypes, argTypes);
     }
 
     FieldInfo* FindField(Il2CppClass* klass, std::string_view fieldName) {
@@ -380,65 +350,6 @@ namespace il2cpp_utils {
             return nullptr;
         }
         return reinterpret_cast<Il2CppReflectionType*>(genericType);
-    }
-
-    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args) {
-        il2cpp_functions::Init();
-
-        auto typ = RET_0_UNLESS(il2cpp_functions::defaults->systemtype_class);
-        auto klassType = RET_0_UNLESS(GetSystemType(klass));
-
-        // Call Type.MakeGenericType on it
-        auto arr = il2cpp_functions::array_new_specific(typ, args.size());
-        if (!arr) {
-            Logger::get().error("il2cpp_utils: MakeGeneric: Failed to make new array with length: %zu", args.size());
-            return nullptr;
-        }
-
-        int i = 0;
-        for (auto arg : args) {
-            auto* o = GetSystemType(arg);
-            if (!o) {
-                Logger::get().error("il2cpp_utils: MakeGeneric: Failed to get type for %s", il2cpp_functions::class_get_name_const(arg));
-                return nullptr;
-            }
-            il2cpp_array_set(arr, void*, i, reinterpret_cast<void*>(o));
-            i++;
-        }
-
-        auto* reflection_type = RET_0_UNLESS(MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), arr));
-        auto* ret = RET_0_UNLESS(il2cpp_functions::class_from_system_type(reflection_type));
-        Logger::get().debug("il2cpp_utils: MakeGeneric: returning '%s'", ClassStandardName(ret).c_str());
-        return ret;
-    }
-
-    Il2CppClass* MakeGeneric(const Il2CppClass* klass, const Il2CppType** types, uint32_t numTypes) {
-        il2cpp_functions::Init();
-
-        auto typ = RET_0_UNLESS(il2cpp_functions::defaults->systemtype_class);
-        auto klassType = RET_0_UNLESS(GetSystemType(klass));
-
-        // Call Type.MakeGenericType on it
-        auto arr = il2cpp_functions::array_new_specific(typ, numTypes);
-        if (!arr) {
-            Logger::get().error("il2cpp_utils: MakeGeneric: Failed to make new array with length: %u", numTypes);
-            return nullptr;
-        }
-
-        for (size_t i = 0; i < numTypes; i++) {
-            const Il2CppType* arg = types[i];
-            auto* o = GetSystemType(arg);
-            if (!o) {
-                Logger::get().error("il2cpp_utils: MakeGeneric: Failed to get system type for %s", il2cpp_functions::type_get_name(arg));
-                return nullptr;
-            }
-            il2cpp_array_set(arr, void*, i, reinterpret_cast<void*>(o));
-        }
-
-        auto* reflection_type = RET_0_UNLESS(MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), arr));
-        auto* ret = RET_0_UNLESS(il2cpp_functions::class_from_system_type(reflection_type));
-        Logger::get().debug("il2cpp_utils: MakeGeneric: returning '%s'", ClassStandardName(ret).c_str());
-        return ret;
     }
 
     const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*> types) noexcept {
@@ -927,14 +838,14 @@ namespace il2cpp_utils {
             AddNestedTypesToNametoClassHashTable(hashTable, namespaze, name, nestedClass);
     }
 
-    Il2CppString* createcsstr(std::string_view inp, [[maybe_unused]] bool pinned) {
+    CsString* createcsstr(std::string_view inp, [[maybe_unused]] bool pinned) {
         if (pinned) {
             return il2cpp_functions::string_new_len(inp.data(), (uint32_t)inp.length());
         }
         // Get ASCII Encoding
         auto enc = RET_0_UNLESS(GetPropertyValue("System.Text", "Encoding", "ASCII"));
         // Create new string, created from the literal char*, not to be confused with a copy of this data
-        auto* obj = (Il2CppString*)RET_0_UNLESS(New("System", "String", (int8_t*)inp.data(), 0, (int)inp.length(), enc));
+        auto* obj = RET_0_UNLESS(RunMethod<CsString*>("System", "String", "CreateStringFromEncoding", (uint8_t*)inp.data(), (int)inp.length(), enc));
         return obj;
     }
 
