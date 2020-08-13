@@ -27,7 +27,23 @@ namespace std {
 }
 
 #include <cassert>
-#include "il2cpp-includes.h"
+// For including il2cpp properly
+#ifdef _MSC_VER
+#undef _MSC_VER
+#endif
+#ifndef __GNUC__
+#define __GNUC__
+#endif
+
+#define NET_4_0 true
+#include "il2cpp-config.h"
+#include "il2cpp-api-types.h"
+#include "il2cpp-class-internals.h"
+#include "il2cpp-object-internals.h"
+#include "il2cpp-tabledefs.h"
+#include "utils/Il2CppHashMap.h"
+#include "utils/HashUtils.h"
+#include "utils/StringUtils.h"
 
 #ifdef __cplusplus
 template<class T, class Enable = void>
@@ -71,48 +87,6 @@ typedef struct Il2CppObject {
     void* monitor;
 } Il2CppObject;
 #endif /* !__cplusplus */
-
-// C# SPECIFIC
-
-// System.IntPtr
-typedef struct IntPtr {
-    void* value;
-} IntPtr;
-
-// System.DelegateData
-typedef struct DelegateData : Il2CppObject {
-    Il2CppReflectionType* target_type;
-    Il2CppString* method_name;
-    bool curied_first_arg;
-} DelegateData;
-
-// See il2cpp-object-internals.h/Il2CppDelegate
-// System.Delegate
-typedef struct Delegate : Il2CppObject
-{
-    Il2CppMethodPointer method_ptr; // 0x8
-    InvokerMethod invoke_impl; // 0xC
-    Il2CppObject* m_target; // 0x10
-    IntPtr* method; // 0x14
-    void* delegate_trampoline; // 0x18
-    intptr_t extra_arg; // 0x1C
-
-    /*
-    * If non-NULL, this points to a memory location which stores the address of
-    * the compiled code of the method, or NULL if it is not yet compiled.
-    */
-    uint8_t** method_code; // 0x20
-    Il2CppReflectionMethod* method_info; // 0x24
-    Il2CppReflectionMethod* original_method_info; // 0x28
-    DelegateData* data; // 0x2C
-    bool method_is_virtual; // 0x30
-} Delegate;
-
-// System.MulticastDelegate
-typedef struct MulticastDelegate : Delegate
-{
-    ::Array<Delegate*>* delegates;
-} MulticastDelegate;
 
 // UNITY SPECIFIC
 
@@ -166,37 +140,78 @@ typedef struct Scene {
     int m_Handle;
 } Scene;
 
+// C# SPECIFIC
+
+// System.IntPtr
+typedef struct IntPtr {
+    void* value;
+} IntPtr;
+
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif /* __cplusplus */
 
-#if __has_include("System/Array.hpp") && !defined(NO_CODEGEN_USE)
+#if __has_include("extern/codegen/include/System/Array.hpp") && !defined(NO_CODEGEN_USE)
 #define HAS_CODEGEN
-#include "System/Array.hpp"
-#include "System/Collections/Generic/IEnumerable_1.hpp"
-#include "System/Collections/Generic/List_1.hpp"
 #endif
 
-// TODO: Move these to extern "C" region
-#ifndef HAS_CODEGEN
-// System.Collections.Generic.List
-template<class T>
-struct List : Il2CppObject
-{
-    Array<T>* items;
-    int size;
-    int version;
-    Il2CppObject* syncRoot;
-};
-
-template<class T>
-struct Array : public Il2CppArray
+#ifdef HAS_CODEGEN
+#include "extern/codegen/include/System/Object.hpp"
+struct CsObject : public Il2CppObject, public System::Object {};
 #else
-template<class T>
-using List = System::Collections::Generic::List_1<T>;
+typedef Il2CppObject CsObject;
+#endif
 
+struct DelegateData;
+// See il2cpp-object-internals.h/Il2CppDelegate
+// System.Delegate
+typedef struct Delegate : CsObject
+{
+    Il2CppMethodPointer method_ptr; // 0x8
+    InvokerMethod invoke_impl; // 0xC
+    CsObject* m_target; // 0x10
+    IntPtr* method; // 0x14
+    void* delegate_trampoline; // 0x18
+    intptr_t extra_arg; // 0x1C
+
+    /*
+    * If non-NULL, this points to a memory location which stores the address of
+    * the compiled code of the method, or NULL if it is not yet compiled.
+    */
+    uint8_t** method_code; // 0x20
+    Il2CppReflectionMethod* method_info; // 0x24
+    Il2CppReflectionMethod* original_method_info; // 0x28
+    DelegateData* data; // 0x2C
+    bool method_is_virtual; // 0x30
+} Delegate;
+
+// System.MulticastDelegate
+typedef struct MulticastDelegate : Delegate
+{
+    ::Array<Delegate*>* delegates;
+} MulticastDelegate;
+
+#ifdef HAS_CODEGEN
+#include "extern/codegen/include/System/String.hpp"
+struct CsString : public System::String {};
+#else
+typedef Il2CppString CsString;
+#endif
+
+// System.DelegateData
+typedef struct DelegateData : CsObject {
+    Il2CppReflectionType* target_type;
+    CsString* method_name;
+    bool curied_first_arg;
+} DelegateData;
+
+#ifdef HAS_CODEGEN
+#include "extern/codegen/include/System/Collections/Generic/IEnumerable_1.hpp"
 template<class T>
 struct Array : public Il2CppArray, public System::Collections::Generic::IEnumerable_1<T>
+#else
+template<class T>
+struct Array : public Il2CppArray
 #endif
 {
     static_assert(is_value_type_v<T>, "T must be a C# value type! (primitive, pointer or Struct)");
@@ -209,4 +224,21 @@ struct Array : public Il2CppArray, public System::Collections::Generic::IEnumera
         return max_length;
     }
 };
+
+#ifdef HAS_CODEGEN
+#include "extern/codegen/include/System/Collections/Generic/List_1.hpp"
+template<class T>
+using List = System::Collections::Generic::List_1<T>;
+#else
+// System.Collections.Generic.List
+template<class T>
+struct List : CsObject
+{
+    Array<T>* items;
+    int size;
+    int version;
+    CsObject* syncRoot;
+};
+#endif
+
 #endif /* TYPEDEFS_H */
