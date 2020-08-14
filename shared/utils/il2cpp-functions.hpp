@@ -155,7 +155,7 @@ class il2cpp_functions {
     static size_t (*field_get_offset)(FieldInfo * field);
     static const Il2CppType* (*field_get_type)(FieldInfo * field);
     static void (*field_get_value)(Il2CppObject * obj, FieldInfo * field, void *value);
-    static CsObject* (*field_get_value_object)(FieldInfo * field, Il2CppObject * obj);
+    static Il2CppObject* (*field_get_value_object)(FieldInfo * field, Il2CppObject * obj);
     static bool (*field_has_attribute)(FieldInfo * field, Il2CppClass * attr_class);
     static void (*field_set_value)(Il2CppObject * obj, FieldInfo * field, void *value);
     static void (*field_static_get_value)(FieldInfo * field, void *value);
@@ -187,7 +187,7 @@ class il2cpp_functions {
     #endif
     static uint32_t (*gchandle_new)(Il2CppObject * obj, bool pinned);
     static uint32_t (*gchandle_new_weakref)(Il2CppObject * obj, bool track_resurrection);
-    static CsObject* (*gchandle_get_target)(uint32_t gchandle);
+    static Il2CppObject* (*gchandle_get_target)(uint32_t gchandle);
     static void (*gchandle_free)(uint32_t gchandle);
     #ifdef UNITY_2019
     static void (*gchandle_foreach_get_target)(void(*func)(void* data, void* userData), void* userData);
@@ -234,11 +234,11 @@ class il2cpp_functions {
     static Il2CppClass* (*object_get_class)(Il2CppObject * obj);
     static uint32_t (*object_get_size)(Il2CppObject * obj);
     static const MethodInfo* (*object_get_virtual_method)(Il2CppObject * obj, const MethodInfo * method);
-    static CsObject* (*object_new)(const Il2CppClass * klass);
+    static Il2CppObject* (*object_new)(const Il2CppClass * klass);
     // Always returns (void*)(obj + 1)
     static void* (*object_unbox)(Il2CppObject * obj);
-    // If klass is not a ValueType, returns (CsObject*)(*data), else boxes
-    static CsObject* (*value_box)(Il2CppClass * klass, void* data);
+    // If klass is not a ValueType, returns (Il2CppObject*)(*data), else boxes
+    static Il2CppObject* (*value_box)(Il2CppClass * klass, void* data);
     static void (*monitor_enter)(Il2CppObject * obj);
     static bool (*monitor_try_enter)(Il2CppObject * obj, uint32_t timeout);
     static void (*monitor_exit)(Il2CppObject * obj);
@@ -246,20 +246,20 @@ class il2cpp_functions {
     static void (*monitor_pulse_all)(Il2CppObject * obj);
     static void (*monitor_wait)(Il2CppObject * obj);
     static bool (*monitor_try_wait)(Il2CppObject * obj, uint32_t timeout);
-    static CsObject* (*runtime_invoke)(const MethodInfo * method, void *obj, void **params, Il2CppException **exc);
-    static CsObject* (*runtime_invoke_convert_args)(const MethodInfo * method, void *obj, Il2CppObject **params, int paramCount, Il2CppException **exc);
+    static Il2CppObject* (*runtime_invoke)(const MethodInfo * method, void *obj, void **params, Il2CppException **exc);
+    static Il2CppObject* (*runtime_invoke_convert_args)(const MethodInfo * method, void *obj, Il2CppObject **params, int paramCount, Il2CppException **exc);
     static void (*runtime_class_init)(Il2CppClass * klass);
     static void (*runtime_object_init)(Il2CppObject * obj);
     static void (*runtime_object_init_exception)(Il2CppObject * obj, Il2CppException** exc);
     static void (*runtime_unhandled_exception_policy_set)(Il2CppRuntimeUnhandledExceptionPolicy value);
     static int32_t (*string_length)(Il2CppString * str);
     static Il2CppChar* (*string_chars)(Il2CppString * str);
-    static CsString* (*string_new)(const char* str);
-    static CsString* (*string_new_len)(const char* str, uint32_t length);
-    static CsString* (*string_new_utf16)(const Il2CppChar * text, int32_t len);
-    static CsString* (*string_new_wrapper)(const char* str);
-    static CsString* (*string_intern)(Il2CppString * str);
-    static CsString* (*string_is_interned)(Il2CppString * str);
+    static Il2CppString* (*string_new)(const char* str);
+    static Il2CppString* (*string_new_len)(const char* str, uint32_t length);
+    static Il2CppString* (*string_new_utf16)(const Il2CppChar * text, int32_t len);
+    static Il2CppString* (*string_new_wrapper)(const char* str);
+    static Il2CppString* (*string_intern)(Il2CppString * str);
+    static Il2CppString* (*string_is_interned)(Il2CppString * str);
     static Il2CppThread* (*thread_current)();
     static Il2CppThread* (*thread_attach)(Il2CppDomain * domain);
     static void (*thread_detach)(Il2CppThread * thread);
@@ -276,7 +276,7 @@ class il2cpp_functions {
     #ifdef UNITY_2019
     static void (*override_stack_backtrace)(Il2CppBacktraceFunc stackBacktraceFunc);
     #endif
-    static CsObject* (*type_get_object)(const Il2CppType * type);
+    static Il2CppObject* (*type_get_object)(const Il2CppType * type);
     static int (*type_get_type)(const Il2CppType * type);
     static Il2CppClass* (*type_get_class_or_element_class)(const Il2CppType * type);
     static char* (*type_get_name)(const Il2CppType * type);
@@ -307,7 +307,7 @@ class il2cpp_functions {
     static void (*unity_install_unitytls_interface)(const void* unitytlsInterfaceStruct);
     static Il2CppCustomAttrInfo* (*custom_attrs_from_class)(Il2CppClass * klass);
     static Il2CppCustomAttrInfo* (*custom_attrs_from_method)(const MethodInfo * method);
-    static CsObject* (*custom_attrs_get_attr)(Il2CppCustomAttrInfo * ainfo, Il2CppClass * attr_klass);
+    static Il2CppObject* (*custom_attrs_get_attr)(Il2CppCustomAttrInfo * ainfo, Il2CppClass * attr_klass);
     static bool (*custom_attrs_has_attr)(Il2CppCustomAttrInfo * ainfo, Il2CppClass * attr_klass);
     static Il2CppArray* (*custom_attrs_construct)(Il2CppCustomAttrInfo * cinfo);
     static void (*custom_attrs_free)(Il2CppCustomAttrInfo * ainfo);

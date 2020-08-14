@@ -838,14 +838,14 @@ namespace il2cpp_utils {
             AddNestedTypesToNametoClassHashTable(hashTable, namespaze, name, nestedClass);
     }
 
-    CsString* createcsstr(std::string_view inp, [[maybe_unused]] bool pinned) {
+    Il2CppString* createcsstr(std::string_view inp, [[maybe_unused]] bool pinned) {
         if (pinned) {
             return il2cpp_functions::string_new_len(inp.data(), (uint32_t)inp.length());
         }
         // Get ASCII Encoding
         auto enc = RET_0_UNLESS(GetPropertyValue("System.Text", "Encoding", "ASCII"));
         // Create new string, created from the literal char*, not to be confused with a copy of this data
-        auto* obj = RET_0_UNLESS(RunMethod<CsString*>("System", "String", "CreateStringFromEncoding", (uint8_t*)inp.data(), (int)inp.length(), enc));
+        auto* obj = RET_0_UNLESS(RunMethod<Il2CppString*>("System", "String", "CreateStringFromEncoding", (uint8_t*)inp.data(), (int)inp.length(), enc));
         return obj;
     }
 
