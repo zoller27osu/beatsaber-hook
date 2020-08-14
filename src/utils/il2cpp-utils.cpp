@@ -843,7 +843,7 @@ namespace il2cpp_utils {
             il2cpp_functions::CheckS_GlobalMetadata();
             auto mallocSize = sizeof(Il2CppString) + sizeof(Il2CppChar) * inp.length();
             auto* str = RET_0_UNLESS(reinterpret_cast<Il2CppString*>(malloc(mallocSize)));
-            str->klass = il2cpp_functions::defaults->string_class;
+            reinterpret_cast<Il2CppObject*>(str)->klass = il2cpp_functions::defaults->string_class;
             RET_0_UNLESS(il2cpp_utils::SetFieldValue(str, "m_stringLength", (int)inp.length()));
             setcsstr(str, to_utf16(inp));
             return str;
