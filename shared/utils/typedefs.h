@@ -219,6 +219,7 @@ struct Il2CppArraySize : public Il2CppArray {
 static const size_t kIl2CppSizeOfArray = (offsetof(Il2CppArraySize, vector));
 static const size_t kIl2CppOffsetOfArrayBounds = (offsetof(Il2CppArray, bounds));
 static const size_t kIl2CppOffsetOfArrayLength = (offsetof(Il2CppArray, max_length));
+#endif
 
 namespace il2cpp_utils {
     namespace array_utils {
@@ -253,7 +254,6 @@ namespace il2cpp_utils {
             } while (0)
     }
 }
-#endif
 
 #ifdef HAS_CODEGEN
 #include "System/String.hpp"
