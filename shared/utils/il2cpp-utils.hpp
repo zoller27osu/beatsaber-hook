@@ -556,7 +556,7 @@ namespace il2cpp_utils {
         return SetPropertyValue(klass, propName, value);
     }
 
-    template<typename T = System::MulticastDelegate, typename TObj, typename R, typename... TArgs>
+    template<typename T = MulticastDelegate, typename TObj, typename R, typename... TArgs>
     // Creates an Action of type actionType, with the given callback and callback self 'obj', and casts it to a T*
     // PLEASE!!! use the below FieldInfo or MethodInfo versions instead if you can.
     // Created by zoller27osu
@@ -579,7 +579,7 @@ namespace il2cpp_utils {
 
         // TODO: figure out why passing method directly doesn't work
         auto* action = il2cpp_utils::NewUnsafe<T>(actionClass, obj, &method);
-        auto* asDelegate = reinterpret_cast<System::Delegate*>(action);
+        auto* asDelegate = reinterpret_cast<Delegate*>(action);
         if (asDelegate->method_ptr != (void*)callback) {
             Logger::get().error("Created Action's method_ptr (%p) is incorrect (should be %p)!", asDelegate->method_ptr, callback);
             return nullptr;
@@ -587,21 +587,21 @@ namespace il2cpp_utils {
         return action;
     }
 
-    template<typename T = System::MulticastDelegate, typename TObj>
+    template<typename T = MulticastDelegate, typename TObj>
     T* MakeAction(const Il2CppType* actionType, TObj* obj, void* callback) {
         auto tmp = reinterpret_cast<function_ptr_t<void>>(callback);
         return MakeAction(actionType, obj, tmp);
     }
 
     // Creates an Action fit to be passed in the given parameter position to the given method.
-    template<typename T = System::MulticastDelegate, typename T1, typename T2>
+    template<typename T = MulticastDelegate, typename T1, typename T2>
     T* MakeAction(const MethodInfo* method, int paramIdx, T1&& arg1, T2&& arg2) {
         auto* actionType = RET_0_UNLESS(il2cpp_functions::method_get_param(method, paramIdx));
         return MakeAction<T, void>(actionType, arg1, arg2);
     }
 
     // Creates an Action fit to be assigned to the given field.
-    template<typename T = System::MulticastDelegate, typename T1, typename T2>
+    template<typename T = MulticastDelegate, typename T1, typename T2>
     T* MakeAction(FieldInfo* field, T1&& arg1, T2&& arg2) {
         auto* actionType = RET_0_UNLESS(il2cpp_functions::field_get_type(field));
         return MakeAction<T, void>(actionType, arg1, arg2);
