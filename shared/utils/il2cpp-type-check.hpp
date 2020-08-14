@@ -117,9 +117,9 @@ namespace il2cpp_utils {
 
         #ifdef NEED_UNSAFE_CSHARP
         DEFINE_IL2CPP_DEFAULT_TYPE(void, void);
-        DEFINE_IL2CPP_DEFAULT_TYPE(CsObject*, object);
+        DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppObject*, object);
         #endif
-        DEFINE_IL2CPP_DEFAULT_TYPE(CsString*, string);
+        DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppString*, string);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionType*, systemtype);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionRuntimeType*, runtimetype);
 
