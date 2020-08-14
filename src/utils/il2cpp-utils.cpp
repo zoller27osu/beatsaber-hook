@@ -838,7 +838,7 @@ namespace il2cpp_utils {
             AddNestedTypesToNametoClassHashTable(hashTable, namespaze, name, nestedClass);
     }
 
-    Il2CppString* createcsstr(std::string_view inp, [[maybe_unused]] bool pinned) {
+    Il2CppString* createcsstr(std::string_view inp, bool pinned) {
         if (pinned) {
             return il2cpp_functions::string_new_len(inp.data(), (uint32_t)inp.length());
         }
