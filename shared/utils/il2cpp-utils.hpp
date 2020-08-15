@@ -402,7 +402,7 @@ namespace il2cpp_utils {
         if constexpr (std::is_same_v<Dt, Il2CppType*> || std::is_same_v<Dt, Il2CppClass*>) {
             return nullptr;
         } else if constexpr(std::is_convertible_v<Dt, Il2CppObject*>) {
-            return arg;
+            return static_cast<Il2CppObject*>(arg);
         }
 
         auto* typ = RET_0_UNLESS(ExtractType(arg));
@@ -418,7 +418,7 @@ namespace il2cpp_utils {
 
         using Dt = std::decay_t<T>;
         if constexpr(std::is_convertible_v<Dt, Il2CppObject*>) {
-            orig = modified;
+            orig = static_cast<T>(static_cast<Il2CppObject*>(modified));
         } else {
             void* val = RET_0_UNLESS(il2cpp_functions::object_unbox(modified));
             if constexpr (std::is_pointer_v<Dt>) {
@@ -682,7 +682,7 @@ namespace il2cpp_utils {
 
     // Creates a cs string (allocates it) with the given string_view and returns it
     // If pinned is true, will create a gchandle for the created string (currently unused)
-    Il2CppString* createcsstr(std::string_view inp, [[maybe_unused]] bool pinned = false);
+    Il2CppString* createcsstr(std::string_view inp, bool pinned = false);
 
     // Returns if a given source object is an object of the given class
     // Created by zoller27osu

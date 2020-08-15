@@ -838,9 +838,15 @@ namespace il2cpp_utils {
             AddNestedTypesToNametoClassHashTable(hashTable, namespaze, name, nestedClass);
     }
 
-    Il2CppString* createcsstr(std::string_view inp, [[maybe_unused]] bool pinned) {
+    Il2CppString* createcsstr(std::string_view inp, bool pinned) {
         if (pinned) {
-            return il2cpp_functions::string_new_len(inp.data(), (uint32_t)inp.length());
+            il2cpp_functions::CheckS_GlobalMetadata();
+            auto mallocSize = sizeof(Il2CppString) + sizeof(Il2CppChar) * inp.length();
+            auto* str = RET_0_UNLESS(reinterpret_cast<Il2CppString*>(malloc(mallocSize)));
+            reinterpret_cast<Il2CppObject*>(str)->klass = il2cpp_functions::defaults->string_class;
+            RET_0_UNLESS(il2cpp_utils::SetFieldValue(str, "m_stringLength", (int)inp.length()));
+            setcsstr(str, to_utf16(inp));
+            return str;
         }
         // Get ASCII Encoding
         auto enc = RET_0_UNLESS(GetPropertyValue("System.Text", "Encoding", "ASCII"));
