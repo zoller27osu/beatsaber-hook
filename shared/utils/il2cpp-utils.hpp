@@ -700,7 +700,7 @@ namespace il2cpp_utils {
     /// @return Created string
     Il2CppString* createcsstr(std::string_view inp, bool pinned = false);
 
-    /// @brief Create a heap allocated Il2CppString without registering it with GC. Does not copy the input string.
+    /// @brief Create a heap allocated Il2CppString without registering it with GC. Copies the input string.
     /// @param inp String view to create the string from.
     /// @return Created string
     Il2CppString* createUnsafeStr(std::u16string_view inp);
