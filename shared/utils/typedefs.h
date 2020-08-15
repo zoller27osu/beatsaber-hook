@@ -285,6 +285,12 @@ struct Array : public Il2CppArray
         }
         return max_length;
     }
+    T& operator[](size_t i) {
+        return values[i];
+    }
+    const T& operator[](size_t i) const {
+        return values[i];
+    }
 };
 
 #ifdef HAS_CODEGEN

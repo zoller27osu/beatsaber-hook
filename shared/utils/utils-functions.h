@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string>
 #include <string_view>
+#include <vector>
 
 struct Il2CppString;
 #ifndef __cplusplus
@@ -23,8 +24,10 @@ std::string to_utf8(std::u16string_view view);
 std::u16string to_utf16(std::string_view view);
 // Dumps the 'before' bytes before and 'after' bytes after the given pointer to log
 void dump(int before, int after, void* ptr);
-// Reads all of the text of a file at the given filename. If the file does not exist, returns NULL
+// Reads all of the text of a file at the given filename. If the file does not exist, returns an empty string.
 std::string readfile(std::string_view filename);
+// Reads all bytes from the provided file at the given filename. If the file does not exist, returns an empty vector.
+std::vector<char> readbytes(std::string_view filename);
 // Writes all of the text to a file at the given filename. Returns true on success, false otherwise
 bool writefile(std::string_view filename, std::string_view text);
 // Deletes a file at the given filename. Returns true on success, false otherwise

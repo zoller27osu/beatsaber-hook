@@ -314,6 +314,14 @@ std::string readfile(std::string_view filename) {
     return buffer.str();
 }
 
+std::vector<char> readbytes(std::string_view filename) {
+    std::ifstream infile(filename.data(), std::ios_base::binary);
+    if (!infile.is_open()) {
+        return std::vector<char>();
+    }
+    return std::vector<char>(std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>());
+}
+
 bool writefile(std::string_view filename, std::string_view text) {
     std::ofstream t(filename.data());
     if (t.is_open()) {

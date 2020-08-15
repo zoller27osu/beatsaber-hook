@@ -633,6 +633,20 @@ namespace il2cpp_utils {
         return il2cpp_utils::NewUnsafe(klass, args...);
     }
 
+    /// @brief Converts a vector to an Array*
+    /// @tparam T Inner type of the vector and array
+    /// @param vec Vector to create the Array from
+    /// @return The created Array<T>*
+    template<typename T>
+    Array<T>* vectorToArray(std::vector<T>& vec) {
+        il2cpp_functions::Init();
+        Array<T>* arr = reinterpret_cast<Array<T>*>(RET_0_UNLESS(il2cpp_functions::array_new(il2cpp_type_check::il2cpp_no_arg_class<T>::get(), vec.size())));
+        for (size_t i = 0; i < vec.size(); i++) {
+            arr->values[i] = vec[i];
+        }
+        return arr;
+    }
+
     // Calls the System.RuntimeType.MakeGenericType(System.Type gt, System.Type[] types) function
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types);
 
@@ -680,9 +694,16 @@ namespace il2cpp_utils {
     // Mainly used in AddTypeToNametoClassHashTable
     void AddNestedTypesToNametoClassHashTable(const Il2CppImage* img, const Il2CppTypeDefinition* typeDefinition);
 
-    // Creates a cs string (allocates it) with the given string_view and returns it
-    // If pinned is true, will create a gchandle for the created string (currently unused)
+    /// @brief Creates a new C# string and registers it with GC. Copies the input string.
+    /// @param inp String view to create the string from.
+    /// @param pinned Whether to create a pinned string or not (pinned strings should be used for string constants)
+    /// @return Created string
     Il2CppString* createcsstr(std::string_view inp, bool pinned = false);
+
+    /// @brief Create a heap allocated Il2CppString without registering it with GC. Does not copy the input string.
+    /// @param inp String view to create the string from.
+    /// @return Created string
+    Il2CppString* createUnsafeStr(std::u16string_view inp);
 
     // Returns if a given source object is an object of the given class
     // Created by zoller27osu
