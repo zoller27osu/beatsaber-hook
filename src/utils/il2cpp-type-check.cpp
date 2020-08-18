@@ -102,5 +102,4 @@ template<int s, int t> struct check_size {
     static_assert(s == t, "wrong size");
 };
 check_size<sizeof(Il2CppObject), 0x10> il2cppObjectCheck;
-check_size<sizeof(System::Array), 0x10> sysArrayCheck;
 check_size<kIl2CppSizeOfArray, 0x20> il2cppArrayCheck;
