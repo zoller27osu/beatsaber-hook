@@ -214,9 +214,9 @@ struct Il2CppArraySize : public Il2CppArray {
     ALIGN_TYPE(8) void* vector[IL2CPP_ZERO_LEN_ARRAY];
 };
 
-static const size_t kIl2CppSizeOfArray = (offsetof(Il2CppArraySize, vector));
-static const size_t kIl2CppOffsetOfArrayBounds = (offsetof(Il2CppArray, bounds));
-static const size_t kIl2CppOffsetOfArrayLength = (offsetof(Il2CppArray, max_length));
+static const size_t kIl2CppSizeOfArray = offsetof(Il2CppArraySize, vector);
+static const size_t kIl2CppOffsetOfArrayBounds = offsetof(Il2CppArray, bounds);
+static const size_t kIl2CppOffsetOfArrayLength = offsetof(Il2CppArray, max_length);
 #endif
 
 namespace il2cpp_utils {
@@ -270,7 +270,7 @@ typedef struct DelegateData : Il2CppObject {
 #ifdef HAS_CODEGEN
 #include "System/Collections/Generic/IEnumerable_1.hpp"
 template<class T>
-struct Array : public Il2CppArray, public System::Collections::Generic::IEnumerable_1<T>
+struct Array : public System::Collections::Generic::IEnumerable_1<T>, public Il2CppArray
 #else
 template<class T>
 struct Array : public Il2CppArray
