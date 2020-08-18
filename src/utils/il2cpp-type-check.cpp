@@ -98,3 +98,8 @@ namespace il2cpp_utils {
         return ret;
     }
 }
+template<int s, int t> struct check_size {
+    static_assert(s == t, "wrong size");
+};
+check_size<sizeof(Il2CppObject), 0x10> il2cppObjectCheck;
+check_size<kIl2CppSizeOfArray, 0x20> il2cppArrayCheck;
