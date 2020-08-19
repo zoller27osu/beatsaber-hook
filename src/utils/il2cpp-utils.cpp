@@ -838,25 +838,26 @@ namespace il2cpp_utils {
             AddNestedTypesToNametoClassHashTable(hashTable, namespaze, name, nestedClass);
     }
 
-    Il2CppString* createcsstr(std::string_view inp, bool pinned) {
-        if (pinned) {
-            return il2cpp_functions::string_new_len(inp.data(), static_cast<uint32_t>(inp.length()));
+    Il2CppString* createcsstr(std::string_view inp, StringType type) {
+        switch (type) {
+            case Permanent:
+                return il2cpp_functions::string_new_len(inp.data(), static_cast<uint32_t>(inp.length()));
+            case Manual: {
+                il2cpp_functions::CheckS_GlobalMetadata();
+                auto mallocSize = sizeof(Il2CppString) + sizeof(Il2CppChar) * inp.length();
+                auto* str = RET_0_UNLESS(reinterpret_cast<Il2CppString*>(calloc(1, mallocSize)));
+                reinterpret_cast<Il2CppObject*>(str)->klass = il2cpp_functions::defaults->string_class;
+                reinterpret_cast<Il2CppObject*>(str)->monitor = nullptr;
+                setcsstr(str, to_utf16(inp));
+                return str;
+            }
+            default:
+                // Get ASCII Encoding
+                auto enc = RET_0_UNLESS(GetPropertyValue("System.Text", "Encoding", "ASCII"));
+                // Create new string, created from the literal char*, not to be confused with a copy of this data
+                auto* obj = RET_0_UNLESS(RunMethod<Il2CppString*>("System", "String", "CreateStringFromEncoding", (uint8_t*)inp.data(), (int)inp.length(), enc));
+                return obj;
         }
-        // Get ASCII Encoding
-        auto enc = RET_0_UNLESS(GetPropertyValue("System.Text", "Encoding", "ASCII"));
-        // Create new string, created from the literal char*, not to be confused with a copy of this data
-        auto* obj = RET_0_UNLESS(RunMethod<Il2CppString*>("System", "String", "CreateStringFromEncoding", (uint8_t*)inp.data(), (int)inp.length(), enc));
-        return obj;
-    }
-
-    Il2CppString* createUnsafeStr(std::u16string_view inp) {
-        il2cpp_functions::CheckS_GlobalMetadata();
-        auto mallocSize = sizeof(Il2CppString) + sizeof(Il2CppChar) * inp.length();
-        auto* str = RET_0_UNLESS(reinterpret_cast<Il2CppString*>(calloc(1, mallocSize)));
-        reinterpret_cast<Il2CppObject*>(str)->klass = il2cpp_functions::defaults->string_class;
-        reinterpret_cast<Il2CppObject*>(str)->monitor = nullptr;
-        setcsstr(str, inp);
-        return str;
     }
 
     [[nodiscard]] bool Match(const Il2CppObject* source, const Il2CppClass* klass) noexcept {
