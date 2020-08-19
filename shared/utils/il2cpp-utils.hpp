@@ -694,16 +694,17 @@ namespace il2cpp_utils {
     // Mainly used in AddTypeToNametoClassHashTable
     void AddNestedTypesToNametoClassHashTable(const Il2CppImage* img, const Il2CppTypeDefinition* typeDefinition);
 
+    enum StringType {
+        Temporary,  // string is normal C# object, may be GC'd
+        Manual,     // string is owned by C++, must be manually freed
+        Permanent   // string can never be freed/deleted
+    };
+
     /// @brief Creates a new C# string and registers it with GC. Copies the input string.
     /// @param inp String view to create the string from.
-    /// @param pinned Whether to create a pinned string or not (pinned strings should be used for string constants)
+    /// @param type The type of string to create
     /// @return Created string
-    Il2CppString* createcsstr(std::string_view inp, bool pinned = false);
-
-    /// @brief Create a heap allocated Il2CppString without registering it with GC. Copies the input string.
-    /// @param inp String view to create the string from.
-    /// @return Created string
-    Il2CppString* createUnsafeStr(std::u16string_view inp);
+    Il2CppString* createcsstr(std::string_view inp, StringType type = Temporary);
 
     // Returns if a given source object is an object of the given class
     // Created by zoller27osu
