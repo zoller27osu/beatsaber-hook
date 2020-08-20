@@ -270,7 +270,7 @@ typedef struct DelegateData : Il2CppObject {
 #ifdef HAS_CODEGEN
 #include "System/Collections/Generic/IEnumerable_1.hpp"
 template<class T>
-struct Array : public System::Collections::Generic::IEnumerable_1<T>, public Il2CppArray
+struct Array : public Il2CppArray, public System::Collections::Generic::IEnumerable_1<T>
 #else
 template<class T>
 struct Array : public Il2CppArray
