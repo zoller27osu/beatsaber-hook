@@ -81,11 +81,6 @@ jobs:
         chmod +x ./QPM/QPM
         ./QPM/QPM restore
         
-    - name: Build
-      run: |
-        cd ${GITHUB_WORKSPACE}
-        pwsh -Command ./build.ps1
-        
     - name: Get Tag Version
       id: get_tag_version
       run: |
@@ -96,6 +91,11 @@ jobs:
     - name: QPM Edit Version
       run: |
         ./QPM/QPM package edit version "${{ steps.get_tag_version.outputs.VERSION }}"
+        
+    - name: Build
+      run: |
+        cd ${GITHUB_WORKSPACE}
+        pwsh -Command ./build.ps1
         
     # Commit the change to the package, .vscode/c_cpp_properties.json, and Android.mk
     - name: Configure commit
