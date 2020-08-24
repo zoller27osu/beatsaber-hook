@@ -51,9 +51,9 @@ jobs:
         cache-name: cache-qpm
       with:
         path: QPM
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('QPM/*') }}
+        key: ${{ runner.os }}-${{ env.cache-name }}-2
         restore-keys: |
-          ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('QPM/*') }}
+          ${{ runner.os }}-${{ env.cache-name }}-2
 
     - name: Get QPM
       if: steps.cache-qpm.outputs.cache-hit != 'true'
