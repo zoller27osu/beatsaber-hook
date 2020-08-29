@@ -289,6 +289,7 @@ gnu_string (*il2cpp_functions::_Type_GetName_)(const Il2CppType *type, Il2CppTyp
 Il2CppClass* (*il2cpp_functions::Class_FromIl2CppType)(Il2CppType* typ);
 Il2CppClass* (*il2cpp_functions::Class_GetPtrClass)(Il2CppClass* elementClass);
 Il2CppClass* (*il2cpp_functions::GenericClass_GetClass)(Il2CppGenericClass* gclass);
+AssemblyVector* (*il2cpp_functions::Assembly_GetAllAssemblies)();
 
 const Il2CppMetadataRegistration** il2cpp_functions::s_Il2CppMetadataRegistrationPtr;
 const void** il2cpp_functions::s_GlobalMetadataPtr;
@@ -942,6 +943,13 @@ void il2cpp_functions::Init() {
     Logger::get().debug("j2C_GPC: %s", j2C_GPC->toString().c_str());
     Class_GetPtrClass = (decltype(Class_GetPtrClass))CRASH_UNLESS(j2C_GPC->label);
     Logger::get().debug("Class::GetPtrClass(Il2CppClass*) found? offset: %lX", ((intptr_t)Class_GetPtrClass) - getRealOffset(0));
+    usleep(1000);  // 0.001s
+
+    // Assembly::GetAllAssemblies
+    Instruction dga((const int32_t*)domain_get_assemblies);
+    auto j2A_GAA = CRASH_UNLESS(dga.findNthCall(1));    
+    Assembly_GetAllAssemblies = (decltype(Assembly_GetAllAssemblies))CRASH_UNLESS(j2A_GAA->label);
+    Logger::get().debug("Assembly::GetAllAssemblies found? offset: %lX", ((intptr_t)Assembly_GetAllAssemblies) - getRealOffset(0));
     usleep(1000);  // 0.001s
 
     Instruction iu16((const int32_t*)init_utf16);

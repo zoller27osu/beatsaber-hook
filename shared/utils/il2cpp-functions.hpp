@@ -337,6 +337,7 @@ class il2cpp_functions {
     static Il2CppClass* (*Class_FromIl2CppType)(Il2CppType* typ);
     static Il2CppClass* (*Class_GetPtrClass)(Il2CppClass* elementClass);
     static Il2CppClass* (*GenericClass_GetClass)(Il2CppGenericClass* gclass);
+    static AssemblyVector* (*Assembly_GetAllAssemblies)();
 
     static const Il2CppMetadataRegistration** s_Il2CppMetadataRegistrationPtr;
     static const void** s_GlobalMetadataPtr;
