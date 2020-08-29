@@ -48,6 +48,8 @@ struct gnu_string {
 
 #endif
 
+typedef std::vector<const Il2CppAssembly*> AssemblyVector;
+
 // A class which contains all available il2cpp functions
 // Created by zoller27osu
 class il2cpp_functions {
