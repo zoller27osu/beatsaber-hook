@@ -382,8 +382,8 @@ namespace il2cpp_utils {
         }
 
         TOut out;
-        if constexpr (std::is_convertible_v<TOut, Il2CppObject*>) {
-            out = static_cast<TOut>(static_cast<Il2CppObject*>(il2cpp_functions::field_get_value_object(field, instance)));
+        if constexpr (std::is_nothrow_convertible_v<Il2CppObject*, TOut>) {
+            out = static_cast<TOut>(il2cpp_functions::field_get_value_object(field, instance));
         } else {
             if (instance) {
                 il2cpp_functions::field_get_value(instance, field, &out);
@@ -401,7 +401,7 @@ namespace il2cpp_utils {
         using Dt = std::decay_t<T>;
         if constexpr (std::is_same_v<Dt, Il2CppType*> || std::is_same_v<Dt, Il2CppClass*>) {
             return nullptr;
-        } else if constexpr(std::is_convertible_v<Dt, Il2CppObject*>) {
+        } else if constexpr(std::is_nothrow_convertible_v<Dt, Il2CppObject*>) {
             return static_cast<Il2CppObject*>(arg);
         }
 
@@ -417,8 +417,8 @@ namespace il2cpp_utils {
         if (!modified) return true;
 
         using Dt = std::decay_t<T>;
-        if constexpr(std::is_convertible_v<Dt, Il2CppObject*>) {
-            orig = static_cast<T>(static_cast<Il2CppObject*>(modified));
+        if constexpr(std::is_nothrow_convertible_v<Il2CppObject*, T>) {
+            orig = static_cast<T>(modified);
         } else {
             void* val = RET_0_UNLESS(il2cpp_functions::object_unbox(modified));
             if constexpr (std::is_pointer_v<Dt>) {
@@ -717,7 +717,7 @@ namespace il2cpp_utils {
     template<class To, class From>
     // Downcasts a class from From* to To*
     [[nodiscard]] auto down_cast(From* in) noexcept {
-        static_assert(std::is_convertible_v<To*, From*>);
+        static_assert(std::is_nothrow_convertible_v<To*, From*>);
         return static_cast<To*>(in);
     }
 
