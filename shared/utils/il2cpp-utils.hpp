@@ -82,7 +82,7 @@ namespace il2cpp_utils {
     bool ParameterMatch(const MethodInfo* method, std::vector<const Il2CppType*> argTypes);
 
     // Returns if a given MethodInfo's parameters match the Il2CppType vector and generic types vector
-    bool ParameterMatch(const MethodInfo* method, std::vector<const Il2CppType*> argTypes, std::vector<Il2CppClass*> genTypes);
+    bool ParameterMatch(const MethodInfo* method, std::vector<Il2CppClass*> genTypes, std::vector<const Il2CppType*> argTypes);
 
     // Returns the MethodInfo for the method on the given class with the given name and number of arguments
     // Created by zoller27osu
@@ -92,6 +92,7 @@ namespace il2cpp_utils {
 
     // Returns the MethodInfo for the method on the given class with the given name and types of arguments
     // Created by zoller27osu
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes);
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes, std::vector<const Il2CppType*> argTypes);
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes, std::vector<const Il2CppClass*> argClasses);
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes, std::vector<std::string_view> argSpaceClass);
@@ -104,11 +105,10 @@ namespace il2cpp_utils {
                 "FindMethod using argCount is invalid! If argCount is 0 then remove it; otherwise use FindMethodUnsafe!");
         } else {
             auto* klass = RET_0_UNLESS(ExtractClass(classOrInstance));
-            if constexpr (sizeof...(TArgs) == 0) {
-                return FindMethodUnsafe(klass, methodName, 0);
-            } else {
+            if constexpr (sizeof...(TArgs) == 0)
+                return FindMethod(klass, methodName, genTypes);
+            else
                 return FindMethod(klass, methodName, genTypes, {args...});
-            }
         }
     }
     
@@ -580,7 +580,7 @@ namespace il2cpp_utils {
         // TODO: figure out why passing method directly doesn't work
         auto* action = il2cpp_utils::NewUnsafe<T>(actionClass, obj, &method);
         auto* asDelegate = reinterpret_cast<Delegate*>(action);
-        if (asDelegate->method_ptr != (void*)callback) {
+        if ((void*)asDelegate->method_ptr != (void*)callback) {
             Logger::get().error("Created Action's method_ptr (%p) is incorrect (should be %p)!", asDelegate->method_ptr, callback);
             return nullptr;
         }

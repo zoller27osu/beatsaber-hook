@@ -267,10 +267,14 @@ typedef struct DelegateData : Il2CppObject {
 } DelegateData;
 #endif
 
+#include "il2cpp-utils.hpp"
+
 #ifdef HAS_CODEGEN
-#include "System/Collections/Generic/IEnumerable_1.hpp"
+#include "System/Collections/Generic/IReadOnlyList_1.hpp"
+#include "System/Collections/Generic/IList_1.hpp"
 template<class T>
-struct Array : public Il2CppArray, public System::Collections::Generic::IEnumerable_1<T>
+struct Array : public Il2CppArray, public System::Collections::Generic::IReadOnlyList_1<T>,
+  public System::Collections::Generic::IList_1<T>
 #else
 template<class T>
 struct Array : public Il2CppArray
@@ -290,6 +294,37 @@ struct Array : public Il2CppArray
     }
     const T& operator[](size_t i) const {
         return values[i];
+    }
+
+  #ifdef HAS_CODEGEN
+    System::Collections::Generic::IEnumerator_1<T>* GetEnumerator() {
+  #else
+    Il2CppObject* GetEnumerator() {
+  #endif
+        static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
+            this, "System.Collections.Generic.IEnumerable`1.GetEnumerator", 0));
+      #ifdef HAS_CODEGEN
+        return CRASH_UNLESS(il2cpp_utils::RunMethod<System::Collections::Generic::IEnumerator_1<T>*>(
+      #else
+        return CRASH_UNLESS(il2cpp_utils::RunMethod(
+      #endif
+            this, method));
+    }
+
+    bool Contains(T item) {
+        // TODO: find a better way around the existence of 2 methods with this name (the 2nd not being generic at all)
+        static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
+            this, "System.Collections.Generic.ICollection`1.Contains", 1));
+        return CRASH_UNLESS(il2cpp_utils::RunMethod<bool>(this, method, item));
+    }
+    void CopyTo(::Array<T>* array, int arrayIndex) {
+        static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
+            this, "System.Collections.Generic.ICollection`1.CopyTo", 2));
+        return CRASH_UNLESS(il2cpp_utils::RunMethod(this, method, array, arrayIndex));
+    }
+    int IndexOf(T item) {
+        static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(this, "System.Collections.Generic.IList`1.IndexOf", 1));
+        return CRASH_UNLESS(il2cpp_utils::RunMethod<int>(this, method, item));
     }
 };
 
@@ -484,8 +519,6 @@ typedef System::Threading::InternalThread Il2CppInternalThread;
 #include "System/Threading/Thread.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppThread : public System::Threading::Thread {};
-
-
 #endif
 
 #include "utils/Il2CppHashMap.h"

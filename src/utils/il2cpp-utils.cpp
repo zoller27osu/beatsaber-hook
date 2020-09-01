@@ -244,7 +244,7 @@ namespace il2cpp_utils {
             }
         }
         if (!methodInfo && klass->parent && klass->parent != klass) {
-            methodInfo = FindMethod(klass->parent, methodName, {}, argTypes);
+            methodInfo = FindMethod(klass->parent, methodName, genTypes, argTypes);
         }
 
         if (!methodInfo || multipleMatches) {
@@ -264,6 +264,11 @@ namespace il2cpp_utils {
         }
         classesNamesTypesToMethodsCache.emplace(key, methodInfo);
         return methodInfo;
+    }
+
+    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes) {
+        auto argTypes = std::vector<const Il2CppType*>();
+        return FindMethod(klass, methodName, genTypes, argTypes);
     }
 
     const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes,
