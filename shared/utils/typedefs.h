@@ -296,6 +296,18 @@ struct Array : public Il2CppArray
         return values[i];
     }
 
+    static Array<T>* New(std::initializer_list<T> vals) {
+        auto* arr = reinterpret_cast<Array<T>*>(il2cpp_functions::array_new(
+            il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<T>::get(), vals.size()));
+        memcpy(arr->values, vals.begin(), sizeof(T)*vals.size());
+        return arr;
+    }
+
+    template<typename... TArgs>
+    static Array<T>* New(TArgs&&... args) {
+        return New({args...});
+    }
+
   #ifdef HAS_CODEGEN
     System::Collections::Generic::IEnumerator_1<T>* GetEnumerator() {
   #else
