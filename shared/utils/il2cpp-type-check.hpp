@@ -162,6 +162,8 @@ namespace il2cpp_utils {
             }
         };
 
+        // TODO: is_il2cpp_object type trait?
+
         template<typename T>
         struct il2cpp_arg_class<T*> {
             static inline Il2CppClass* get(T* arg) {
