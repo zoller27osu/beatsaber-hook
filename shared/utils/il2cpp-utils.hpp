@@ -382,14 +382,10 @@ namespace il2cpp_utils {
         }
 
         TOut out;
-        if constexpr (std::is_nothrow_convertible_v<Il2CppObject*, TOut>) {
-            out = static_cast<TOut>(il2cpp_functions::field_get_value_object(field, instance));
-        } else {
-            if (instance) {
-                il2cpp_functions::field_get_value(instance, field, &out);
-            } else { // Fallback to perform a static field set
-                il2cpp_functions::field_static_get_value(field, &out);
-            }
+        if (instance) {
+            il2cpp_functions::field_get_value(instance, field, &out);
+        } else { // Fallback to perform a static field set
+            il2cpp_functions::field_static_get_value(field, &out);
         }
         return out;
     }
@@ -401,14 +397,11 @@ namespace il2cpp_utils {
         using Dt = std::decay_t<T>;
         if constexpr (std::is_same_v<Dt, Il2CppType*> || std::is_same_v<Dt, Il2CppClass*>) {
             return nullptr;
-        } else if constexpr(std::is_nothrow_convertible_v<Dt, Il2CppObject*>) {
+        } else if constexpr (std::is_pointer_v<Dt> && std::is_base_of_v<Il2CppObject, std::remove_pointer_t<Dt>>) {
             return static_cast<Il2CppObject*>(arg);
         }
-
-        auto* typ = RET_0_UNLESS(ExtractType(arg));
-        auto* klass = RET_0_UNLESS(il2cpp_functions::class_from_il2cpp_type(typ));
-        void* val = ExtractValue(arg);
-        return il2cpp_functions::value_box(klass, val);
+        auto* klass = RET_0_UNLESS(ExtractClass(arg));
+        return il2cpp_functions::value_box(klass, &arg);
     }
 
     template<class T>
@@ -417,10 +410,12 @@ namespace il2cpp_utils {
         if (!modified) return true;
 
         using Dt = std::decay_t<T>;
-        if constexpr(std::is_nothrow_convertible_v<Il2CppObject*, T>) {
+        if constexpr (std::is_pointer_v<Dt> && std::is_base_of_v<Il2CppObject, std::remove_pointer_t<Dt>>) {
             orig = static_cast<T>(modified);
         } else {
-            void* val = RET_0_UNLESS(il2cpp_functions::object_unbox(modified));
+            void* val = modified;
+            if (il2cpp_functions::class_is_valuetype(il2cpp_functions::object_get_class(modified)))
+                val = RET_0_UNLESS(il2cpp_functions::object_unbox(modified));
             if constexpr (std::is_pointer_v<Dt>) {
                 // TODO: would orig = static_cast<Dt>(val); work?
                 *orig = *static_cast<Dt>(val);
