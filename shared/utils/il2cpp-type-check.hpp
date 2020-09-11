@@ -115,13 +115,11 @@ namespace il2cpp_utils {
         DEFINE_IL2CPP_DEFAULT_TYPE(bool, boolean);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppChar, char);
 
-        #ifdef NEED_UNSAFE_CSHARP
         DEFINE_IL2CPP_DEFAULT_TYPE(void, void);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppObject*, object);
-        #endif
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppString*, string);
+        DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppArray*, array);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionType*, systemtype);
-        DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionRuntimeType*, runtimetype);
 
         DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
         DEFINE_IL2CPP_ARG_TYPE(Color, "UnityEngine", "Color");

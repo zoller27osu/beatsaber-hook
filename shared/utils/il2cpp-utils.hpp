@@ -90,40 +90,63 @@ namespace il2cpp_utils {
     const MethodInfo* FindMethodUnsafe(Il2CppObject* instance, std::string_view methodName, int argsCount);
     const MethodInfo* FindMethodUnsafe(std::string_view nameSpace, std::string_view className, std::string_view methodName, int argsCount);
 
-    // Returns the MethodInfo for the method on the given class with the given name and types of arguments
-    // Created by zoller27osu
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes);
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes, std::vector<const Il2CppType*> argTypes);
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes, std::vector<const Il2CppClass*> argClasses);
-    const MethodInfo* FindMethod(Il2CppClass* klass, std::string_view methodName, std::vector<Il2CppClass*> genTypes, std::vector<std::string_view> argSpaceClass);
-    
-    template <typename T, typename... TArgs>
-    std::enable_if_t<(... && !is_vector<TArgs>::value) && !std::is_convertible_v<T, std::string_view>, const MethodInfo*>
-    FindMethod(T&& classOrInstance, std::string_view methodName, std::vector<Il2CppClass*> genTypes, TArgs&&... args) {
-        if constexpr (sizeof...(TArgs) == 1 && (std::is_integral_v<std::decay_t<TArgs>> && ...)) {
-            static_assert(false_t<TArgs...>,
-                "FindMethod using argCount is invalid! If argCount is 0 then remove it; otherwise use FindMethodUnsafe!");
-        } else {
-            auto* klass = RET_0_UNLESS(ExtractClass(classOrInstance));
-            if constexpr (sizeof...(TArgs) == 0)
-                return FindMethod(klass, methodName, genTypes);
-            else
-                return FindMethod(klass, methodName, genTypes, {args...});
-        }
-    }
-    
-    // Returns the MethodInfo for the method on the given class or instance. Also the only non-vector arg types version.
-    template <typename T, typename... TArgs>
-    // prevents template recursion and ambiguity with the double string version:
-    std::enable_if_t<(... && !is_vector<TArgs>::value) && !std::is_convertible_v<T, std::string_view>, const MethodInfo*>
-    FindMethod(T&& classOrInstance, std::string_view methodName, TArgs&&... args) {
-        return FindMethod(classOrInstance, methodName, {}, args...);
-    }
+    std::vector<Il2CppClass*> ClassesFrom(std::vector<Il2CppClass*> classes);
+    std::vector<Il2CppClass*> ClassesFrom(std::vector<std::string_view> strings);
 
-    // Returns the MethodInfo for the method on class found via namespace and name with the given other arguments
-    template<class... TArgs>
-    const MethodInfo* FindMethod(std::string_view nameSpace, std::string_view className, TArgs&&... params) {
-        return FindMethod(GetClassFromName(nameSpace, className), params...);
+    std::vector<const Il2CppType*> TypesFrom(std::vector<const Il2CppType*> types);
+    std::vector<const Il2CppType*> TypesFrom(std::vector<const Il2CppClass*> classes);
+    std::vector<const Il2CppType*> TypesFrom(std::vector<std::string_view> strings);
+    
+    struct FindMethodInfo {
+        Il2CppClass* klass = nullptr;
+        std::string name;
+        Il2CppClass* returnType = nullptr;
+        std::vector<Il2CppClass*> genTypes;
+        std::vector<const Il2CppType*> argTypes;
+
+        template <typename T, typename... TParams,
+            std::enable_if_t<!std::is_convertible_v<T, std::string_view>, int> = 0>
+        FindMethodInfo(T&& classOrInstance, std::string_view methodName, TParams&&... paramTypes) {
+            klass = ExtractClass(classOrInstance);
+            name = methodName;
+
+            if constexpr (sizeof...(TParams) > 0) {
+                if constexpr (sizeof...(TParams) == 1 && (... && is_vector<std::decay_t<TParams>>::value))
+                    argTypes = TypesFrom(paramTypes...);
+                else
+                    argTypes = TypesFrom({paramTypes...});
+            }
+        }
+
+        template <typename T, typename G, typename... TArgs,
+            std::enable_if_t<!std::is_convertible_v<Il2CppType*, G>, int> = 0>
+        FindMethodInfo(T&& classOrInstance, std::string_view methodName, std::vector<G> genericArgs, TArgs&&... args)
+            : FindMethodInfo(classOrInstance, methodName, args...)
+        {
+            genTypes = ClassesFrom(genericArgs);
+        }
+
+        template <typename T, typename R, typename... TArgs,
+            std::enable_if_t<!std::is_convertible_v<R, std::string_view>, int> = 0>
+        FindMethodInfo(T&& classOrInstance, R returnTypeOrClass, std::string_view methodName, TArgs&&... args)
+            : FindMethodInfo(classOrInstance, methodName, args...)
+        {
+            returnType = ExtractClass(returnTypeOrClass);
+        }
+
+        template <typename... TArgs>
+        FindMethodInfo(std::string_view namespaceName, std::string_view className, TArgs&&... args)
+            : FindMethodInfo(GetClassFromName(namespaceName, className), args...) { }
+    };
+
+    // Returns the MethodInfo for the method described by 'info'.
+    // Created by zoller27osu
+    const MethodInfo* FindMethod(FindMethodInfo& info);
+
+    template <typename... TArgs, std::enable_if_t<(... && !std::is_convertible_v<TArgs, FindMethodInfo>), int> = 0>
+    const MethodInfo* FindMethod(TArgs&&... args) {
+        auto info = FindMethodInfo(args...);
+        return FindMethod(info);
     }
 
     template<class T>
@@ -164,6 +187,20 @@ namespace il2cpp_utils {
     Il2CppClass* GetParamClass(const MethodInfo* method, int paramIdx);
     Il2CppClass* GetFieldClass(FieldInfo* field);
     bool IsConvertible(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
+
+    template<class T>
+    [[deprecated]]void a_lack_of_no_arg_class_for([[maybe_unused]]std::string_view s) {};
+
+    template<class T>
+    Il2CppClass* NoArgClass() {
+        using arg_class = il2cpp_type_check::il2cpp_no_arg_class<T>;
+        if constexpr (has_no_arg_get<arg_class>) {
+            return CRASH_UNLESS(arg_class::get());
+        } else {
+            a_lack_of_no_arg_class_for<T>("please tell il2cpp-type-check.hpp what C# type your type represents");
+        }
+        return nullptr;
+    }
 
     // Like ExtractType, but only returns an Il2CppType* if it can be extracted without an instance of T.
     template<class T>
@@ -240,7 +277,7 @@ namespace il2cpp_utils {
             return std::nullopt;
         }
 
-        auto* method = RET_NULLOPT_UNLESS(FindMethod(classOrInstance, methodName, {}, types));
+        auto* method = RET_NULLOPT_UNLESS(FindMethod(classOrInstance, NoArgClass<TOut>(), methodName, types));
         return RunMethod<TOut, false>(classOrInstance, method, params...);
     }
 
@@ -294,7 +331,7 @@ namespace il2cpp_utils {
             return std::nullopt;
         }
 
-        auto* info = RET_NULLOPT_UNLESS(FindMethod(classOrInstance, methodName, genTypes, types));
+        auto* info = RET_NULLOPT_UNLESS(FindMethod(classOrInstance, NoArgClass<TOut>(), methodName, genTypes, types));
         return RunGenericMethod<TOut>(classOrInstance, info, genTypes, params...);
     }
 
