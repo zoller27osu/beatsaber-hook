@@ -242,7 +242,7 @@ namespace il2cpp_utils {
         auto* klass = info.klass;
         RET_0_UNLESS(klass);
 
-        // TODO: fix for generics
+        // TODO: make cache work for generics (stratify by generics count?) and differing return types?
         // Check Cache
         auto innerPair = classesNamesTypesInnerPairType(info.name, info.argTypes);
         auto key = std::pair<Il2CppClass*, classesNamesTypesInnerPairType>(klass, innerPair);
@@ -252,16 +252,37 @@ namespace il2cpp_utils {
         }
 
         void* myIter = nullptr;
-        const MethodInfo* methodInfo = nullptr;
-        bool multipleMatches = false;
+        const MethodInfo* methodInfo = nullptr;  // basic match
+        bool multipleBasicMatches = false;
+        const MethodInfo* returnMatch = nullptr;
+        bool multipleReturnMatches = false;
+        const MethodInfo* perfectMatch = nullptr;
+        bool multiplePerfectMatches = false;
         // Does NOT automatically recurse through klass's parents
         while (const MethodInfo* current = il2cpp_functions::class_get_methods(info.klass, &myIter)) {
             if ((info.name == current->name) && ParameterMatch(current, info.genTypes, info.argTypes)) {
-                if (methodInfo) {
-                    multipleMatches = true;
-                    break;
+                il2cpp_utils::LogMethod(current);
+                if (info.returnType) {
+                    auto* returnClass = il2cpp_functions::class_from_il2cpp_type(current->return_type);
+                    if (info.returnType == returnClass) {
+                        if (perfectMatch) {
+                            multiplePerfectMatches = true;
+                            Logger::get().error("Multiple perfect matches???");
+                        }
+                        else perfectMatch = current;
+                    }
+                    if (il2cpp_functions::class_is_assignable_from(info.returnType, returnClass)) {
+                        if (returnMatch) {
+                            Logger::get().debug("Multiple return type matches.");
+                            multipleReturnMatches = true;
+                        }
+                        else returnMatch = current;
+                    }
                 }
-                methodInfo = current;
+                if (methodInfo)
+                    multipleBasicMatches = true;
+                else
+                    methodInfo = current;
             }
         }
         if (!methodInfo && klass->parent && klass->parent != klass) {
@@ -270,9 +291,14 @@ namespace il2cpp_utils {
             info.klass = klass;
         }
 
-        if (!methodInfo || multipleMatches) {
+        if (!multiplePerfectMatches && perfectMatch) {
+            // It's important that these kinds of matches aren't added to the general cache
+            return perfectMatch;
+        } else if (!multipleReturnMatches && returnMatch) {
+            return returnMatch;
+        } else if (!methodInfo || multipleBasicMatches) {
             std::stringstream ss;
-            ss << ((multipleMatches) ? "found multiple matches for" : "could not find");
+            ss << ((multipleBasicMatches) ? "found multiple matches for" : "could not find");
             ss << " method " << info.name << "(";
             bool first = true;
             for (auto t : info.argTypes) {
@@ -283,7 +309,7 @@ namespace il2cpp_utils {
             ss << ") in class '" << ClassStandardName(klass) << "'!";
             Logger::get().error("%s", ss.str().c_str());
             LogMethods(klass);
-            if (multipleMatches) methodInfo = nullptr;
+            return nullptr;
         }
         classesNamesTypesToMethodsCache.emplace(key, methodInfo);
         return methodInfo;
