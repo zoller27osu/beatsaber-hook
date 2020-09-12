@@ -531,7 +531,42 @@ typedef System::Threading::InternalThread Il2CppInternalThread;
 #include "System/Threading/Thread.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppThread : public System::Threading::Thread {};
+
+#else
+// From Runtime.cpp (some may need the * removed):
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppMulticastDelegate*, multicastdelegate);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppAsyncCall*, async_call);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppInternalThread*, internal_thread);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionEvent*, event_info);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppStringBuilder*, stringbuilder);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppStackFrame*, stack_frame);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionAssemblyName*, assembly_name);
+// DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionAssembly*, assembly);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionAssembly*, mono_assembly);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionField*, mono_field);
+// DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionParameter*, parameter_info);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionParameter*, mono_parameter_info);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionModule*, module);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionPointer*, pointer);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppSystemException*, system_exception);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppArgumentException*, argument_exception);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppMarshalByRefObject*, marshalbyrefobject);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppSafeHandle*, safe_handle);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppSortKey*, sort_key);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppErrorWrapper*, error_wrapper);
+// TODO: attempt to move out of this conditional if codegen ever gets an Il2CppComObject?
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppComObject*, il2cpp_com_object);
 #endif
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppDelegate*, delegate);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionMonoType*, monotype);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppThread*, thread);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionRuntimeType*, runtimetype);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionMonoEventInfo*, mono_event_info);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppTypedRef*, typed_reference);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionMethod*, mono_method);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppMethodInfo*, mono_method_info);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppPropertyInfo*, mono_property_info);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppException*, exception);
 
 #include "utils/Il2CppHashMap.h"
 #include "utils/HashUtils.h"
