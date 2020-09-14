@@ -647,7 +647,7 @@ namespace il2cpp_utils {
         if (obj == nullptr) method->flags |= METHOD_ATTRIBUTE_STATIC;
 
         // TODO: figure out why passing method directly doesn't work
-        auto* action = il2cpp_utils::NewUnsafe<T>(actionClass, obj, &method);
+        auto* action = RET_DEFAULT_UNLESS(il2cpp_utils::NewUnsafe<T*>(actionClass, obj, &method));
         auto* asDelegate = reinterpret_cast<Delegate*>(action);
         if ((void*)asDelegate->method_ptr != (void*)callback) {
             Logger::get().error("Created Action's method_ptr (%p) is incorrect (should be %p)!", asDelegate->method_ptr, callback);
