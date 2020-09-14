@@ -546,7 +546,7 @@ namespace il2cpp_utils {
         auto* field = RET_0_UNLESS(FindField(classOrInstance, fieldName));
         Il2CppObject* obj = ToIl2CppObject(classOrInstance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
         RET_0_UNLESS(SetFieldValue(obj, field, value));
-        if (obj) RET_0_UNLESS(FromIl2CppObject(classOrInstance, obj));
+        if (obj) RET_0_UNLESS(FromIl2CppObject(obj, classOrInstance));
         return true;
     }
 
