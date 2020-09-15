@@ -96,6 +96,7 @@ namespace il2cpp_utils {
 
     template<class T, bool ResultRequired = false>
     Il2CppClass* NoArgClass() {
+        // TODO: change ifndef HAS_CODEGEN to 'if compile warnings are not errors'?
         #ifndef HAS_CODEGEN
         using arg_class = il2cpp_type_check::il2cpp_no_arg_class<T>;
         if constexpr (!has_get<arg_class>) {
