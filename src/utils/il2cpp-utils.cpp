@@ -171,7 +171,7 @@ namespace il2cpp_utils {
             typeMap[il2cpp_functions::defaults->string_class] = "string";
             typeMap[il2cpp_functions::defaults->void_class] = "void";
         }
-        auto p = typeMap.find(il2cpp_functions::class_from_type(type));
+        auto p = typeMap.find(il2cpp_functions::class_from_il2cpp_type(type));
         if (p != typeMap.end()) {
             return p->second;
         } else {
