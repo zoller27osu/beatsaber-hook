@@ -96,16 +96,19 @@ namespace il2cpp_utils {
 
     template<class T, bool ResultRequired = false>
     Il2CppClass* NoArgClass() {
+        // TODO: change ifndef HAS_CODEGEN to 'if compile warnings are not errors'?
+        #ifndef HAS_CODEGEN
         using arg_class = il2cpp_type_check::il2cpp_no_arg_class<T>;
-        if constexpr (has_get<arg_class>) {
-            return CRASH_UNLESS(arg_class::get());
-        } else if constexpr(ResultRequired) {
-            static_assert(false_t<il2cpp_type_check::il2cpp_no_arg_class<T>>,
-                "il2cpp-type-check.hpp could not deduce what C# type your type represents");
-        } else {
-            a_lack_of_no_arg_class_for<T>("please tell il2cpp-type-check.hpp what C# type your type represents");
-        }
-        return nullptr;
+        if constexpr (!has_get<arg_class>) {
+            if constexpr (ResultRequired) {
+                static_assert(false_t<arg_class>, "il2cpp-type-check.hpp could not deduce what C# type your type represents");
+            } else {
+                a_lack_of_no_arg_class_for<T>("please tell il2cpp-type-check.hpp what C# type your type represents");
+                return nullptr;
+            }
+        } else
+        #endif
+        return CRASH_UNLESS(il2cpp_type_check::il2cpp_no_arg_class<T>::get());
     }
 
     template<typename T>
