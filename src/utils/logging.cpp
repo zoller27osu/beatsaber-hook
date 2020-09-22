@@ -8,29 +8,152 @@
 #include <string>
 #include <memory>
 #include "../../shared/utils/utils-functions.h"
+#include "../../shared/utils/utils.h"
+#include <fstream>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 #ifndef VERSION
 #define VERSION "0.0.0"
 #endif
 
-bool Logger::silent = false;
+std::vector<LoggerBuffer> Logger::buffers;
+bool Logger::consumerStarted = false;
+std::mutex Logger::bufferMutex;
+
+const char* get_level(Logging::Level level) {
+    switch (level)
+    {
+    case Logging::Level::CRITICAL:
+        return "CRITICAL";
+    case Logging::Level::ERROR:
+        return "ERROR";
+    case Logging::Level::WARNING:
+        return "WARNING";
+    case Logging::Level::INFO:
+        return "INFO";
+    case Logging::Level::DEBUG:
+        return "DEBUG";
+    default:
+        return "UNKNOWN";
+    }
+}
 
 const Logger& Logger::get() {
-    static Logger utilsLogger("UtilsLogger|v" VERSION);
+    // UtilsLogger will (by default) log to file.
+    static Logger utilsLogger(ModInfo{"UtilsLogger", VERSION}, LoggerOptions(false, true));
     return utilsLogger;
 }
 
-Logger::Logger(std::string_view tag_) {
-    tag = std::string("QuestHook[") + tag_.data() + "]";
+void LoggerBuffer::flush() {
+    if (length() == 0) {
+        // If we have nothing to write, exit early.
+        return;
+    }
+    // We can open the file without locking path, because it is only created on initialization.
+    std::ofstream file(path, std::ios::app);
+    if (!file.is_open()) {
+        __android_log_print(Logging::CRITICAL, Logger::get().tag.c_str(), "Could not open file: %s when flushing buffer!", path.c_str());
+    }
+    // First, we need to lock the buffer
+    std::unique_lock<std::mutex> lock(mut);
+    // Then, iterate over all messages and write each of them to the file.
+    // Assuming we always append to the END of the list, we could theoretically get away without locking on this call (except for length 1)
+    for (; !messages.empty(); messages.pop_front()) {
+        file << messages.front().c_str() << '\n';
+    }
+    lock.unlock();
+    file.close();
 }
 
-Logger::Logger(ModInfo info) {
-    tag = "QuestHook[" + info.id + "|v" + info.version + "]";
+// Now, we COULD be a lot more reasonable and spawn a thread for each buffer logger
+// However, I think having one should be fine.
+// Flushing while holding the bufferMutex means that new loggers take awhile to create (everything else must be flushed)
+// Flushing itself is pretty quick, new messages aren't allowed to be added while the writing is happening (I'm not sure HOW quick it is)
+class Consumer {
+    public:
+    void operator()() {
+        // Goal here is that we want to iterate over all of the buffers
+        // For each one, we flush our log to the file specified by the path of that buffer.
+        while (true) {
+            // Lock our bufferMutex
+            std::unique_lock<std::mutex> lock(Logger::bufferMutex);
+            for (auto& buffer : Logger::buffers) {
+                // For each buffer, we want to flush all of the messages.
+                // However, we want to do so in a fashion that isn't terribly unreasonable.
+                buffer.flush();
+                // Ideally, we thread_yield after each buffer flush
+                std::this_thread::yield();
+            }
+            lock.unlock();
+            // Sleep for a bit without the lock to allow other threads to create loggers and add them
+            std::this_thread::sleep_for(std::chrono::microseconds(500));
+        }
+    }
+};
+
+void Logger::flushAll() {
+    __android_log_write(Logging::CRITICAL, Logger::get().tag.c_str(), "Flushing all buffers!");
+    std::unique_lock<std::mutex> lock(Logger::bufferMutex);
+    for (auto& buffer : Logger::buffers) {
+        buffer.flush();
+    }
+    __android_log_write(Logging::CRITICAL, Logger::get().tag.c_str(), "All buffers flushed!");
+}
+
+void Logger::closeAll() {
+    __android_log_write(Logging::CRITICAL, Logger::get().tag.c_str(), "Closing all buffers!");
+    std::unique_lock<std::mutex> lock(Logger::bufferMutex);
+    for (auto& buffer : Logger::buffers) {
+        buffer.flush();
+        buffer.closed = true;
+    }
+    __android_log_write(Logging::CRITICAL, Logger::get().tag.c_str(), "All buffers closed!");
+}
+
+void Logger::init() const {
+    // So, we want to take a look at our options.
+    // If we have fileLog set to true, we want to clear the file pointed to by this log.
+    // That means that we want to delete the existing file (because storing a bunch is pretty obnoxious)
+    if (options.toFile) {
+        if (fileexists(buff.path)) {
+            deletefile(buff.path);
+        }
+        // Now, create the file and paths as necessary.
+        mkpath(buff.path, 0700);
+        std::ofstream str(buff.path);
+        if (!str.is_open()) {
+            critical("Could not open logger buffer file!");
+            buff.closed = true;
+        } else {
+            str.close();
+        }
+    }
+}
+
+void Logger::flush() const {
+    // Flush our buffer.
+    // We do this by locking it and reading all of its messages to completion.
+    buff.flush();
+}
+
+void Logger::close() const {
+    buff.flush();
+    buff.closed = true;
+}
+
+void Logger::startConsumer() {
+    if (!Logger::consumerStarted) {
+        consumerStarted = true;
+        std::thread(Consumer()).detach();
+    }
 }
 
 #define LOG_MAX_CHARS 1000
 void Logger::log(Logging::Level lvl, std::string str) const {
-    if (silent) {
+    if (options.silent) {
         return;
     }
     if (str.length() > LOG_MAX_CHARS) {
@@ -49,10 +172,27 @@ void Logger::log(Logging::Level lvl, std::string str) const {
     } else {
         __android_log_write(lvl, tag.c_str(), str.c_str());
     }
+    if (options.toFile) {
+        // If we want to log to file, we want to write to a shared buffer.
+        // This buffer should be consumed by a separate thread (started if we haven't yet started any consumer)
+        // The overhead of this thread should be pretty minimal, all things considered, even if it handles every Logger instance.
+        // The first thing we need to do is create our buffer, and add it to our buffers (lock while doing so)
+        // Then, we need to start our thread if we haven't started it already
+        // Then, we need to add our data to the buffer (lock while doing so)
+        // The thread needs to consume from these buffers (locks while doing so)
+        auto now = std::chrono::system_clock::now();
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+        auto in_time = std::chrono::system_clock::to_time_t(now);
+        std::tm bt = *std::localtime(&in_time);
+        std::ostringstream oss;
+        oss << std::put_time(&bt, "%m-%d %H:%M:%S.") << std::setfill('0') << std::setw(3) << ms.count();
+        buff.addMessage(oss.str() + " " + get_level(lvl) + " " + tag + ": " + str.c_str());
+        startConsumer();
+    }
 }
 
 void Logger::log(Logging::Level lvl, std::string_view fmt, ...) const {
-    if (silent) {
+    if (options.silent) {
         return;
     }
     va_list args;
@@ -63,7 +203,7 @@ void Logger::log(Logging::Level lvl, std::string_view fmt, ...) const {
 }
 
 void Logger::critical(std::string_view fmt, ...) const {
-    if (silent) {
+    if (options.silent) {
         return;
     }
     va_list args;
@@ -74,7 +214,7 @@ void Logger::critical(std::string_view fmt, ...) const {
 }
 
 void Logger::error(std::string_view fmt, ...) const {
-    if (silent) {
+    if (options.silent) {
         return;
     }
     va_list args;
@@ -85,7 +225,7 @@ void Logger::error(std::string_view fmt, ...) const {
 }
 
 void Logger::warning(std::string_view fmt, ...) const {
-    if (silent) {
+    if (options.silent) {
         return;
     }
     va_list args;
@@ -96,7 +236,7 @@ void Logger::warning(std::string_view fmt, ...) const {
 }
 
 void Logger::info(std::string_view fmt, ...) const {
-    if (silent) {
+    if (options.silent) {
         return;
     }
     va_list args;
@@ -107,7 +247,7 @@ void Logger::info(std::string_view fmt, ...) const {
 }
 
 void Logger::debug(std::string_view fmt, ...) const {
-    if (silent) {
+    if (options.silent) {
         return;
     }
     va_list args;
@@ -116,77 +256,3 @@ void Logger::debug(std::string_view fmt, ...) const {
     va_end(args);
     log(Logging::DEBUG, s);
 }
-
-#ifdef FILE_LOG
-
-#include "../../shared/utils/utils.h"
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-#include <string>
-static FILE *fp;
-static bool logPathCreated = false;
-static std::string logPath;
-
-void log_create(Mod mod) {
-    if (!logPathCreated) {
-        logPath = string_format(LOG_PATH_FORMAT, Modloader::getApplicationId());
-        logPathCreated = true;
-    }
-    if (!direxists(logPath.c_str())) {
-        // DANGER
-        mkpath(logPath.c_str(), 0700);
-    }
-    fp = fopen((logPath + mod.info.id + ".log").c_str(), "w");
-}
-
-std::string get_level(int level) {
-    switch (level)
-    {
-    case CRITICAL:
-        return std::string("CRITICAL");
-    case ERROR:
-        return std::string("ERROR");
-    case WARNING:
-        return std::string("WARNING");
-    case INFO:
-        return std::string("INFO");
-    case DEBUG:
-    default:
-        return std::string("DEBUG");
-    }
-}
-
-void log_file(int level, const char* format, ...) {
-    va_list args;
-    if (fp == nullptr) {
-        log_create(mod);
-    }
-    auto now = std::chrono::system_clock::now();
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-    auto in_time_t = std::chrono::system_clock::to_time_t(now);
-    std::tm bt = *std::localtime(&in_time_t);
-    std::ostringstream oss;
-    oss << std::put_time(&bt, "%Y/%M/%d %H:%M:%S");
-    oss << '.' << std::setfill('0') << std::setw(3) << ms.count();
-    // Write prefix
-    fprintf(fp, "%s [%s] %s: ", oss.str().data(), TAG, get_level(level).data());
-    va_start(args, format);
-    vfprintf(fp, format, args);
-    va_end(args);
-    fprintf(fp, "\n");
-}
-
-void log_flush() {
-    if (fp) {
-        fflush(fp);
-    }
-}
-
-void log_close() {
-    if (fp) {
-        fclose(fp);
-    }
-}
-
-#endif

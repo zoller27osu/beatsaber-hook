@@ -13,9 +13,7 @@
 #include "modloader/shared/modloader.hpp"
 
 void safeAbort(const char* func, const char* file, int line) {
-    #ifdef FILE_LOG
-    log_close();
-    #endif
+    Logger::closeAll();
     // we REALLY want this to appear at least once in the log (for fastest fixing)
     for (int i = 0; i < 2; i++) {
         usleep(100000L);  // 0.1s
@@ -174,7 +172,11 @@ intptr_t getRealOffset(const void* offset) // calculate dump.cs address + lib.so
 }
 
 int mkpath(std::string_view file_path, mode_t mode) {
-    return system(("mkdir -p -m=" + std::to_string(mode) + " " + file_path.data()).c_str());
+    auto found = file_path.find_last_of('/');
+    if (found == std::string::npos) {
+        return -1;
+    }
+    return system(("mkdir -p -m=" + std::to_string(mode) + " " + file_path.substr(0, found).data()).c_str());
 }
 
 intptr_t findPattern(intptr_t dwAddress, const char* pattern, intptr_t dwSearchRangeLen) {

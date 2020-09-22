@@ -162,19 +162,6 @@ template<typename TRet, typename ...TArgs>
 // A generic function pointer, which can be called with and set to a `getRealOffset` call
 using function_ptr_t = TRet(*)(TArgs...);
 
-// Yoinked from: https://stackoverflow.com/questions/2342162/stdstring-formatting-like-sprintf
-// TODO: This should be removed once std::format exists
-template<typename... TArgs>
-std::string string_format(const std::string_view format, TArgs ... args)
-{
-    size_t size = snprintf(nullptr, 0, format.data(), args ...) + 1; // Extra space for '\0'
-    if (size <= 0)
-        return "";
-    std::unique_ptr<char[]> buf(new char[size]); 
-    snprintf(buf.get(), size, format.data(), args...);
-    return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
-}
-
 #if __has_feature(cxx_exceptions)
 template<class T>
 auto throwUnless(T&& arg, const char* func, const char* file, int line) {
