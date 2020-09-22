@@ -22,5 +22,5 @@ libs/
 obj/
 
 extern/
-qpm.lock.json
+qpm.shared.json
 *.backup
