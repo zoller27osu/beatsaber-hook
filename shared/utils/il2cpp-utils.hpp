@@ -769,5 +769,47 @@ namespace il2cpp_utils {
         void* invokeParams[] = {reinterpret_cast<void*>(args)...};
         return il2cpp_functions::runtime_invoke(method, reference, invokeParams, exc);
     }
+
+    template<typename T, typename... TArgs>
+    std::vector<const Il2CppClass*> ExtractClassesNoArgs() {
+        auto* first = il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<T>::get();
+        if constexpr (sizeof...(TArgs) == 1) {
+            std::vector<const Il2CppClass*> lst;
+            lst.push_back(first);
+            lst.push_back(il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<TArgs...>::get());
+            return lst;
+        } else {
+            auto lst = ExtractClassesNoArgs<TArgs...>();
+            lst.insert(lst.begin(), first);
+            return lst;
+        }
+    }
+
+    template<typename Ret, typename... TArgs>
+    std::vector<const Il2CppClass*> ExtractFromFunctionNoArgs() {
+        auto genericClasses = ExtractClassesNoArgs<TArgs...>();
+        genericClasses.push_back(classof(Ret));
+        return genericClasses;
+    }
+
+    template<typename Ret, typename T = MulticastDelegate, typename... TArgs>
+    /// @brief Creates and returns a C# System.Func<TArgs..., Ret> from the provided std::function.
+    /// Note that this function assumes AOT code exists for a System.Func with the provided generic arguments.
+    /// @tparam Ret The return type of the function
+    /// @tparam T The type to create (default: MulticastDelegate)
+    /// @tparam TArgs The arguments of the function
+    /// @returns The created System.Func<TArgs..., Ret>. Null if it could not be created.
+    T* MakeFunc(std::function<Ret(TArgs...)> lambda) {
+        static_assert(sizeof...(TArgs) <= 16, "Cannot create a Func`<T1, T2, ..., TN> where N is > 16!");
+        // Get generic class with matching number of args
+        static auto* genericClass = il2cpp_utils::GetClassFromName("System", "Func`" + std::to_string(sizeof...(TArgs)));
+        // Extract all parameter types and return types
+        static auto genericClasses = ExtractFromFunctionNoArgs<Ret, TArgs...>();
+        // Instantiate the Func` type
+        auto* instantiatedFunc = RET_DEFAULT_UNLESS(il2cpp_utils::MakeGeneric(genericClass, genericClasses));
+        // Create the action from the instantiated Func` type
+        auto* classType = RET_DEFAULT_UNLESS(il2cpp_functions::class_get_type(instantiatedFunc));
+        return il2cpp_utils::MakeAction<T>(classType, nullptr, reinterpret_cast<function_ptr_t<Ret, TArgs...>>(&lambda));
+    }
 }
 #endif /* IL2CPP_UTILS_H */

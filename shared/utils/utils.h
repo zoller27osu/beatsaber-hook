@@ -123,6 +123,19 @@ static void StartCoroutine(Function&& fun, Args&&... args) {
     t->detach();
 }
 
+template<typename T>
+struct identity {};
+
+template<typename Ret, typename C, typename... TArgs>
+struct identity<Ret(C::*)(TArgs...) const> {
+    using type = std::function<Ret(TArgs...)>;
+};
+
+template<typename Q>
+typename identity<decltype(&Q::operator())>::type wrapLambda(Q const& f) {
+    return f;
+}
+
 // logs the function, file and line, sleeps to allow logs to flush, then terminates program
 void safeAbort(const char* func, const char* file, int line);
 // sets "file" and "line" to the file and line you call this macro from
