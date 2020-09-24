@@ -41,7 +41,7 @@ const char* get_level(Logging::Level level) {
     }
 }
 
-const Logger& Logger::get() {
+Logger& Logger::get() {
     // UtilsLogger will (by default) log to file.
     static Logger utilsLogger(ModInfo{"UtilsLogger", VERSION}, LoggerOptions(false, true));
     return utilsLogger;

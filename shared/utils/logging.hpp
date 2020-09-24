@@ -109,7 +109,7 @@ class Logger {
         /// After this call, this logger will no longer log to a buffer, nor will it log to a file.
         void close() const;
         /// @brief Returns the logger that is used within the utils library. This function should not be used outside of the main library
-        static const Logger& get();
+        static Logger& get();
         /// @brief Close all open LoggerBuffer objects. Should only be called on a crash or exit of the game.
         static void closeAll();
         /// @brief Flush all open LoggerBuffer objects.
