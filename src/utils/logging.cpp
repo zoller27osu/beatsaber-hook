@@ -22,6 +22,7 @@
 std::vector<LoggerBuffer> Logger::buffers;
 bool Logger::consumerStarted = false;
 std::mutex Logger::bufferMutex;
+LoggerBuffer& Logger::global(Logger::buffers.emplace_back(ModInfo{"GlobalLog", ""}));
 
 const char* get_level(Logging::Level level) {
     switch (level)
@@ -57,14 +58,12 @@ void LoggerBuffer::flush() {
     if (!file.is_open()) {
         __android_log_print(Logging::CRITICAL, Logger::get().tag.c_str(), "Could not open file: %s when flushing buffer!", path.c_str());
     }
-    // First, we need to lock the buffer
-    std::unique_lock<std::mutex> lock(mut);
     // Then, iterate over all messages and write each of them to the file.
+    // We already must hold the lock for this call.
     // Assuming we always append to the END of the list, we could theoretically get away without locking on this call (except for length 1)
     for (; !messages.empty(); messages.pop_front()) {
         file << messages.front().c_str() << '\n';
     }
-    lock.unlock();
     file.close();
 }
 
@@ -122,10 +121,13 @@ void Logger::init() const {
             deletefile(buff.path);
         }
         // Now, create the file and paths as necessary.
-        mkpath(buff.path, 0700);
+        if (!direxists(buff.get_logDir())) {
+            mkpath(buff.get_logDir());
+            __android_log_print(Logging::INFO, tag.c_str(), "Created logger buffer dir: %s", buff.get_logDir().c_str());
+        }
         std::ofstream str(buff.path);
         if (!str.is_open()) {
-            critical("Could not open logger buffer file!");
+            __android_log_print(Logging::CRITICAL, tag.c_str(), "Could not open logger buffer file: %s!", buff.path.c_str());
             buff.closed = true;
         } else {
             str.close();
@@ -136,10 +138,12 @@ void Logger::init() const {
 void Logger::flush() const {
     // Flush our buffer.
     // We do this by locking it and reading all of its messages to completion.
+    std::unique_lock<std::mutex> lock(Logger::bufferMutex);
     buff.flush();
 }
 
 void Logger::close() const {
+    std::unique_lock<std::mutex> lock(Logger::bufferMutex);
     buff.flush();
     buff.closed = true;
 }
@@ -147,6 +151,7 @@ void Logger::close() const {
 void Logger::startConsumer() {
     if (!Logger::consumerStarted) {
         consumerStarted = true;
+        __android_log_write(Logging::INFO, Logger::get().tag.c_str(), "Started consumer thread!");
         std::thread(Consumer()).detach();
     }
 }
@@ -186,7 +191,11 @@ void Logger::log(Logging::Level lvl, std::string str) const {
         std::tm bt = *std::localtime(&in_time);
         std::ostringstream oss;
         oss << std::put_time(&bt, "%m-%d %H:%M:%S.") << std::setfill('0') << std::setw(3) << ms.count();
-        buff.addMessage(oss.str() + " " + get_level(lvl) + " " + tag + ": " + str.c_str());
+        std::unique_lock<std::mutex> lock(Logger::bufferMutex);
+        auto msg = oss.str() + " " + get_level(lvl) + " " + tag + ": " + str.c_str();
+        buff.addMessage(msg);
+        Logger::global.addMessage(msg);
+        lock.unlock();
         startConsumer();
     }
 }

@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <cmath> // Included to support cmath's definition of log
 #include <string_view>
+#include <algorithm>
+#include <string>
 #include <list>
 #include <mutex>
 #include "modloader/shared/modloader.hpp"
@@ -41,40 +43,42 @@ class Logger;
 /// Each buffer contains multiple messages that need to be written out, stored as an std::list
 class LoggerBuffer {
     friend Logger;
-    std::mutex mut;
+    private:
+    std::string path;
+    public:
     std::list<std::string> messages;
-    const ModInfo& modInfo;
-    const std::string path;
-    bool closed;
-    static inline std::string get_path(const ModInfo& info) noexcept {
-        std::string cpy(info.version);
+    const ModInfo modInfo;
+    bool closed = false;
+    static std::string get_logDir() {
+        // Copy it
+        static std::string d = string_format(LOG_PATH, Modloader::getApplicationId().c_str());
+        return d;
+    }
+    std::string get_path() {
+        std::string cpy = modInfo.version;
         std::replace(cpy.begin(), cpy.end(), '.', '_');
-        return string_format(LOG_PATH, Modloader::getApplicationId().c_str()) + info.id + "_" + cpy + ".log";
+        auto val = get_logDir() + modInfo.id + "_" + cpy + ".log";
+        __android_log_print(Logging::INFO, "QuestHook[Logging]", "LoggerBuffer get_path: %s", val.c_str());
+        return val;
     }
-    template<typename T>
-    static inline T&& safe_move(std::mutex& mtx, T& t) noexcept {
-        std::unique_lock<std::mutex> lock(mtx);
-        return std::move(t);
-    }
-    std::size_t length() noexcept {
-        std::unique_lock<std::mutex> lock(mut);
+    std::size_t length() {
         if (closed) {
             // Ignore messages to write if we are closed.
             return 0;
         }
         return messages.size();
     }
-    void addMessage(std::string msg) {
-        std::unique_lock<std::mutex> lock(mut);
+    void addMessage(std::string_view msg) {
         if (closed) {
             return;
         }
-        messages.push_back(msg);
+        messages.emplace_back(msg);
     }
     public:
     void flush();
-    LoggerBuffer(const ModInfo& info) : modInfo(info), path(get_path(modInfo)), closed(false) {}
-    LoggerBuffer(LoggerBuffer&& other) : messages(safe_move(other.mut, other.messages)), modInfo(safe_move(other.mut, other.modInfo)), path(safe_move(other.mut, other.path)), closed(safe_move(other.mut, other.closed)) {}
+    LoggerBuffer(const ModInfo info) : modInfo(info) {
+        path = get_path();
+    }
 };
 
 /// @struct Logger Options
@@ -92,7 +96,7 @@ class Logger {
     friend LoggerBuffer;
     public:
         Logger(const ModInfo info, LoggerOptions options_) : options(options_), modInfo(info), buff(emplace_safe(modInfo)) {
-            tag = info.id + "v|" + info.version;
+            tag = "QuestHook[" + info.id + "|v" + info.version + "]";
             init();
         }
         Logger(const ModInfo info) : Logger(info, LoggerOptions{false, false}) {}
@@ -138,11 +142,13 @@ class Logger {
         static bool consumerStarted;
         static std::vector<LoggerBuffer> buffers;
         static std::mutex bufferMutex;
-        static inline LoggerBuffer& emplace_safe(const ModInfo& info) {
+        static LoggerBuffer& global;
+
+        static LoggerBuffer& emplace_safe(const ModInfo& info) {
             // Obtain lock
             std::unique_lock<std::mutex> lck(bufferMutex);
             // Emplace, lock is released
-            return buffers.emplace_back(info);
+            return Logger::buffers.emplace_back(info);
         }
         static void startConsumer();
 };
