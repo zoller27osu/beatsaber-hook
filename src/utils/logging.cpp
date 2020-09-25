@@ -80,6 +80,22 @@ void LoggerBuffer::flush() {
     file.close();
 }
 
+std::size_t LoggerBuffer::length() {
+    if (closed) {
+        // Ignore messages to write if we are closed.
+        return 0;
+    }
+    return messages.size();
+}
+
+void LoggerBuffer::addMessage(std::string_view msg) {
+    if (closed) {
+        return;
+    }
+    __android_log_print(Logging::DEBUG, "QuestHook[Logging]", "adding message: %s", msg.data());
+    messages.emplace_back(msg.data());
+}
+
 // Now, we COULD be a lot more reasonable and spawn a thread for each buffer logger
 // However, I think having one should be fine.
 // Flushing while holding the bufferMutex means that new loggers take awhile to create (everything else must be flushed)
@@ -96,8 +112,8 @@ class Consumer {
                 // For each buffer, we want to flush all of the messages.
                 // However, we want to do so in a fashion that isn't terribly unreasonable.
                 buffer.flush();
-                // Ideally, we thread_yield after each buffer flush
-                std::this_thread::yield();
+                // Ideally, we thread_yield after each buffer flush (may not need to, though)
+                // std::this_thread::yield();
             }
             // Also do the get_global() buffer
             get_global().flush();
@@ -211,11 +227,13 @@ void Logger::log(Logging::Level lvl, std::string str) const {
         std::tm bt = *std::localtime(&in_time);
         std::ostringstream oss;
         oss << std::put_time(&bt, "%m-%d %H:%M:%S.") << std::setfill('0') << std::setw(3) << ms.count();
-        std::unique_lock<std::mutex> lock(Logger::bufferMutex);
         auto msg = oss.str() + " " + get_level(lvl) + " " + tag + ": " + str.c_str();
-        buff.addMessage(msg);
-        get_global().addMessage(msg);
-        lock.unlock();
+        __android_log_print(Logging::DEBUG, tag.c_str(), "Logging message: %s to file!", msg.c_str());
+        {
+            std::unique_lock<std::mutex> lock(Logger::bufferMutex);
+            buff.addMessage(msg);
+            get_global().addMessage(msg);
+        }
         startConsumer();
     }
 }

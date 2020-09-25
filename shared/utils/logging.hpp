@@ -60,19 +60,8 @@ class LoggerBuffer {
         auto val = get_logDir() + modInfo.id + "_" + cpy + ".log";
         return val;
     }
-    std::size_t length() {
-        if (closed) {
-            // Ignore messages to write if we are closed.
-            return 0;
-        }
-        return messages.size();
-    }
-    void addMessage(std::string_view msg) {
-        if (closed) {
-            return;
-        }
-        messages.push_back(std::string(msg));
-    }
+    std::size_t length();
+    void addMessage(std::string_view msg);
     public:
     void flush();
     LoggerBuffer(const ModInfo info) : modInfo(info) {
