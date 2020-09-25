@@ -26,9 +26,7 @@ jobs:
         ndk-version: r21
       
     - name: Create ndkpath.txt
-      run: |
-        cd ndk
-        echo ${steps.setup-ndk.outputs.ndk-path} > ${GITHUB_WORKSPACE}/ndkpath.txt
+      run: echo ${steps.setup-ndk.outputs.ndk-path} > ${GITHUB_WORKSPACE}/ndkpath.txt
         
 #     - name: Cache QPM
 #       id: cache-qpm
