@@ -22,7 +22,6 @@
 std::vector<LoggerBuffer> Logger::buffers;
 bool Logger::consumerStarted = false;
 std::mutex Logger::bufferMutex;
-LoggerBuffer global(ModInfo{"GlobalLog", ""});
 
 const char* get_level(Logging::Level level) {
     switch (level)
@@ -40,6 +39,20 @@ const char* get_level(Logging::Level level) {
     default:
         return "UNKNOWN";
     }
+}
+
+bool createdGlobal = false;
+
+LoggerBuffer& get_global() {
+    static LoggerBuffer g(ModInfo{"GlobalLog", ""});
+    if (!createdGlobal) {
+        if (fileexists(g.get_path())) {
+            deletefile(g.get_path());
+        }
+        __android_log_print(Logging::INFO, "QuestHook[Logging]", "Created get_global() log at path: %s", g.get_path().c_str());
+        createdGlobal = true;
+    }
+    return g;
 }
 
 Logger& Logger::get() {
@@ -86,8 +99,8 @@ class Consumer {
                 // Ideally, we thread_yield after each buffer flush
                 std::this_thread::yield();
             }
-            // Also do the global buffer
-            global.flush();
+            // Also do the get_global() buffer
+            get_global().flush();
             lock.unlock();
             // Sleep for a bit without the lock to allow other threads to create loggers and add them
             std::this_thread::sleep_for(std::chrono::microseconds(500));
@@ -101,7 +114,7 @@ void Logger::flushAll() {
     for (auto& buffer : Logger::buffers) {
         buffer.flush();
     }
-    global.flush();
+    get_global().flush();
     __android_log_write(Logging::CRITICAL, Logger::get().tag.c_str(), "All buffers flushed!");
 }
 
@@ -112,8 +125,8 @@ void Logger::closeAll() {
         buffer.flush();
         buffer.closed = true;
     }
-    global.flush();
-    global.closed = true;
+    get_global().flush();
+    get_global().closed = true;
     __android_log_write(Logging::CRITICAL, Logger::get().tag.c_str(), "All buffers closed!");
 }
 
@@ -145,13 +158,13 @@ void Logger::flush() const {
     // We do this by locking it and reading all of its messages to completion.
     std::unique_lock<std::mutex> lock(Logger::bufferMutex);
     buff.flush();
-    global.flush();
+    get_global().flush();
 }
 
 void Logger::close() const {
     std::unique_lock<std::mutex> lock(Logger::bufferMutex);
     buff.flush();
-    global.flush();
+    get_global().flush();
     buff.closed = true;
 }
 
@@ -201,7 +214,7 @@ void Logger::log(Logging::Level lvl, std::string str) const {
         std::unique_lock<std::mutex> lock(Logger::bufferMutex);
         auto msg = oss.str() + " " + get_level(lvl) + " " + tag + ": " + str.c_str();
         buff.addMessage(msg);
-        global.addMessage(msg);
+        get_global().addMessage(msg);
         lock.unlock();
         startConsumer();
     }
