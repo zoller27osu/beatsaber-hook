@@ -171,12 +171,8 @@ intptr_t getRealOffset(const void* offset) // calculate dump.cs address + lib.so
     return location + (intptr_t)offset;
 }
 
-int mkpath(std::string_view file_path, mode_t mode) {
-    auto found = file_path.find_last_of('/');
-    if (found == std::string::npos) {
-        return -1;
-    }
-    return system(("mkdir -p -m=" + std::to_string(mode) + " " + file_path.substr(0, found).data()).c_str());
+int mkpath(std::string_view file_path) {
+    return system((std::string("mkdir -p -m +rw ") + file_path.data()).c_str());
 }
 
 intptr_t findPattern(intptr_t dwAddress, const char* pattern, intptr_t dwSearchRangeLen) {

@@ -193,7 +193,7 @@ extern "C" {
 
 // Creates all directories for a provided file_path
 // Ex: /sdcard/Android/data/something/files/libs/
-int mkpath(std::string_view file_path, mode_t mode);
+int mkpath(std::string_view file_path);
 
 // Restores an existing stringstream to a newly created state.
 void resetSS(std::stringstream& ss);

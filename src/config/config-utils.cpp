@@ -82,7 +82,7 @@ std::string Configuration::getConfigFilePath(const ModInfo& info) {
     if (!Configuration::configDir) {
         Configuration::configDir = string_format(CONFIG_PATH_FORMAT, Modloader::getApplicationId().c_str());
         if (!direxists(Configuration::configDir->c_str())) {
-            mkpath(Configuration::configDir->data(), 0700);
+            mkpath(Configuration::configDir->c_str());
         }
     }
     return *Configuration::configDir + info.id + ".json";
