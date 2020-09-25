@@ -21,7 +21,7 @@ jobs:
     
     - name: Setup NDK
       id: setup-ndk
-      uses: nttld/setup-ndk@v1
+      uses: nttld/setup-ndk@v1.0.0
       with:
         ndk-version: r21
       
