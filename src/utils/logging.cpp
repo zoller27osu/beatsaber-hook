@@ -44,7 +44,7 @@ const char* get_level(Logging::Level level) {
 bool createdGlobal = false;
 
 LoggerBuffer& get_global() {
-    static LoggerBuffer g(ModInfo{"GlobalLog", ""});
+    static LoggerBuffer g(ModInfo{"GlobalLog", VERSION});
     if (!createdGlobal) {
         if (fileexists(g.get_path())) {
             deletefile(g.get_path());
