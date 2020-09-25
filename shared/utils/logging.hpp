@@ -58,7 +58,6 @@ class LoggerBuffer {
         std::string cpy = modInfo.version;
         std::replace(cpy.begin(), cpy.end(), '.', '_');
         auto val = get_logDir() + modInfo.id + "_" + cpy + ".log";
-        __android_log_print(Logging::INFO, "QuestHook[Logging]", "LoggerBuffer get_path: %s", val.c_str());
         return val;
     }
     std::size_t length() {
@@ -72,7 +71,7 @@ class LoggerBuffer {
         if (closed) {
             return;
         }
-        messages.emplace_back(msg);
+        messages.push_back(std::string(msg));
     }
     public:
     void flush();
@@ -142,7 +141,6 @@ class Logger {
         static bool consumerStarted;
         static std::vector<LoggerBuffer> buffers;
         static std::mutex bufferMutex;
-        static LoggerBuffer& global;
 
         static LoggerBuffer& emplace_safe(const ModInfo& info) {
             // Obtain lock

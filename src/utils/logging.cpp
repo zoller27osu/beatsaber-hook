@@ -22,7 +22,7 @@
 std::vector<LoggerBuffer> Logger::buffers;
 bool Logger::consumerStarted = false;
 std::mutex Logger::bufferMutex;
-LoggerBuffer& Logger::global(Logger::buffers.emplace_back(ModInfo{"GlobalLog", ""}));
+LoggerBuffer global(ModInfo{"GlobalLog", ""});
 
 const char* get_level(Logging::Level level) {
     switch (level)
@@ -86,6 +86,8 @@ class Consumer {
                 // Ideally, we thread_yield after each buffer flush
                 std::this_thread::yield();
             }
+            // Also do the global buffer
+            global.flush();
             lock.unlock();
             // Sleep for a bit without the lock to allow other threads to create loggers and add them
             std::this_thread::sleep_for(std::chrono::microseconds(500));
@@ -99,6 +101,7 @@ void Logger::flushAll() {
     for (auto& buffer : Logger::buffers) {
         buffer.flush();
     }
+    global.flush();
     __android_log_write(Logging::CRITICAL, Logger::get().tag.c_str(), "All buffers flushed!");
 }
 
@@ -109,6 +112,8 @@ void Logger::closeAll() {
         buffer.flush();
         buffer.closed = true;
     }
+    global.flush();
+    global.closed = true;
     __android_log_write(Logging::CRITICAL, Logger::get().tag.c_str(), "All buffers closed!");
 }
 
@@ -140,11 +145,13 @@ void Logger::flush() const {
     // We do this by locking it and reading all of its messages to completion.
     std::unique_lock<std::mutex> lock(Logger::bufferMutex);
     buff.flush();
+    global.flush();
 }
 
 void Logger::close() const {
     std::unique_lock<std::mutex> lock(Logger::bufferMutex);
     buff.flush();
+    global.flush();
     buff.closed = true;
 }
 
@@ -194,7 +201,7 @@ void Logger::log(Logging::Level lvl, std::string str) const {
         std::unique_lock<std::mutex> lock(Logger::bufferMutex);
         auto msg = oss.str() + " " + get_level(lvl) + " " + tag + ": " + str.c_str();
         buff.addMessage(msg);
-        Logger::global.addMessage(msg);
+        global.addMessage(msg);
         lock.unlock();
         startConsumer();
     }
