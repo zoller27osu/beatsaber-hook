@@ -57,7 +57,7 @@ LoggerBuffer& get_global() {
 
 Logger& Logger::get() {
     // UtilsLogger will (by default) log to file.
-    static Logger utilsLogger(ModInfo{"UtilsLogger", VERSION}, LoggerOptions(false, true));
+    static Logger utilsLogger(ModInfo{"UtilsLogger", VERSION}, LoggerOptions(false, false));
     return utilsLogger;
 }
 
@@ -92,7 +92,6 @@ void LoggerBuffer::addMessage(std::string_view msg) {
     if (closed) {
         return;
     }
-    __android_log_print(Logging::DEBUG, "QuestHook[Logging]", "adding message: %s", msg.data());
     messages.emplace_back(msg.data());
 }
 
@@ -228,7 +227,7 @@ void Logger::log(Logging::Level lvl, std::string str) const {
         std::ostringstream oss;
         oss << std::put_time(&bt, "%m-%d %H:%M:%S.") << std::setfill('0') << std::setw(3) << ms.count();
         auto msg = oss.str() + " " + get_level(lvl) + " " + tag + ": " + str.c_str();
-        __android_log_print(Logging::DEBUG, tag.c_str(), "Logging message: %s to file!", msg.c_str());
+        // __android_log_print(Logging::DEBUG, tag.c_str(), "Logging message: %s to file!", msg.c_str());
         {
             std::unique_lock<std::mutex> lock(Logger::bufferMutex);
             buff.addMessage(msg);
