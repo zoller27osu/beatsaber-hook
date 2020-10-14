@@ -285,7 +285,6 @@ std::string (*il2cpp_functions::_Type_GetName_)(const Il2CppType *type, Il2CppTy
 #else
 gnu_string (*il2cpp_functions::_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
 #endif
-void (*il2cpp_functions::GC_free)(void* addr);
 
 Il2CppClass* (*il2cpp_functions::Class_FromIl2CppType)(Il2CppType* typ);
 Il2CppClass* (*il2cpp_functions::Class_GetPtrClass)(Il2CppClass* elementClass);
@@ -951,15 +950,6 @@ void il2cpp_functions::Init() {
     usleep(1000);  // 0.001s
 
     CRASH_UNLESS(shutdown);
-    // GC_free
-    Instruction sd((const int32_t*)shutdown);
-    auto* Runtime_Shutdown = CRASH_UNLESS(sd.label);
-    Instruction Runtime_Shutdown_inst(Runtime_Shutdown);
-    auto j2GC_FF = CRASH_UNLESS(Runtime_Shutdown_inst.findNthCall(5));
-    Instruction GC_FreeFixed(CRASH_UNLESS(j2GC_FF->label));
-    GC_free = (decltype(GC_free))CRASH_UNLESS(GC_FreeFixed.label);
-    Logger::get().debug("gc::GarbageCollector::FreeFixed found? offset: %lX", ((intptr_t)GC_free) - getRealOffset(0));
-    usleep(1000);  // 0.001s
 
     Instruction iu16((const int32_t*)init_utf16);
     auto j2R_I = CRASH_UNLESS(iu16.findNthCall(3));
