@@ -949,8 +949,6 @@ void il2cpp_functions::Init() {
     Logger::get().debug("Assembly::GetAllAssemblies found? offset: %lX", ((intptr_t)Assembly_GetAllAssemblies) - getRealOffset(0));
     usleep(1000);  // 0.001s
 
-    CRASH_UNLESS(shutdown);
-
     Instruction iu16((const int32_t*)init_utf16);
     auto j2R_I = CRASH_UNLESS(iu16.findNthCall(3));
     Instruction Runtime_Init(CRASH_UNLESS(j2R_I->label));
@@ -974,6 +972,10 @@ void il2cpp_functions::Init() {
     usleep(1000);  // 0.001s
     Logger::get().debug("All global constants found!");
 
+
+    CRASH_UNLESS(shutdown);
+    Instruction sd((const int32_t*)shutdown);
+    auto* Runtime_Shutdown = CRASH_UNLESS(sd.label);
     if (Runtime_Shutdown) {
         Logger::get().info("hook installing to: %p (offset %lX)", Runtime_Shutdown, ((intptr_t)Runtime_Shutdown) - getRealOffset(0));
         INSTALL_HOOK_DIRECT(shutdown_hook, Runtime_Shutdown);
