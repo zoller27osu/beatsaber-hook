@@ -952,8 +952,9 @@ void il2cpp_functions::Init() {
     Instruction iu16((const int32_t*)init_utf16);
     auto j2R_I = CRASH_UNLESS(iu16.findNthCall(3));
     Instruction Runtime_Init(CRASH_UNLESS(j2R_I->label));
-    auto ldr = CRASH_UNLESS(Runtime_Init.findNth(1, std::mem_fn(&Instruction::isLoad)));  // the load for the malloc that precedes our adrp
-    // alternatively, could just get the 1st ADRP in Runtime::Init with dest reg x20
+    // alternatively, could just get the 1st ADRP in Runtime::Init with dest reg x20 (or the 9th ADRP)
+    // We DO need to skip at least one ret, though.
+    auto ldr = CRASH_UNLESS(Runtime_Init.findNth(6, std::mem_fn(&Instruction::isLoad), 1));  // the load for the malloc that precedes our adrp
     il2cpp_functions::defaults = (decltype(il2cpp_functions::defaults))ExtractAddress(ldr->addr, 1, 1);
     Logger::get().debug("il2cpp_defaults found? offset: %lX", ((intptr_t)defaults) - getRealOffset(0));
     usleep(1000);  // 0.001s
