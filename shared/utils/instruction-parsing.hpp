@@ -139,11 +139,11 @@ public:
         usleep(10000);
         return nullptr;
     }
-    // e.g. BL, BLR. Unless the jump is indirect, the address which the instruction jumps to will be at ->imm.
+    // e.g. BL(R). Unless the jump is indirect, the address which the instruction jumps to will be at ->imm.
     Instruction* findNthCall(int n, int rets = 0);
-    // e.g. B, B.eq, B.ne
+    // e.g. B(.eq/.ne)
     Instruction* findNthDirectBranchWithoutLink(int n, int rets = 0);
-    // e.g. ADR, ADRP
+    // e.g. ADR(P)
     Instruction* findNthPcRelAdr(int n, int rets = 0);
     // Finds the nth (Load/store with an Immediate offset) or (Add/subtract immediate) that applies to register "reg".
     Instruction* findNthImmOffsetOnReg(int n, uint_fast8_t reg, int rets = 0);
@@ -157,13 +157,15 @@ public:
     inline bool isReturn() const {
         return branchType == RET;
     }
-    // i.e. location to jump to is not read from a register/memory, but encoded directly into the instruction
+    // B(L/.cond)/TB(N)Z (i.e. location to jump to is not read from a register/memory, but encoded directly into the instruction)
     inline bool isDirectBranch() const {
         return (branchType == DIRCALL) || (branchType == DIR);
     }
+    // B(L)R
     inline bool isIndirectBranch() const {
         return (branchType != NOBRANCH) && (!isDirectBranch());
     }
+    // BL(R)
     inline bool isCall() const {
         return (branchType == DIRCALL) || (branchType == INDCALL);
     }
