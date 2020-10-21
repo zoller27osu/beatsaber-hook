@@ -285,6 +285,7 @@ std::string (*il2cpp_functions::_Type_GetName_)(const Il2CppType *type, Il2CppTy
 #else
 gnu_string (*il2cpp_functions::_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
 #endif
+void (*il2cpp_functions::GC_free)(void* addr);
 
 Il2CppClass* (*il2cpp_functions::Class_FromIl2CppType)(Il2CppType* typ);
 Il2CppClass* (*il2cpp_functions::Class_GetPtrClass)(Il2CppClass* elementClass);
@@ -949,6 +950,19 @@ void il2cpp_functions::Init() {
     Logger::get().debug("Assembly::GetAllAssemblies found? offset: %lX", ((intptr_t)Assembly_GetAllAssemblies) - getRealOffset(0));
     usleep(1000);  // 0.001s
 
+    CRASH_UNLESS(shutdown);
+    // GC_free
+    Instruction sd((const int32_t*)shutdown);
+    auto* Runtime_Shutdown = CRASH_UNLESS(sd.label);
+    Instruction Runtime_Shutdown_inst(Runtime_Shutdown);
+    auto blr = CRASH_UNLESS(Runtime_Shutdown_inst.findNth(1, std::mem_fn(&Instruction::isIndirectBranch)));
+    auto j2GC_FF = CRASH_UNLESS(blr->findNthCall(5));  // BL(R)
+    Instruction GC_FreeFixed(CRASH_UNLESS(j2GC_FF->label));
+    GC_free = (decltype(GC_free))CRASH_UNLESS(GC_FreeFixed.label);
+    Logger::get().debug("gc::GarbageCollector::FreeFixed found? offset: %lX", ((intptr_t)GC_free) - getRealOffset(0));
+    usleep(1000);  // 0.001s
+
+    // il2cpp_defaults
     Instruction iu16((const int32_t*)init_utf16);
     auto j2R_I = CRASH_UNLESS(iu16.findNthCall(3));
     Instruction Runtime_Init(CRASH_UNLESS(j2R_I->label));
@@ -973,10 +987,7 @@ void il2cpp_functions::Init() {
     usleep(1000);  // 0.001s
     Logger::get().debug("All global constants found!");
 
-
-    CRASH_UNLESS(shutdown);
-    Instruction sd((const int32_t*)shutdown);
-    auto* Runtime_Shutdown = CRASH_UNLESS(sd.label);
+    // Runtime.Shutdown (for file loggers)
     if (Runtime_Shutdown) {
         Logger::get().info("hook installing to: %p (offset %lX)", Runtime_Shutdown, ((intptr_t)Runtime_Shutdown) - getRealOffset(0));
         INSTALL_HOOK_DIRECT(shutdown_hook, Runtime_Shutdown);
