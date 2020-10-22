@@ -950,9 +950,9 @@ void il2cpp_functions::Init() {
     usleep(1000);  // 0.001s
 
     CRASH_UNLESS(shutdown);
+    Instruction sd((const int32_t*)shutdown);
+    auto* Runtime_Shutdown = CRASH_UNLESS(sd.label);
     // // GC_free
-    // Instruction sd((const int32_t*)shutdown);
-    // auto* Runtime_Shutdown = CRASH_UNLESS(sd.label);
     // Instruction Runtime_Shutdown_inst(Runtime_Shutdown);
     // auto blr = CRASH_UNLESS(Runtime_Shutdown_inst.findNth(1, std::mem_fn(&Instruction::isIndirectBranch)));
     // auto j2GC_FF = CRASH_UNLESS(blr->findNthCall(5));  // BL(R)
